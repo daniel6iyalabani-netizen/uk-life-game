@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UK Life 3D — Hair Creator & 100 Jobs</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#a9d8ed;font-family:system-ui,Arial,sans-serif;color:#fff}canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none;text-shadow:0 2px 5px #0009}.pill{background:#101a21dc;border:1px solid #ffffff28;border-radius:12px;padding:10px 13px;backdrop-filter:blur(7px)}
+#brand{position:absolute;left:14px;top:14px;font-weight:900;letter-spacing:.07em}#stats{position:absolute;right:14px;top:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#mission{position:absolute;top:68px;left:14px;max-width:330px;font-size:13px;line-height:1.45}#prompt{position:absolute;top:60%;left:50%;transform:translate(-50%,-50%);font-weight:900;text-align:center}
+#notice{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);font-size:23px;font-weight:900;text-align:center;display:none}
+#bottom{position:absolute;bottom:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:end;gap:10px}
+#controls{font-size:12px;line-height:1.5;max-width:580px}#info{text-align:right;font-size:12px;min-width:150px}
+#start{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:16px;background:linear-gradient(130deg,#08131bef,#173d43dd)}
+.card{width:min(660px,100%);padding:25px;border:1px solid #ffffff35;border-radius:22px;background:#111e26;box-shadow:0 20px 70px #0008}h1{font-size:clamp(30px,6vw,48px);letter-spacing:-.05em;margin:3px 0 8px}.muted{color:#c8d7dd;line-height:1.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}button,select{font:inherit;border-radius:10px;border:1px solid #ffffff28;padding:11px 13px;color:white;background:#263a45;cursor:pointer}button.primary{background:#83e0b0;color:#102019;border:0;font-weight:900}label{font-size:13px;color:#d4e1e5}
+#mapPanel{position:absolute;right:14px;bottom:105px;width:160px;font-size:11px;display:none}
+#lifeBtn{position:fixed;z-index:4;right:14px;top:72px;pointer-events:auto}
+#lifePanel{position:fixed;z-index:6;right:14px;top:120px;width:min(330px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:#101a21f2;border:1px solid #ffffff35;border-radius:16px;padding:14px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto}
+#lifePanel h2{margin:0 0 8px;font-size:18px}#lifePanel label{display:block;margin:8px 0 4px;font-size:12px}
+#lifePanel select,#lifePanel input,#lifePanel button{width:100%;margin:0 0 7px;padding:8px;border-radius:8px;background:#263a45;color:white;border:1px solid #ffffff30;font:inherit}
+#lifePanel input[type=color]{height:36px;padding:3px}#lifePanel button{cursor:pointer;font-weight:750}#lifePanel .small{font-size:11px;color:#c8d7dd;line-height:1.4}
+#lifePanel .jobrow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#financeBtn{position:fixed;z-index:4;right:14px;top:116px;pointer-events:auto;cursor:pointer;color:white;font-weight:800}
+#financePanel{position:fixed;z-index:7;right:14px;top:164px;width:min(370px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:#101a21f5;border:1px solid #ffffff35;border-radius:16px;padding:14px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto}
+#financePanel h2{margin:0 0 8px;font-size:18px}#financePanel h3{font-size:14px;margin:12px 0 5px;color:#a9e6cb}
+#financePanel p,#financePanel .small{font-size:11px;color:#d0dce1;line-height:1.45;margin:5px 0}
+#financePanel select,#financePanel input,#financePanel button{width:100%;margin:0 0 7px;padding:8px;border-radius:8px;background:#263a45;color:white;border:1px solid #ffffff30;font:inherit}
+#financePanel button{cursor:pointer;font-weight:750}#financePanel .finrow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#financePanel .stat{background:#ffffff0d;padding:8px;border-radius:8px;margin:5px 0;font-size:12px}
+@media(max-width:650px){#stats{top:58px;left:14px;right:14px;justify-content:flex-start}#mission{top:112px}#controls{font-size:10px;max-width:68%}#info{font-size:10px;min-width:110px}#mapPanel{width:125px;bottom:120px}}
+</style></head>
+<body>
+<div id="start"><div class="card">
+<div style="color:#83e0b0;font-weight:900;letter-spacing:.16em">CITY EXPANSION UPDATE</div>
+<h1>UK LIFE <span style="color:#83e0b0">🏙️</span></h1>
+<p class="muted">A bigger original London-inspired neighbourhood with enterable buildings, wandering pedestrians, delivery jobs, shopping and your drivable cars.</p>
+<div class="row"><label for="carChoice">Starting car</label><select id="carChoice"><option value="hatch">City Hatchback</option><option value="saloon">Executive Saloon</option><option value="suv">Family SUV</option><option value="taxi">London Taxi</option></select><label for="paintChoice">Car colour</label><select id="paintChoice"><option value="#d7443e">Red</option><option value="#287fc4">Blue</option><option value="#25292e">Black</option><option value="#e7c442">Yellow</option><option value="#eeeeea">White</option><option value="#398b5b">Green</option></select></div>
+<div class="row"><button class="primary" id="play">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
+<p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/mission · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
+<p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
+</div></div>
+<div id="hud">
+<div id="brand" class="pill">🇬🇧 UK LIFE <span style="color:#83e0b0">CITY UPDATE</span></div>
+<div id="stats"><div class="pill">£<span id="money">250</span></div><div class="pill">MODE <span id="mode">ON FOOT</span></div><div class="pill">PEOPLE <span id="peopleCount">16</span></div></div>
+<div id="mission" class="pill"><b id="missionTitle">MISSION 01 · CORNER SHOP RUN</b><div id="missionText">Find the green marker at the corner shop and press F.</div><div style="margin-top:6px">Progress: <b id="progress">0 / 4</b></div></div>
+<div id="prompt"></div><div id="notice"></div><div id="mapPanel" class="pill">CITY GUIDE<br><span id="mapText">Green = mission · Gold = doors</span></div>
+<div id="bottom"><div id="controls" class="pill">WASD move · E enter/exit · F interact<br>Drive: W/S throttle · A/D steer · Space handbrake</div><div id="info" class="pill">ON FOOT<br>Nearby: <b id="nearby">—</b><br>Speed <b id="speed">0</b> km/h</div></div>
+
+</div>
+<button id="lifeBtn" class="pill" style="pointer-events:auto;cursor:pointer;color:white;font-weight:800">👤 CHARACTER & JOBS</button>
+<button id="financeBtn" class="pill">£ LIFE & FINANCES</button>
+<div id="financePanel">
+  <h2>£ Life & Finances</h2>
+  <p>In-game calendar advances every 30 seconds. Weekly bills and paydays happen every 7 in-game days.</p>
+  <div class="stat">Cash: <b>£<span id="finCash">250</span></b> · Bank: <b>£<span id="finBank">0</span></b><br>Day <b id="finDay">1</b> · Next weekly cycle in <b id="finDue">7</b> days<br>Credit score: <b id="finCredit">600</b></div>
+  <h3>🏠 Housing and property</h3>
+  <label for="propertyChoice">Choose a place</label>
+  <select id="propertyChoice"><option value="room">Shared room — £65/week</option><option value="flat">Small flat — £130/week</option><option value="house">Family house — £220/week</option></select>
+  <div class="finrow"><button id="rentHome">Rent this place</button><button id="buyHome">Buy property</button></div>
+  <button id="sellHome">Sell owned property</button>
+  <p id="housingStatus" class="small">Currently staying with family. No rent due.</p>
+  <h3>🧾 Bills and insurance</h3>
+  <div class="stat" id="billStatus">No active household bills.</div>
+  <div class="finrow"><button id="payBills">Pay overdue bills</button><button id="buyInsurance">Get car insurance</button></div>
+  <h3>🚗 Car running costs</h3>
+  <div class="finrow"><button id="buyFuel">Buy fuel (£25)</button><button id="repairCar">Repair car (£45)</button></div>
+  <p id="carStatus" class="small">Fuel: 100% · Condition: 100% · Insurance: not insured</p>
+  <h3>🏦 Bank and savings</h3>
+  <label for="bankAmount">Amount (£)</label><input id="bankAmount" type="number" min="1" step="1" value="25">
+  <div class="finrow"><button id="depositMoney">Deposit cash</button><button id="withdrawMoney">Withdraw savings</button></div>
+  <h3>🛒 Food and everyday shopping</h3>
+  <div class="finrow"><button id="buyGroceries">Groceries (£18)</button><button id="buyEssentials">Essentials (£12)</button></div>
+  <p id="shoppingStatus" class="small">Food and essentials: stocked.</p>
+  <h3>📱 Phone and internet</h3>
+  <div class="finrow"><button id="phoneContract">Phone plan (£8/week)</button><button id="internetContract">Internet (£10/week)</button></div>
+  <p id="contractStatus" class="small">No phone or internet contracts.</p>
+  <h3>💳 Loans and credit</h3>
+  <div class="finrow"><button id="takeLoan">Take £300 loan</button><button id="repayLoan">Repay £50</button></div>
+  <p id="loanStatus" class="small">Outstanding loan: £0. On-time bill payments can improve credit; missed payments can lower it.</p>
+  <h3>💼 Job applications and payday</h3>
+  <label for="careerChoice">Apply for a job from the list</label><select id="careerChoice"></select>
+  <button id="applyCareer">Apply for job</button>
+  <p id="careerStatus" class="small">No regular job yet. Apply for a job to receive weekly pay.</p>
+  <p class="small">This is a fictional game economy, not real UK tax, banking, insurance or legal advice.</p>
+  <button id="closeFinance">Close finances</button>
+</div>
+<div id="lifePanel">
+  <h2>👤 Character Creator</h2>
+  <p class="small">Change your 3D character's look, then pick from 100 jobs.</p>
+  <label for="hairStyle">Hairstyle</label>
+  <select id="hairStyle">
+    <option value="short">Short</option><option value="buzz">Buzz cut</option><option value="curly">Curly</option>
+    <option value="long">Long</option><option value="bun">Bun</option><option value="fringe">Fringe</option>
+    <option value="afro">Afro</option><option value="mohawk">Mohawk</option><option value="ponytail">Ponytail</option><option value="shaggy">Shaggy</option>
+  </select>
+  <div class="jobrow">
+    <div><label for="hairColor">Hair colour</label><input type="color" id="hairColor" value="#352820"></div>
+    <div><label for="skinColor">Skin colour</label><input type="color" id="skinColor" value="#b97950"></div>
+  </div>
+  <label for="topColor">Outfit colour</label><input type="color" id="topColor" value="#3478b8">
+  <button id="applyLook">Apply appearance</button>
+  <hr style="border-color:#ffffff25">
+  <h2>💼 100 Jobs</h2>
+  <label for="jobChoice">Choose a job</label><select id="jobChoice"></select>
+  <div id="jobDetails" class="small">Choose a job to see your task.</div>
+  <div class="jobrow" style="margin-top:8px"><button id="startJob">Start job</button><button id="finishJob">Complete task</button></div>
+  <p class="small">Jobs are playable mini tasks inside this prototype. Completing one earns money and XP. Main city missions still work too.</p>
+  <div class="small">XP: <b id="xpValue">0</b> · Level: <b id="levelValue">1</b></div>
+  <button id="closeLife">Close menu</button>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);
+const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,800);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe1f6ff,0x52634b,2));const sun=new THREE.DirectionalLight(0xfff0d9,2.2);sun.position.set(-50,85,35);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const M=(c,r=.85,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:metal});
+const mats={grass:M(0x688d5b),road:M(0x34393e),brick:M(0x9c5d49),brick2:M(0xb67d63),roof:M(0x45464a),glass:M(0x8ec8d9,.3),tree:M(0x347247),trunk:M(0x68472e),white:M(0xe6dfd0),line:M(0xe3d8aa),skin:M(0xd6a17c),pants:M(0x29323b),shoe:M(0xeeeeea),green:M(0x37df8c),lamp:M(0x252b2d)};
+function mesh(g,m,x,y,z,p=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+function box(x,y,z,sx,sy,sz,m,p=scene){return mesh(new THREE.BoxGeometry(sx,sy,sz),m,x,y,z,p)}
+box(0,-.35,0,390,.5,390,mats.grass);
+function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);if(w>d){for(let i=-Math.floor(w/8);i<Math.floor(w/8);i++)box(x+i*8,.025,z,.13,.025,2.5,mats.line)}else{for(let i=-Math.floor(d/8);i<Math.floor(d/8);i++)box(x,.025,z+i*8,2.5,.025,.13,mats.line)}}
+// larger connected street grid
+for(const z of [-120,-80,-40,0,40,80,120])road(0,z,360,12);
+for(const x of [-120,-80,-40,0,40,80,120])road(x,0,12,360);
+const obstacles=[],doors=[];
+function obstacle(x,z,w,d){obstacles.push({x,z,w,d})}
+function blocked(x,z,r){for(const b of obstacles)if(Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r)return true;return false}
+function moveCollision(pos,dx,dz,r){let hit=false;if(!blocked(pos.x+dx,pos.z,r))pos.x+=dx;else hit=true;if(!blocked(pos.x,pos.z+dz,r))pos.z+=dz;else hit=true;pos.x=THREE.MathUtils.clamp(pos.x,-177,177);pos.z=THREE.MathUtils.clamp(pos.z,-177,177);return hit}
+function building(x,z,w,d,h,brick,kind='house',label='HOUSE'){
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ box(0,h/2,0,w,h,d,brick,g);box(0,h+.1,0,w+.3,.25,d+.3,mats.roof,g);
+ for(let xx=-w/2+1.4;xx<w/2-1;xx+=2.5)for(let yy=1.5;yy<h-1;yy+=2.2){box(xx,yy,d/2+.02,.82,1.12,.06,mats.glass,g);box(xx,yy+.61,d/2+.06,.94,.1,.08,mats.white,g)}
+ const doorMat=kind==='shop'?M(0x246447):M(0x333a40);
+ box(0,1.12,d/2+.12,1.15,2.15,.18,doorMat,g);
+ const sign=box(0,2.75,d/2+.13,Math.min(w*.86,8),.55,.18,kind==='shop'?M(0x237c58):M(0x5c493e),g);
+ // small readable sign via canvas texture
+ const c=document.createElement('canvas');c.width=512;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle=kind==='shop'?'#237c58':'#5c493e';ctx.fillRect(0,0,512,96);ctx.fillStyle='white';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(label,256,62);
+ sign.material=new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c),roughness:.8});
+ obstacle(x,z,w,d);
+ const door={x,z,kind,label,group:g,inside:false,doorX:x,doorZ:z+d/2+1.7,insidePos:new THREE.Vector3(x,0,z),w,d};doors.push(door);return door;
+}
+// Place buildings on city blocks, with a deliberately clear approach side.
+const buildingData=[
+[-23,-23,12,12,10,'brick','house','TERRACED HOME'],[-23,-43,12,12,8,'brick2','house','YOUR HOME'],
+[23,-23,13,12,11,'brick2','shop','CORNER SHOP'],[43,-23,13,12,9,'brick','shop','CAFE'],
+[-23,23,12,12,9,'brick2','shop','CLOTHING'],[-43,23,12,12,12,'brick','house','TOWNHOUSE'],
+[23,23,14,12,10,'brick','house','TERRACED HOME'],[43,23,12,12,13,'brick2','shop','MINI MART'],
+[-63,-3,13,12,11,'brick','shop','PHONE SHOP'],[63,3,14,12,9,'brick2','house','FLAT'],
+[-43,-63,14,11,8,'brick','shop','TAKEAWAY'],[23,63,15,12,18,'brick','flat','CITY FLATS'],
+[43,63,15,12,23,'brick2','flat','TOWER BLOCK'],[-23,63,14,12,15,'brick','house','TOWNHOUSE'],
+[-103,-23,13,12,10,'brick2','shop','MARKET'],[-103,-43,13,12,8,'brick','house','HOME'],
+[103,-23,14,12,12,'brick','shop','GROCER'],[103,-43,13,12,9,'brick2','shop','BARBER'],
+[-103,43,14,12,11,'brick','house','HOME'],[-83,63,14,12,15,'brick2','shop','BAKERY'],
+[83,43,14,12,10,'brick','shop','LAUNDRETTE'],[103,63,15,12,17,'brick','flat','FLATS'],
+[-143,-23,15,13,12,'brick','shop','SUPERMARKET'],[143,23,14,12,13,'brick2','house','HOME'],
+[-143,63,14,12,10,'brick2','shop','CHIPPY'],[143,-63,14,12,11,'brick','shop','NEWSAGENT'],
+[-63,103,14,12,15,'brick2','house','HOME'],[63,-103,14,12,12,'brick','shop','COFFEE'],
+[-103,-103,16,13,17,'brick2','flat','APARTMENTS'],[103,103,16,13,19,'brick','flat','CITY FLATS']
+];
+for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[7]);
+function tree(x,z){mesh(new THREE.CylinderGeometry(.3,.4,2.5,8),mats.trunk,x,1.25,z);mesh(new THREE.SphereGeometry(2.1,10,8),mats.tree,x,3.4,z)}
+for(let i=0;i<95;i++){let x=(Math.random()-.5)*330,z=(Math.random()-.5)*330;if(Math.abs(x%40)<9||Math.abs(z%40)<9)continue;if(blocked(x,z,3))continue;tree(x,z)}
+for(let x=-160;x<=160;x+=20)for(const z of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp);box(x,6,z,.8,.12,.4,M(0xffe8a5))}
+for(let z=-160;z<=160;z+=20)for(const x of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp);box(x,6,z+.4,.8,.12,.4,M(0xffe8a5))}
+
+// player
+const player=new THREE.Group();scene.add(player);
+const outfit=M(0x3478b8);box(0,1.35,0,.8,1,.45,outfit,player);
+const playerSkin=M(0xb97950),playerHair=M(0x352820);
+mesh(new THREE.SphereGeometry(.32,16,12),playerSkin,0,2.08,0,player);
+const hairCap=mesh(new THREE.SphereGeometry(.33,12,8,0,Math.PI*2,0,Math.PI*.55),playerHair,0,2.22,0,player);
+const hairExtras=new THREE.Group();player.add(hairExtras);
+const legL=box(-.22,.55,0,.27,.8,.3,mats.pants,player),legR=box(.22,.55,0,.27,.8,.3,mats.pants,player);box(-.22,.13,-.07,.3,.18,.48,mats.shoe,player);box(.22,.13,-.07,.3,.18,.48,mats.shoe,player);player.position.set(0,0,5);
+
+// cars
+const specs=[{id:'hatch',name:'City Hatchback',w:2.05,l:4,max:29,acc:13,turn:1.75,color:0xd7443e},{id:'saloon',name:'Executive Saloon',w:2.15,l:4.8,max:34,acc:10.5,turn:1.35,color:0x287fc4},{id:'suv',name:'Family SUV',w:2.35,l:4.6,max:27,acc:9.5,turn:1.3,color:0x25292e},{id:'taxi',name:'London Taxi',w:2.15,l:4.3,max:25,acc:10,turn:1.5,color:0xe7c442}];
+const cars=[];
+function createCar(s,x,z,heading=0){const g=new THREE.Group(),paint=M(s.color,.38,.2),glass=M(0x8ec6d9,.25,.1),chrome=M(0xb7c1c5,.3,.6),w=s.w,l=s.l;
+box(0,.36,0,w,.72,l,paint,g);box(0,1.0,-.25,w*.78,.62,l*.44,glass,g);box(0,1.33,-.25,w*.69,.07,l*.4,M(0x252d33,.45),g);box(0,.25,l/2+.035,w*.88,.2,.13,chrome,g);box(0,.25,-l/2-.035,w*.88,.2,.13,chrome,g);
+const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){const wh=mesh(new THREE.CylinderGeometry(.37,.37,.22,16),M(0x17191b),xx,.37,zz,g);wh.rotation.z=Math.PI/2;wheels.push(wh)}
+for(const xx of [-w*.34,w*.34]){box(xx,.55,l/2+.05,.34,.17,.08,M(0xfff2c0),g);box(xx,.55,-l/2-.05,.34,.17,.08,M(0xff3028),g)}
+if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.04,.28,M(0x1e292d),g)}
+g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false};cars.push(c);return c}
+createCar(specs[0],5,9,.1);createCar(specs[1],-7,12,0);createCar(specs[2],13,12,Math.PI);createCar(specs[3],-14,12,0);
+
+// pedestrians: simple colourful characters following sidewalk waypoints and avoiding building footprints.
+const npcs=[],npcColors=[0x8b5e3c,0xd34e4e,0x4e9b67,0x8b66bd,0xe0a33c,0x3478b8,0x22252a,0xb1b4ba];
+function createNPC(i){const g=new THREE.Group(),col=M(npcColors[i%npcColors.length]);box(0,1.25,0,.58,.8,.34,col,g);mesh(new THREE.SphereGeometry(.23,12,10),M([0xd6a17c,0x8d5c3f,0xe5c19d][i%3]),0,1.83,0,g);box(-.16,.43,0,.18,.65,.2,mats.pants,g);box(.16,.43,0,.18,.65,.2,mats.pants,g);
+let x,z;do{x=(Math.random()-.5)*280;z=(Math.random()-.5)*280}while(blocked(x,z,1.2)||Math.abs(x%40)<9||Math.abs(z%40)<9);
+g.position.set(x,0,z);scene.add(g);const npc={g,from:new THREE.Vector3(x,0,z),to:new THREE.Vector3(x+(Math.random()-.5)*24,0,z+(Math.random()-.5)*24),speed:1+Math.random()*1.1,phase:Math.random()*5};npcs.push(npc)}
+for(let i=0;i<24;i++)createNPC(i);
+
+// doors/building interiors are instanced as compact rooms; entering teleports to room, E returns to door.
+const interior=new THREE.Group();scene.add(interior);interior.visible=false;
+const floor=box(0,-.15,0,24,.3,24,M(0xc9bba5),interior);box(0,3,-12,24,6,.3,M(0xe0d5c2),interior);box(-12,3,0,.3,6,24,M(0xe0d5c2),interior);box(12,3,0,.3,6,24,M(0xe0d5c2),interior);box(0,3,12,24,6,.3,M(0xe0d5c2),interior);
+box(0,5.8,0,24,.3,24,M(0xf1e9da),interior);
+const interiorProps=[];
+function prop(x,y,z,sx,sy,sz,color){interiorProps.push(box(x,y,z,sx,sy,sz,M(color),interior))}
+prop(-5,.7,-4,5,1.4,2,0x76503a);prop(-5,1.55,-4,4.7,.25,1.8,0x9c7656);prop(5,.55,-5,2.4,1.1,1.3,0x447d98);prop(5,1.2,-5,2.5,.2,1.4,0xd5d8d5);prop(0,1.2,4,4,2.4,.25,0x3c5c64);
+let activeDoor=null,inside=false;
+const missionList=[
+ {title:'MISSION 01 · CORNER SHOP RUN',text:'Go to the Corner Shop door and press F to pick up a parcel.',target:'CORNER SHOP',reward:150},
+ {title:'MISSION 02 · COFFEE BREAK',text:'Visit the Cafe and press F inside to collect a coffee order.',target:'CAFE',reward:180},
+ {title:'MISSION 03 · FRESH FIT',text:'Visit the Clothing shop and press F inside to finish a styling errand.',target:'CLOTHING',reward:200},
+ {title:'MISSION 04 · NEWS ROUND',text:'Visit the Newsagent and press F inside to deliver a local paper bundle.',target:'NEWSAGENT',reward:220},
+ {title:'MISSION 05 · MARKET SUPPLIES',text:'Visit the Supermarket and press F inside to collect supplies.',target:'SUPERMARKET',reward:250}
+];let missionIndex=0,missionStage=0,money=250;
+const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
+function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
+function updateMission(){const m=currentMission();$('missionTitle').textContent=missionIndex>=missionList.length?'CITY LIFE · FREE ROAM':m.title;$('missionText').textContent=missionIndex>=missionList.length?'All starter missions complete! Explore the city and visit any building.':(missionStage===0?m.text:'Inside the '+m.target+' — press F to complete this job.');$('progress').textContent=Math.min(missionIndex,missionList.length)+' / '+missionList.length;
+const d=doors.find(d=>d.label===m.target);if(d)marker.position.set(d.x,0,d.doorZ)}
+updateMission();
+const keys={};let yaw=0,playing=false,driving=null,last=performance.now(),noticeTimer=0,cameraMode=0,playerReturn=new THREE.Vector3(0,0,5);
+const $=id=>document.getElementById(id);
+addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact()});
+addEventListener('keyup',e=>keys[e.code]=false);
+renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
+addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
+$('play').onclick=()=>{const c=cars.find(c=>c.spec.id===$('carChoice').value);if(c)c.paint.color.set($('paintChoice').value);playing=true;$('start').style.display='none';$('mapPanel').style.display='block';renderer.domElement.requestPointerLock?.();notify('Welcome to the neighbourhood!')};
+$('controlsBtn').onclick=()=>{$('help').style.display=$('help').style.display==='none'?'block':'none'};
+$('paintChoice').onchange=e=>{const c=driving||nearestCar();if(c){c.paint.color.set(e.target.value);notify(c.spec.name+' colour changed')}};
+function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
+function nearestCar(){let best=null,bd=Infinity;for(const c of cars){if(c===driving)continue;const d=player.position.distanceTo(c.g.position);if(d<bd){best=c;bd=d}}return bd<7?best:null}
+function nearestDoor(){let best=null,bd=Infinity;for(const d of doors){const p=new THREE.Vector3(d.doorX,0,d.doorZ),dist=player.position.distanceTo(p);if(dist<bd){best=d;bd=dist}}return bd<5?best:null}
+function useDoorOrCar(){
+ if(inside){inside=false;interior.visible=false;scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);player.position.copy(playerReturn);player.visible=true;activeDoor=null;notify('Back outside');return}
+ if(driving){const c=driving;const side=new THREE.Vector3(Math.cos(c.heading),0,-Math.sin(c.heading));const exit=c.g.position.clone().addScaledVector(side,c.spec.w/2+1.3);if(blocked(exit.x,exit.z,.5)){notify('No room to exit here — move the car first');return}player.position.set(exit.x,0,exit.z);player.visible=true;driving=null;c.occupied=false;notify('Exited '+c.spec.name);return}
+ const door=nearestDoor();if(door){activeDoor=door;playerReturn.copy(player.position);inside=true;interior.visible=true;player.position.set(0,0,7);player.visible=true;camera.position.set(0,4,17);camera.lookAt(0,1,0);notify('Entered '+door.label);return}
+ const c=nearestCar();if(c){driving=c;c.occupied=true;player.visible=false;yaw=c.heading;notify('Driving '+c.spec.name+' · E to exit');return}
+ notify('Walk near a gold door or parked car and press E')
+}
+function switchCar(){if(driving||inside){notify('Exit first to switch vehicles');return}const c=nearestCar();if(c){$('carChoice').value=c.spec.id;c.paint.color.set($('paintChoice').value);notify('Selected '+c.spec.name)}else notify('Walk closer to a car')}
+function interact(){
+ if(inside){const m=currentMission();if(missionIndex>=missionList.length){notify('No more starter missions — free roam!');return}if(activeDoor&&activeDoor.label===m.target){money+=m.reward;$('money').textContent=money;syncFinance();notify('JOB COMPLETE · +£'+m.reward);missionIndex++;missionStage=0;updateMission()}else notify('This is not the shop for your current job');return}
+ const pos=driving?driving.g.position:player.position;if(missionIndex<missionList.length&&pos.distanceTo(marker.position)<7){const m=currentMission();if(missionStage===0){const target=doors.find(d=>d.label===m.target);if(target&&target.kind==='shop'){notify('Job started: enter '+m.target+' and press F');missionStage=1;updateMission()}else{notify('Head to '+m.target);}}else notify('Enter the target building to finish the job')}else notify('Follow the green marker to your next job')
+}
+function vehicleCollision(c,nx,nz){const r=c.spec.w*.45;if(blocked(nx,nz,r))return true;for(const o of cars){if(o===c)continue;const dx=nx-o.g.position.x,dz=nz-o.g.position.z,reach=(c.spec.l+o.spec.l)*.34;if(dx*dx+dz*dz<reach*reach)return true}return false}
+function updateCar(c,dt){const s=c.spec,accelerating=keys.KeyW||keys.ArrowUp,braking=keys.KeyS||keys.ArrowDown,hand=keys.Space;
+ if(accelerating)c.speed=Math.min(s.max,c.speed+s.acc*dt);else if(braking){if(c.speed>1)c.speed=Math.max(0,c.speed-22*dt);else c.speed=Math.max(-s.max*.3,c.speed-s.acc*.65*dt)}else c.speed*=Math.pow(hand?.91:.982,dt*60);
+ if(hand)c.speed*=Math.pow(.91,dt*60);const steer=(keys.KeyA||keys.ArrowLeft?-1:0)+(keys.KeyD||keys.ArrowRight?1:0);c.heading+=steer*s.turn*(.25+.75*Math.min(1,Math.abs(c.speed)/10))*Math.sign(c.speed||1)*dt*(hand?.65:1);c.g.rotation.y=c.heading;
+ const nx=c.g.position.x-Math.sin(c.heading)*c.speed*dt,nz=c.g.position.z-Math.cos(c.heading)*c.speed*dt;
+ if(vehicleCollision(c,nx,nz)){c.speed*=-.2;if(Math.abs(c.speed)>7)notify('Collision! Slow down near buildings and parked cars')}else{c.g.position.x=nx;c.g.position.z=nz}c.wheels.forEach(w=>w.rotation.x+=c.speed*dt*1.4)}
+function update(dt){
+ if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').style.display='none'}
+ marker.rotation.y+=dt*.65;halo.rotation.z+=dt;marker.position.y=Math.sin(performance.now()*.002)*.12;
+ // pedestrians walk between randomly chosen nearby points; reverse when blocked or reaching destination
+ for(const n of npcs){if(inside)break;const dx=n.to.x-n.g.position.x,dz=n.to.z-n.g.position.z,dist=Math.hypot(dx,dz);if(dist<1.2||blocked(n.to.x,n.to.z,1)){n.to.set(n.g.position.x+(Math.random()-.5)*22,0,n.g.position.z+(Math.random()-.5)*22)}else{const vx=dx/dist*n.speed*dt,vz=dz/dist*n.speed*dt;if(!blocked(n.g.position.x+vx,n.g.position.z+vz,.4)){n.g.position.x+=vx;n.g.position.z+=vz;n.g.rotation.y=Math.atan2(vx,vz)}else n.to.set(n.g.position.x+(Math.random()-.5)*20,0,n.g.position.z+(Math.random()-.5)*20)}}
+ if(inside){if(keys.KeyW||keys.ArrowUp)player.position.z-=4*dt;if(keys.KeyS||keys.ArrowDown)player.position.z+=4*dt;if(keys.KeyA||keys.ArrowLeft)player.position.x-=4*dt;if(keys.KeyD||keys.ArrowRight)player.position.x+=4*dt;player.position.x=THREE.MathUtils.clamp(player.position.x,-9,9);player.position.z=THREE.MathUtils.clamp(player.position.z,-9,9);camera.position.lerp(new THREE.Vector3(player.position.x,4.3,player.position.z+10),.12);camera.lookAt(player.position.x,1,player.position.z)}
+ else{
+  if(driving){updateCar(driving,dt);player.position.copy(driving.g.position);yaw=driving.heading}
+  else{const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)),move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(fwd);if(keys.KeyS||keys.ArrowDown)move.sub(fwd);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq()){move.normalize().multiplyScalar((keys.ShiftLeft?9:5.7)*dt);moveCollision(player.position,move.x,move.z,.45);player.rotation.y=yaw;const t=performance.now()*.012;legL.rotation.x=Math.sin(t)*.45;legR.rotation.x=-legL.rotation.x}}
+  const target=driving?driving.g.position:player.position;const desired=new THREE.Vector3(target.x+Math.sin(yaw)*(cameraMode===0?8:0),target.y+(cameraMode===0?(driving?4.5:4.2):3),target.z+Math.cos(yaw)*(cameraMode===0?8:0));camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(target.x,target.y+(driving?1.2:1.6),target.z)
+ }
+ const near=nearestCar(),door=inside?null:nearestDoor();$('nearby').textContent=inside?(activeDoor?.label||'Inside'):driving?driving.spec.name:door?door.label:near?near.spec.name:'—';$('mode').textContent=inside?'INSIDE':driving?'DRIVING':'ON FOOT';$('speed').textContent=driving?Math.round(Math.abs(driving.speed)*3.6):0;$('peopleCount').textContent=npcs.length;
+ const pos=driving?driving.g.position:player.position;if(!inside&&missionIndex<missionList.length){const d=pos.distanceTo(marker.position);if(d<7&&missionStage===0)$('prompt').textContent='Press F to start '+currentMission().target+' job';else if(door)$('prompt').textContent='Press E to enter '+door.label;else if(near&&!driving)$('prompt').textContent='Press E to enter '+near.spec.name;else if(driving)$('prompt').textContent='Press E to exit car';else $('prompt').textContent=''}else if(inside)$('prompt').textContent='Inside '+(activeDoor?.label||'building')+' · E to exit · F to do job';else $('prompt').textContent=driving?'Press E to exit car':door?'Press E to enter '+door.label:near?'Press E to enter '+near.spec.name:''
+}
+
+const jobNames=['Shop Assistant','Supermarket Worker','Barista','Chef','Kitchen Porter','Waiter','Restaurant Host','Bakery Assistant','Delivery Rider','Courier Driver','Taxi Driver','Bus Driver','Mechanic','Car Wash Attendant','Petrol Station Assistant','Bike Repairer','Builder','Painter & Decorator','Plumber','Electrician','Gardener','Landscaper','Window Cleaner','Cleaner','Housekeeper','Hotel Receptionist','Hotel Porter','Lifeguard','Swimming Teacher','Personal Trainer','Football Coach','Sports Shop Assistant','Library Assistant','Teaching Assistant','Tutor','Nursery Assistant','Dog Walker','Pet Sitter','Veterinary Assistant','Pet Groomer','Farm Worker','Florist','Market Stall Seller','Clothing Shop Assistant','Shoe Shop Assistant','Phone Shop Assistant','Electronics Assistant','Furniture Mover','Warehouse Picker','Forklift Operator','Factory Worker','Parcel Sorter','Security Guard','Event Steward','Cinema Usher','Theatre Assistant','Museum Guide','Tour Guide','Photographer','Video Editor','Graphic Designer','Web Designer','Game Tester','IT Support Assistant','Computer Repairer','Social Media Assistant','Content Creator','Newspaper Deliverer','Radio Assistant','Journalist','Estate Agent','Lettings Assistant','Office Assistant','Receptionist','Data Entry Clerk','Account Assistant','Bank Clerk','Insurance Assistant','Call Centre Worker','Customer Support Agent','Hairdresser','Barber','Nail Technician','Make-up Artist','Tailor','Laundry Assistant','Dry Cleaner','Street Food Seller','Ice Cream Seller','Coffee Cart Worker','Recycling Collector','Street Cleaner','Park Ranger','Train Station Assistant','Airport Ground Crew','Post Office Assistant','Community Helper','Charity Shop Assistant','Apprentice Carpenter','Town Event Planner'];
+let activeJob=null,jobStarted=false,xp=0,jobCount=0;
+const jobTasks=[
+  'Visit a shop or workplace and press F to clock in.',
+  'Walk around the neighbourhood, then press Complete task.',
+  'Drive any car for a short trip, then press Complete task.',
+  'Explore a building using E, then return outside and finish.',
+  'Reach the green mission marker, then press Complete task.'
+];
+const jobChoice=document.getElementById('jobChoice');
+jobNames.forEach((name,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=(i+1)+'. '+name;jobChoice.appendChild(o)});
+function showJobDetails(){
+ const i=Number(jobChoice.value||0);
+ document.getElementById('jobDetails').innerHTML='<b>'+jobNames[i]+'</b><br>'+jobTasks[i%jobTasks.length]+'<br>Reward: £'+(35+(i%6)*15)+' · XP: '+(20+(i%4)*5);
+}
+jobChoice.addEventListener('change',showJobDetails);showJobDetails();
+document.getElementById('lifeBtn').addEventListener('click',()=>{const p=document.getElementById('lifePanel');p.style.display=p.style.display==='block'?'none':'block'});
+document.getElementById('closeLife').addEventListener('click',()=>document.getElementById('lifePanel').style.display='none');
+document.getElementById('startJob').addEventListener('click',()=>{activeJob=Number(jobChoice.value||0);jobStarted=true;showJobDetails();notify('Job started: '+jobNames[activeJob]+' — follow the task shown in Character & Jobs');});
+document.getElementById('finishJob').addEventListener('click',()=>{
+ if(!jobStarted||activeJob===null){notify('Choose a job and press Start job first');return}
+ const reward=35+(activeJob%6)*15,earnedXP=20+(activeJob%4)*5;
+ money+=reward;xp+=earnedXP;jobCount++;
+ document.getElementById('money').textContent=money;syncFinance();document.getElementById('xpValue').textContent=xp;
+ document.getElementById('levelValue').textContent=1+Math.floor(xp/100);
+ notify('JOB COMPLETE · +£'+reward+' · +'+earnedXP+' XP');jobStarted=false;
+});
+function applyHairStyle(){
+ while(hairExtras.children.length){const o=hairExtras.children[0];hairExtras.remove(o);o.geometry?.dispose()}
+ const style=document.getElementById('hairStyle').value;
+ const sphere=(x,y,z,sx,sy,sz)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(1,12,9),playerHair);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;hairExtras.add(o)};
+ if(style==='long')sphere(0,1.97,0,.35,.52,.32);
+ else if(style==='bun'){sphere(0,2.24,0,.34,.2,.32);sphere(0,2.5,-.02,.14,.14,.14)}
+ else if(style==='curly'||style==='afro'){sphere(0,2.3,0,style==='afro'?.43:.37,style==='afro'?.34:.26,.36);for(let i=0;i<7;i++)sphere(Math.cos(i*Math.PI*2/7)*.27,2.32,Math.sin(i*Math.PI*2/7)*.24,.13,.13,.13)}
+ else if(style==='mohawk'){sphere(0,2.43,0,.12,.28,.17);sphere(0,2.27,.01,.33,.12,.31)}
+ else if(style==='ponytail'){sphere(0,2.28,0,.34,.2,.32);sphere(0,2.04,-.29,.12,.34,.12)}
+ else if(style==='fringe'||style==='shaggy'){sphere(0,2.3,0,.35,.23,.33);sphere(0,2.17,.25,.3,.14,.12);if(style==='shaggy'){sphere(-.28,2.03,0,.1,.28,.12);sphere(.28,2.03,0,.1,.28,.12)}}
+ else sphere(0,2.3,0,style==='buzz'?.32:.35,style==='buzz'?.13:.18,.32);
+}
+document.getElementById('applyLook').addEventListener('click',()=>{
+ playerHair.color.set(document.getElementById('hairColor').value);
+ playerSkin.color.set(document.getElementById('skinColor').value);
+ outfit.color.set(document.getElementById('topColor').value);
+ applyHairStyle();notify('Your 3D character look has been updated');
+});
+document.getElementById('hairStyle').addEventListener('change',applyHairStyle);
+
+// LIFE ECONOMY: recurring game calendar, rent, taxes, utilities, insurance, banking and jobs.
+const finance = {
+ day:1, bank:0, credit:600, housing:'none', propertyOwned:false, propertyValue:0,
+ rent:0, council:0, utilities:0, phone:false, internet:false, insured:false,
+ fuel:100, condition:100, loan:0, loanPayment:0, food:3, essentials:2,
+ employed:null, wage:0, lastWeeklyDay:0, arrears:0
+};
+const cashEl=()=>document.getElementById('money');
+function cash(){return Math.max(0,Math.floor(money))}
+function syncFinance(){
+ if(cashEl())cashEl().textContent=cash();
+ $('finCash').textContent=cash();$('finBank').textContent=Math.floor(finance.bank);
+ $('finDay').textContent=finance.day;$('finDue').textContent=7-((finance.day-1)%7);
+ $('finCredit').textContent=finance.credit;
+ $('housingStatus').textContent=finance.propertyOwned
+  ? 'You own your property (estimated value £'+finance.propertyValue+'). Weekly household bills still apply.'
+  : finance.housing==='none'?'Currently staying with family. No rent due.':'Renting a '+finance.housing+' for £'+finance.rent+'/week. Rent is due on day '+(finance.day+(7-((finance.day-1)%7)))+'.';
+ $('billStatus').textContent='Rent £'+finance.rent+' · Council tax £'+finance.council+'/week · Utilities £'+finance.utilities+'/week · Arrears £'+finance.arrears+'.';
+ $('carStatus').textContent='Fuel: '+finance.fuel+'% · Condition: '+finance.condition+'% · Insurance: '+(finance.insured?'active (£15/week)':'not insured');
+ $('contractStatus').textContent='Phone: '+(finance.phone?'active (£8/week)':'none')+' · Internet: '+(finance.internet?'active (£10/week)':'none');
+ $('loanStatus').textContent='Outstanding loan: £'+finance.loan+'. Credit score: '+finance.credit+'. Interest is simulated at £5 per weekly cycle while a balance remains.';
+ $('shoppingStatus').textContent='Food stock: '+finance.food+' · Essentials stock: '+finance.essentials+'. Buy more before supplies run out.';
+ $('careerStatus').textContent=finance.employed
+  ? 'Employed as '+finance.employed+'. Weekly gross pay: £'+finance.wage+'. Payday is every 7 in-game days; simulated income tax is deducted.'
+  : 'No regular job yet. Apply for a job to receive weekly pay.';
+}
+function spend(amount,what){
+ amount=Math.ceil(amount);
+ if(money<amount){notify('Not enough cash for '+what+'. Earn money or withdraw savings.');return false}
+ money-=amount;syncFinance();notify(what+' paid: £'+amount);return true;
+}
+function addCash(amount,what){money+=Math.floor(amount);syncFinance();notify(what+' +£'+Math.floor(amount))}
+function weeklyCycle(){
+ const costs=[];
+ if(finance.housing!=='none'&&!finance.propertyOwned)costs.push(['rent',finance.rent]);
+ costs.push(['council tax',finance.council],['household bills',finance.utilities]);
+ if(finance.phone)costs.push(['phone contract',8]);
+ if(finance.internet)costs.push(['internet',10]);
+ if(finance.insured)costs.push(['car insurance',15]);
+ let total=costs.reduce((a,c)=>a+c[1],0);
+ if(total>0){
+  const paid=Math.min(money,total);money-=paid;
+  let shortfall=total-paid;
+  if(shortfall>0){finance.arrears+=shortfall;finance.credit=Math.max(300,finance.credit-18);notify('Weekly bills due £'+total+'. Short by £'+shortfall+'; arrears added.')}
+  else {finance.credit=Math.min(850,finance.credit+2);notify('Weekly bills paid: £'+total)}
+ }
+ if(finance.loan>0){const interest=Math.min(finance.loan,5);finance.loan+=interest;}
+ if(finance.employed){
+  const gross=finance.wage;
+  const tax=Math.round(gross*.12); // simple fictional game tax
+  const net=gross-tax;money+=net;
+  notify('PAYDAY: £'+gross+' gross, £'+tax+' game tax, £'+net+' net');
+ }
+ syncFinance();
+}
+function gameDayTick(){
+ finance.day++;
+ if(finance.day%7===1 && finance.day>1)weeklyCycle();
+ syncFinance();
+}
+setInterval(gameDayTick,30000);
+$('financeBtn').addEventListener('click',()=>{const p=$('financePanel');p.style.display=p.style.display==='block'?'none':'block';syncFinance()});
+$('closeFinance').addEventListener('click',()=>$('financePanel').style.display='none');
+$('rentHome').addEventListener('click',()=>{
+ if(finance.propertyOwned){notify('You already own a property');return}
+ if(finance.housing!=='none'){notify('End your current tenancy by selecting a different plan after moving out (demo: rent selection replaces it)')}
+ const v=$('propertyChoice').value,opts={room:['room',65,15,20],flat:['flat',130,25,30],house:['house',220,40,45]};
+ [finance.housing,finance.rent,finance.council,finance.utilities]=opts[v];
+ finance.arrears=0;finance.credit=Math.max(300,finance.credit-2);syncFinance();notify('Tenancy started: '+finance.housing+'. First weekly payment is due at next cycle.');
+});
+$('buyHome').addEventListener('click',()=>{
+ if(finance.propertyOwned){notify('You already own a property');return}
+ const v=$('propertyChoice').value,opts={room:[500,1200],flat:[2500,6500],house:[8000,18000]},[price,value]=opts[v];
+ if(!spend(price,'Property purchase'))return;
+ finance.propertyOwned=true;finance.propertyValue=value;finance.housing=v;finance.rent=0;
+ finance.council=v==='room'?15:v==='flat'?25:40;finance.utilities=v==='room'?20:v==='flat'?30:45;
+ syncFinance();notify('Property purchased for £'+price+'. Weekly council tax and utilities still apply.');
+});
+$('sellHome').addEventListener('click',()=>{
+ if(!finance.propertyOwned){notify('You do not own a property to sell');return}
+ const proceeds=Math.round(finance.propertyValue*.85);finance.propertyOwned=false;finance.propertyValue=0;finance.housing='none';finance.rent=0;finance.council=0;finance.utilities=0;addCash(proceeds,'Property sale (selling fees included)');
+});
+$('payBills').addEventListener('click',()=>{
+ if(finance.arrears<=0){notify('No overdue bills to pay');return}
+ if(!spend(finance.arrears,'Overdue bills'))return;
+ finance.arrears=0;finance.credit=Math.min(850,finance.credit+8);syncFinance();
+});
+$('buyInsurance').addEventListener('click',()=>{
+ if(finance.insured){notify('Car insurance is already active');return}
+ if(!spend(30,'Initial car insurance payment'))return;
+ finance.insured=true;syncFinance();notify('Car insurance active; £15 weekly premium due every cycle.');
+});
+$('buyFuel').addEventListener('click',()=>{
+ if(!spend(25,'Fuel'))return;finance.fuel=Math.min(100,finance.fuel+45);syncFinance();
+});
+$('repairCar').addEventListener('click',()=>{
+ if(!spend(45,'Vehicle repair'))return;finance.condition=Math.min(100,finance.condition+45);syncFinance();
+});
+$('depositMoney').addEventListener('click',()=>{
+ const a=Math.floor(Number($('bankAmount').value));
+ if(!Number.isFinite(a)||a<1){notify('Enter a valid amount');return}
+ if(money<a){notify('Not enough cash to deposit');return}
+ money-=a;finance.bank+=a;syncFinance();notify('Deposited £'+a+' into savings');
+});
+$('withdrawMoney').addEventListener('click',()=>{
+ const a=Math.floor(Number($('bankAmount').value));
+ if(!Number.isFinite(a)||a<1||finance.bank<a){notify('Not enough savings to withdraw that amount');return}
+ finance.bank-=a;money+=a;syncFinance();notify('Withdrew £'+a+' from savings');
+});
+$('buyGroceries').addEventListener('click',()=>{if(spend(18,'Groceries')){finance.food+=3;syncFinance()}});
+$('buyEssentials').addEventListener('click',()=>{if(spend(12,'Everyday essentials')){finance.essentials+=3;syncFinance()}});
+$('phoneContract').addEventListener('click',()=>{
+ if(finance.phone){notify('Phone contract already active');return}
+ if(!spend(15,'Phone contract setup'))return;finance.phone=true;syncFinance();notify('Phone contract active; £8 due weekly');
+});
+$('internetContract').addEventListener('click',()=>{
+ if(finance.internet){notify('Internet contract already active');return}
+ if(!spend(20,'Internet setup'))return;finance.internet=true;syncFinance();notify('Internet active; £10 due weekly');
+});
+$('takeLoan').addEventListener('click',()=>{
+ if(finance.loan>0){notify('Pay down your current loan before borrowing more');return}
+ if(finance.credit<400){notify('Credit score is too low for this loan');return}
+ finance.loan=300;money+=300;finance.credit=Math.max(300,finance.credit-10);syncFinance();notify('Loan received: £300. Weekly interest is simulated at £5.');
+});
+$('repayLoan').addEventListener('click',()=>{
+ if(finance.loan<=0){notify('No loan balance');return}
+ const a=Math.min(50,finance.loan);if(!spend(a,'Loan repayment'))return;
+ finance.loan-=a;finance.credit=Math.min(850,finance.credit+5);syncFinance();
+});
+const careerChoice=$('careerChoice');
+jobNames.forEach((name,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=name;careerChoice.appendChild(o)});
+$('applyCareer').addEventListener('click',()=>{
+ const i=Number(careerChoice.value||0);
+ if(finance.employed){notify('You already have a regular job. Leave it before applying again (prototype limitation).');return}
+ finance.employed=jobNames[i];finance.wage=180+(i%8)*25;
+ syncFinance();notify('Application accepted: '+finance.employed+'. Weekly gross pay £'+finance.wage+'.');
+});
+syncFinance();
+
+function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)}
+camera.position.set(0,5,14);camera.lookAt(0,1,0);requestAnimationFrame(loop);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
