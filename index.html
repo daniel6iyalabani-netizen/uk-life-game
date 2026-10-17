@@ -211,7 +211,7 @@ const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry
 function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
 function updateMission(){const m=currentMission();$('missionTitle').textContent=missionIndex>=missionList.length?'CITY LIFE · FREE ROAM':m.title;$('missionText').textContent=missionIndex>=missionList.length?'All starter missions complete! Explore the city and visit any building.':(missionStage===0?m.text:'Inside the '+m.target+' — press F to complete this job.');$('progress').textContent=Math.min(missionIndex,missionList.length)+' / '+missionList.length;
 const d=doors.find(d=>d.label===m.target);if(d)marker.position.set(d.x,0,d.doorZ)}
-updateMission();
+setTimeout(undateMission, 0);
 const keys={};let yaw=0,playing=false,driving=null,last=performance.now(),noticeTimer=0,cameraMode=0,playerReturn=new THREE.Vector3(0,0,5);
 const $=id=>document.getElementById(id);
 addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact()});
