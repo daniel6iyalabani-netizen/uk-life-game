@@ -168,6 +168,11 @@ body.ui-hidden #prompt{display:none!important}
   <div id="jobDetails" class="small">Choose a job to see your task.</div>
   <div class="jobrow" style="margin-top:8px"><button id="startJob">Start job</button><button id="finishJob">Complete task</button></div>
   <p class="small">Jobs are playable mini tasks inside this prototype. Completing one earns money and XP. Main city missions still work too.</p>
+  <h3>🧭 City Explorer Contracts</h3>
+  <p class="small">Take short exploration jobs to discover new places around the city. Walk or drive to the marked destination to collect your reward.</p>
+  <div class="stat" id="exploreContractStatus">No explorer contract active. Accept one to get started.</div>
+  <button id="exploreContractBtn" style="width:100%;margin:7px 0">Accept explorer contract</button>
+  <div class="small">New places: Riverside Museum, Community Stadium, Market Hall and Harbour Pier. Also explore the landmarks in your selected UK city.</div>
   <div class="small">XP: <b id="xpValue">0</b> · Level: <b id="levelValue">1</b></div>
   <button id="closeLife">Close menu</button>
 </div>
@@ -530,6 +535,32 @@ function applyRegionLandmarks(region){
  for(const [name,g] of Object.entries(regionLandmarks))g.visible=name===region;
 }
 applyRegionLandmarks('london');
+// Extra public destinations available in every regional city.
+{
+ const g=new THREE.Group();scene.add(g);
+ // Riverside Museum: glass-fronted civic building.
+ box(80,2.6,145,18,5.2,10,M(0x7898a4),g);
+ box(80,5.35,145,18.4,.35,10.4,M(0x394f5b),g);
+ for(let x=73;x<=87;x+=3.5)box(x,2.8,139.85,.16,4.2,.12,M(0xd5e5e8),g);
+ signBoard(g,80,.6,136,'RIVERSIDE','MUSEUM',0x35616d);
+ // Community stadium with open stands and a pitch.
+ const field=M(0x377b49),stand=M(0xb7b5aa);
+ box(-80,.25,145,20,.5,14,field,g);
+ for(const z of [137,153])box(-80,1.5,z,21,2.5,2,stand,g);
+ for(const x of [-90, -70])box(x,1.5,145,2,2.5,14,stand,g);
+ for(const x of [-84,-76])box(x,3,145,.2,3,.2,M(0xffffff),g);
+ signBoard(g,-80,.6,133,'COMMUNITY','STADIUM',0x326b43);
+ // Market hall with a pitched-looking roof.
+ box(80,2.5,-145,18,5,11,M(0xc4a77d),g);
+ box(80,5.35,-145,19,.5,12,M(0x7b4d36),g);
+ for(let x=73;x<=87;x+=4)box(x,2,-139.25,2.1,4,.18,M(0x6b4735),g);
+ signBoard(g,80,.6,-137,'MARKET','HALL',0x76503b);
+ // Harbour pier and water-side decking.
+ box(-80,.3,-145,8,.6,25,M(0x98764e),g);
+ box(-80,.08,-160,14,.12,12,M(0x3e94b4),g);
+ for(let z=-155;z<=-135;z+=5)box(-83,.8,z,.2,1.1,.2,M(0xe6dfcb),g);
+ signBoard(g,-80,.6,-130,'HARBOUR','PIER',0x315a6b);
+}
 // British street furniture: traffic lights, speed limits, direction signs and bus shelters.
 const signPole=M(0x34383a,.6,.15),signWhite=M(0xf4f1e8);
 function trafficLight(x,z,rot=0){
@@ -795,6 +826,35 @@ const missionList=[
  {title:'MISSION 17 · FIRE ENGINE DISPATCH',text:'Take a Fire Engine to the marked incident. Drive close to the green marker and press F.',target:'FIRE STATION',vehicleMission:'fireengine',targetPos:{x:63,z:-105},reward:650},
  {title:'MISSION 18 · AMBULANCE CALL-OUT',text:'Drive an Ambulance to the marked incident. Drive close to the green marker and press F.',target:'AMBULANCE STATION',vehicleMission:'ambulance',targetPos:{x:103,z:-105},reward:700}
 ];let missionIndex=0,missionStage=0,money=250;
+const explorerPlaces=[
+ {name:'Riverside Museum',x:80,z:136,reward:220},
+ {name:'Community Stadium',x:-80,z:133,reward:260},
+ {name:'Market Hall',x:80,z:-137,reward:200},
+ {name:'Harbour Pier',x:-80,z:-130,reward:240}
+];
+let activeExplorerContract=null,explorerContractIndex=0;
+function offerExplorerContract(){
+ if(activeExplorerContract){notify('Finish your current explorer contract first.');return}
+ const place=explorerPlaces[explorerContractIndex%explorerPlaces.length];explorerContractIndex++;
+ activeExplorerContract={...place};
+ $('exploreContractStatus').textContent='Destination: '+place.name+' · Reward £'+place.reward+'. Follow the green GPS marker and get within 7 metres.';
+ $('exploreContractBtn').textContent='Contract active · £'+place.reward;
+ marker.position.set(place.x,0,place.z);marker.visible=true;
+ notify('New explorer contract: visit '+place.name+' for £'+place.reward+'.');
+}
+function updateExplorerContract(){
+ if(!activeExplorerContract)return;
+ const p=driving?driving.g.position:player.position;
+ if(Math.hypot(p.x-activeExplorerContract.x,p.z-activeExplorerContract.z)<7){
+  const completed=activeExplorerContract;money+=completed.reward;jobCount++;xp+=35;syncFinance();
+  $('exploreContractStatus').textContent='Completed: '+completed.name+' · Earned £'+completed.reward+' and 35 XP. Accept another when ready.';
+  $('exploreContractBtn').textContent='Accept next explorer contract';
+  activeExplorerContract=null;marker.visible=missionIndex<missionList.length;
+  notify('Explorer contract complete! +£'+completed.reward+' · +35 XP');
+  updateMission();
+ }
+}
+$('exploreContractBtn').addEventListener('click',offerExplorerContract);
 const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
 let activeDispatch=null,dispatchOffer=null,dispatchClock=95,dispatchOfferClock=0,dispatchFlash=0,radioAudio=null,radioLastWarning=0;
 function radioMessage(message){try{if('speechSynthesis' in window){window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(message);utterance.rate=1.08;utterance.pitch=.82;utterance.volume=.75;window.speechSynthesis.speak(utterance)}if(!radioAudio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)radioAudio=new AC()}if(radioAudio){if(radioAudio.state==='suspended')radioAudio.resume();const now=radioAudio.currentTime;[0,.12,.28].forEach((offset,i)=>{const osc=radioAudio.createOscillator(),gain=radioAudio.createGain();osc.type='square';osc.frequency.value=i===1?740:560;gain.gain.setValueAtTime(.0001,now+offset);gain.gain.exponentialRampToValueAtTime(.035,now+offset+.015);gain.gain.exponentialRampToValueAtTime(.0001,now+offset+.07);osc.connect(gain);gain.connect(radioAudio.destination);osc.start(now+offset);osc.stop(now+offset+.08)})}}catch(e){/* Radio audio is optional; gameplay must continue if blocked. */}}
@@ -905,7 +965,7 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
- updateDayNight(dt);updateWeather(dt);
+ updateDayNight(dt);updateWeather(dt);updateExplorerContract();
  const staminaFill=$('staminaFill'),staminaValue=$('staminaValue'),staminaHint=$('staminaHint');if(staminaFill&&staminaValue){const pct=Math.round(stamina);staminaFill.style.width=pct+'%';staminaFill.style.background=pct<25?'#ff6868':pct<55?'#ffd166':'#83e0b0';staminaValue.textContent=pct;if(staminaHint)staminaHint.textContent=pct<=0?'Exhausted · recover to sprint':pct<25?'Running low · let stamina recover':'Hold Shift to sprint';}
  if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
  updateTraffic(dt);
