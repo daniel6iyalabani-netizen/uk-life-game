@@ -290,7 +290,7 @@ for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[
 const businessBuildingGroups=[];
 let businessBuildingSignature='';
 function syncBusinessBuildings(portfolio){
- const signature=portfolio.map((b,i)=>[i,b.id,b.location].join(':')).join('|');
+ const signature=portfolio.map((b,i)=>[i,b.id,b.location,b.upgrade||0].join(':')).join('|');
  if(signature===businessBuildingSignature)return;
  for(const g of businessBuildingGroups){scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map)m.map.dispose();m.dispose()})}})}
  for(let i=doors.length-1;i>=0;i--)if(doors[i].businessType)doors.splice(i,1);
@@ -315,6 +315,11 @@ function syncBusinessBuildings(portfolio){
   box(0,1.6,3.08,1.25,2.7,.16,trim,g);box(0,1.55,3.18,.92,2.35,.12,roof,g);
   box(-2.05,2.15,3.12,1.35,1.25,.1,glass,g);box(2.05,2.15,3.12,1.35,1.25,.1,glass,g);
   box(0,3.65,3.28,6.5,.72,.22,M(info.colour),g);
+  // Each upgrade adds visible frontage improvements to the business premises.
+  const level=Math.min(3,item.upgrade||0);
+  if(level>=1){box(0,2.9,3.48,7.1,.18,.65,M(info.colour),g);for(const px of [-2.8,2.8]){box(px,.48,3.7,.65,.85,.65,M(0x7b573b),g);for(let leaf=0;leaf<3;leaf++)mesh(new THREE.SphereGeometry(.28,8,7),M([0x367b43,0x4d934c,0x2c6939][leaf]),px+(leaf-1)*.17,.98,3.7,g)}}
+  if(level>=2){for(const px of [-4.1,4.1]){box(px,1.25,3.35,.16,2.5,.16,M(0xe5d7b6),g);mesh(new THREE.SphereGeometry(.42,10,8),M(0x387c43),px,2.65,3.35,g)}}
+  if(level>=3){box(0,4.7,0,8.2,.2,7,M(0xd2b16d),g);for(let flag=0;flag<3;flag++)box(-2+flag*2,5.1,3.3,1.1,.55,.08,M([0x3c8a59,0x2d668d,0xb34a42][flag]),g)}
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=96;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#'+info.colour.toString(16).padStart(6,'0');ctx.fillRect(0,0,512,96);
   ctx.fillStyle='#ffffff';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(info.label,256,49);
@@ -442,7 +447,9 @@ const specs=[
 {id:'estate',name:'Family Estate',w:2.1,l:4.9,max:31,acc:11,turn:1.4,color:0x398b5b},
 {id:'sports',name:'Performance Coupe',w:2.05,l:4.4,max:48,acc:17,turn:1.9,color:0x8b343b},
 {id:'electric',name:'Electric City Car',w:1.95,l:3.7,max:32,acc:15,turn:1.8,color:0xe6e9e9},
-{id:'van',name:'Delivery Van',w:2.3,l:5.2,max:24,acc:8,turn:1.1,color:0xf1f0e8}
+{id:'van',name:'Delivery Van',w:2.3,l:5.2,max:24,acc:8,turn:1.1,color:0xf1f0e8},
+{id:'minibus',name:'Community Minibus',w:2.35,l:5.5,max:22,acc:7.5,turn:1.0,color:0x398b5b},
+{id:'police',name:'Police Patrol Car',w:2.1,l:4.5,max:38,acc:14,turn:1.7,color:0x253b59}
 ];
 const cars=[];
 function createCar(s,x,z,heading=0){const g=new THREE.Group(),paint=M(s.color,.38,.2),glass=M(0x8ec6d9,.25,.1),chrome=M(0xb7c1c5,.3,.6),w=s.w,l=s.l;
@@ -523,7 +530,7 @@ for(const p of [-80,-40,0,40,80]){
 }
 // No player-owned vehicle at spawn. Cars appear only after purchase from the dealership.
 const ownedCars=new Set();
-const carPrices={hatch:1800,saloon:6500,suv:9800,taxi:4200,estate:5200,sports:18500,electric:14500,van:7200};
+const carPrices={hatch:1800,saloon:6500,suv:9800,taxi:4200,estate:5200,sports:18500,electric:14500,van:7200,minibus:8900,police:12500};
 
 // pedestrians: simple colourful characters following sidewalk waypoints and avoiding building footprints.
 const npcs=[],npcColors=[0x8b5e3c,0xd34e4e,0x4e9b67,0x8b66bd,0xe0a33c,0x3478b8,0x22252a,0xb1b4ba];
@@ -589,7 +596,10 @@ const missionList=[
  {title:'MISSION 05 · MARKET SUPPLIES',text:'Visit the Supermarket and press F inside to collect supplies.',target:'SUPERMARKET',reward:250},
  {title:'MISSION 06 · BAKERY DELIVERY',text:'Head to the Bakery and press F inside to deliver the morning order.',target:'BAKERY',reward:275},
  {title:'MISSION 07 · FRESH LAUNDRY',text:'Visit the Laundrette and press F inside to collect a customer order.',target:'LAUNDRETTE',reward:300},
- {title:'MISSION 08 · HIGH STREET ERRAND',text:'Visit the Phone Shop and press F inside to finish a quick errand.',target:'PHONE SHOP',reward:325}
+ {title:'MISSION 08 · HIGH STREET ERRAND',text:'Visit the Phone Shop and press F inside to finish a quick errand.',target:'PHONE SHOP',reward:325},
+ {title:'MISSION 09 · BARBER PICKUP',text:'Visit the Barber and press F inside to collect a customer booking.',target:'BARBER',reward:350},
+ {title:'MISSION 10 · CHIP SHOP RUN',text:'Head to the Chippy and press F inside to pick up a takeaway order.',target:'CHIPPY',reward:375},
+ {title:'MISSION 11 · COMMUNITY ROUTE',text:'Visit the Delivery Depot and press F inside to complete a community delivery.',target:'DELIVERY DEPOT',reward:400}
 ];let missionIndex=0,missionStage=0,money=250;
 const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
 function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
