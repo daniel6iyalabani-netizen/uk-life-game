@@ -158,7 +158,39 @@ body.ui-hidden #prompt{display:none!important}
   <button id="closeLife">Close menu</button>
 </div>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+let THREE;
+try {
+  THREE = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
+} catch (firstError) {
+  console.error('Primary Three.js CDN failed; trying fallback', firstError);
+  try {
+    THREE = await import('https://unpkg.com/three@0.180.0/build/three.module.js');
+  } catch (secondError) {
+    console.error('Both Three.js CDNs failed', secondError);
+    const help = document.getElementById('help');
+    if (help) {
+      help.style.display = 'block';
+      help.textContent = 'The 3D engine could not load. Check your internet connection or try Chrome, then refresh. Details: ' + (secondError.message || 'module download failed');
+    }
+    const play = document.getElementById('play');
+    if (play) {
+      play.disabled = true;
+      play.textContent = '3D ENGINE FAILED TO LOAD';
+    }
+    throw secondError;
+  }
+}
+window.addEventListener('error', event => {
+  console.error('UK Life page error', event.error || event.message);
+  const help = document.getElementById('help');
+  if (help && !window.__startUKLifeGame) {
+    help.style.display = 'block';
+    help.textContent = 'The game hit a loading error. Refresh the page; if it repeats, send the error from the browser console.';
+  }
+});
+window.addEventListener('unhandledrejection', event => {
+  console.error('UK Life async error', event.reason);
+});
 // Early boot handler: remains available if a later optional feature fails to initialize.
 const earlyPlayButton=document.getElementById('play');if(earlyPlayButton)earlyPlayButton.addEventListener('click',()=>{try{if(typeof window.__startUKLifeGame==='function'){window.__startUKLifeGame();}else{const help=document.getElementById('help');if(help){help.style.display='block';help.textContent='The game did not finish loading. Refresh the page and try again; if it repeats, the 3D engine may be blocked by your browser or connection.'}}}catch(err){console.error('UK Life startup error',err);const help=document.getElementById('help');if(help){help.style.display='block';help.textContent='The game could not start: '+err.message+'. Refresh the page and try again.'}}});
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);
