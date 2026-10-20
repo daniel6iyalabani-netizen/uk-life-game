@@ -575,10 +575,15 @@ const specs=[
 {id:'ambulance',name:'Ambulance',w:2.35,l:5.4,max:27,acc:9,turn:1.15,color:0xf2f0e8},
 {id:'fireengine',name:'Fire Engine',w:2.5,l:6.2,max:25,acc:8.5,turn:1.0,color:0xc92f26}
 ];
+// Give rental flats their own compact bedroom and practical essentials.
+prop(flatRoom,-3,.22,-4,3,.28,4.4,0x76503a);prop(flatRoom,-3,.48,-4,2.9,.22,4.3,0xf4f0e8);prop(flatRoom,-3,.64,-3.45,2.8,.16,3.2,0x6e9eb8);prop(flatRoom,-3.1,.73,-5.6,.7,.15,.65,0xfaf8ef);prop(flatRoom,-2.1,.73,-5.6,.7,.15,.65,0xfaf8ef);prop(flatRoom,1,.9,-5,1.2,1.8,1.1,0xe4e7e7);prop(flatRoom,5,.55,3,2.6,1.1,1,0x76503a);prop(flatRoom,5,1.12,3,2.7,.12,1.05,0xd8d9d6);prop(flatRoom,-7,.08,6,4,.12,4,0xd8e0e1);prop(flatRoom,-7,.4,5,1,.6,1,0xf5f5f2);prop(flatRoom,-5.8,.75,5,1.1,.15,.6,0xffffff);prop(flatRoom,-5.8,.5,5,1,.5,.5,0x9aa8ad);
 const cars=[];
 function createCar(s,x,z,heading=0){const g=new THREE.Group(),paint=M(s.color,.38,.2),glass=M(0x8ec6d9,.25,.1),chrome=M(0xb7c1c5,.3,.6),w=s.w,l=s.l;
-box(0,.36,0,w,.72,l,paint,g);box(0,1.0,-.25,w*.78,.62,l*.44,glass,g);box(0,1.33,-.25,w*.69,.07,l*.4,M(0x252d33,.45),g);box(0,.25,l/2+.035,w*.88,.2,.13,chrome,g);box(0,.25,-l/2-.035,w*.88,.2,.13,chrome,g);
-const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){const wh=mesh(new THREE.CylinderGeometry(.37,.37,.22,16),M(0x17191b),xx,.37,zz,g);wh.rotation.z=Math.PI/2;wheels.push(wh)}
+// Slightly fuller body, separated cabin glazing, bumpers and side detailing.
+box(0,.43,0,w,.82,l,paint,g);box(0,.98,-.22,w*.76,.57,l*.42,glass,g);box(0,1.275,-.22,w*.68,.07,l*.39,M(0x252d33,.45),g);box(0,.25,l/2+.07,w*.9,.22,.18,chrome,g);box(0,.25,-l/2-.07,w*.9,.22,.18,chrome,g);
+for(const side of [-1,1]){box(side*w*.505,.83,-.15,.035,.07,l*.68,M(0x333a3e),g);box(side*w*.505,.93,-.28,.045,.34,l*.26,glass,g);box(side*w*.505,.93,.62,.045,.34,l*.19,glass,g);box(side*w*.57,.86,.58,.18,.12,.25,paint,g);box(side*w*.57,.88,.61,.13,.055,.2,glass,g);box(side*w*.505,.44,0,.035,.035,l*.7,chrome,g)}
+box(0,.48,l/2+.105,w*.35,.14,.025,M(0x252a2d),g);box(0,.48,l/2+.125,w*.2,.08,.025,M(0xd8dcda),g);box(0,.48,-l/2-.105,w*.35,.14,.025,M(0x252a2d),g);
+const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){const wh=mesh(new THREE.CylinderGeometry(.4,.4,.25,20),M(0x17191b),xx,.39,zz,g);wh.rotation.z=Math.PI/2;wheels.push(wh);const hub=mesh(new THREE.CylinderGeometry(.22,.22,.265,16),M(0x9da7ab,.3,.7),xx,.39,zz,g);hub.rotation.z=Math.PI/2;wheels.push(hub);for(let k=0;k<5;k++){const spoke=box(xx+Math.sign(xx)*.14,.39,zz,.035,.035,.29,M(0xd1d7d9),g);spoke.rotation.y=k*Math.PI/5;wheels.push(spoke)}}
 for(const xx of [-w*.34,w*.34]){box(xx,.55,l/2+.05,.34,.17,.08,M(0xfff2c0),g);box(xx,.55,-l/2-.05,.34,.17,.08,M(0xff3028),g)}
 if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.04,.28,M(0x1e292d),g)}
 if(['police','ambulance','fireengine'].includes(s.id)){box(0,1.39,-.22,w*.43,.12,.28,M(0x252d33),g);const beaconL=box(-w*.19,1.49,-.22,.18,.13,.24,M(s.id==='fireengine'?0xff3030:0x287cff),g),beaconR=box(w*.19,1.49,-.22,.18,.13,.24,M(s.id==='fireengine'?0x287cff:0xff3030),g);g.userData.emergencyBeacons=[beaconL,beaconR];g.userData.emergencyType=s.id;if(s.id==='ambulance'){box(0,.78,l*.12,.12,.45,.035,M(0xd52f32),g);box(0,.78,l*.12,.42,.12,.035,M(0xd52f32),g)}if(s.id==='fireengine'){box(0,1.04,-l*.12,w*.68,.1,.08,M(0xf1c84b),g);box(0,1.15,-l*.28,w*.5,.12,.08,M(0xd5d8dc),g)}}
@@ -677,6 +682,18 @@ function shelf(group,x,z,colour=0x76503a){prop(group,x,1.45,z,3.8,2.9,.55,colour
 function table(group,x,z){prop(group,x,.9,z,2,.16,1.5,0x9b7656);prop(group,x-.8,.45,z-.55,.14,.9,.14,0x76503a);prop(group,x+.8,.45,z-.55,.14,.9,.14,0x76503a);prop(group,x-.8,.45,z+.55,.14,.9,.14,0x76503a);prop(group,x+.8,.45,z+.55,.14,.9,.14,0x76503a)}
 // Home: sofa, rug, coffee table, TV and kitchen units.
 prop(homeRoom,-4,.12,-2,7,.08,4,0xb9a28a);prop(homeRoom,-4,.65,-3,4.2,1.1,1.1,0x447d98);prop(homeRoom,-4,1.25,-3,4.1,.2,1,0x5d9bb0);prop(homeRoom,1,.55,-4,2.5,1.1,.25,0x33383b);prop(homeRoom,1,1.35,-4,2.3,.35,.18,0x1b2428);prop(homeRoom,5,.55,2,3,1.1,1.2,0x76503a);prop(homeRoom,5,1.15,2,3.1,.18,1.3,0xc8c5bb);prop(homeRoom,-5,.5,5,3,1,.8,0xd5d8d5);
+// Bedroom furniture: a full bed, duvet, pillows, bedside tables and wardrobe.
+prop(homeRoom,5,.25,-5,3.3,.35,5,0x76503a);prop(homeRoom,5,.53,-5,3.2,.28,4.9,0xf0eee7);prop(homeRoom,5,.7,-4.55,3.05,.18,3.7,0x6e9eb8);prop(homeRoom,4.25,.78,-6.55,.72,.18,.72,0xfaf8ef);prop(homeRoom,5.75,.78,-6.55,.72,.18,.72,0xfaf8ef);prop(homeRoom,5,.95,-7.1,3.35,.18,.22,0x76503a);
+prop(homeRoom,2.7,.45,-6.5,.85,.9,.8,0x76503a);prop(homeRoom,2.7,.94,-6.5,.9,.12,.85,0x9b7656);prop(homeRoom,2.7,1.25,-6.5,.12,.5,.12,0xf0dca0);
+prop(homeRoom,8.2,1.15,-5.5,1.25,2.3,2.2,0x9a7654);prop(homeRoom,8.2,1.15,-4.35,1.15,2.1,.08,0x76503a);prop(homeRoom,8.2,1.15,-4.25,.08,2.1,.04,0xc3a57b);
+// Bathroom corner: tiled floor, toilet, basin, taps, shower tray and glass screen.
+prop(homeRoom,-8,.08,6,6,.12,5,0xd8e0e1);prop(homeRoom,-9,.35,4.8,1.05,.55,1.2,0xf5f5f2);prop(homeRoom,-9,.72,4.55,.9,.2,.65,0xffffff);prop(homeRoom,-9,.9,4.25,.75,.08,.3,0xffffff);
+prop(homeRoom,-6.8,.85,4.5,1.4,.16,.65,0xffffff);prop(homeRoom,-6.8,.55,4.5,1.2,.55,.55,0x9aa8ad);prop(homeRoom,-6.8,1.15,4.5,.1,.35,.1,0xb7c1c5);
+prop(homeRoom,-8,1.35,7.2,2.4,.08,2.2,0xcbdde2);prop(homeRoom,-8,1.7,6.15,2.4,2.8,.08,0x9fcbd7);prop(homeRoom,-9,2.8,7.2,.12,2,.12,0xb7c1c5);prop(homeRoom,-7,2.8,7.2,.12,2,.12,0xb7c1c5);
+// Fridge, cooker and kitchen cupboards for a lived-in home.
+prop(homeRoom,8,.95,3.8,1.25,1.9,1.25,0xe4e7e7);prop(homeRoom,8.42,.95,3.15,.08,1.25,.08,0x9aa3a6);
+prop(homeRoom,5,.55,5,2.8,1.1,1.1,0x76503a);prop(homeRoom,5,1.13,5,2.9,.12,1.15,0xd8d9d6);prop(homeRoom,5,1.22,4.7,1.1,.08,.55,0x25292c);for(const x of [4.65,5.35])prop(homeRoom,x,1.3,4.65,.25,.035,.25,0x4a5054);
+
 // Shop / supermarket: stocked shelves and a checkout counter.
 for(const z of [-7,-2,3])shelf(shopRoom,-4,z);prop(shopRoom,5,.65,6,5,1.3,1.1,0x76503a);prop(shopRoom,5,1.35,6,5.1,.15,1.2,0x3d514a);prop(shopRoom,5,1.6,5.7,1,.35,.25,0xd6b64d);
 // Café: tables, chairs and a serving counter.
