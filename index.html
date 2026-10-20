@@ -168,10 +168,14 @@ function moveCollision(pos,dx,dz,r){let hit=false;if(!blocked(pos.x+dx,pos.z,r))
 function building(x,z,w,d,h,brick,kind='house',label='HOUSE'){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
  box(0,h/2,0,w,h,d,brick,g);
- // More varied UK-style rooflines, chimneys and bay windows.
+ // Pitched tiled roof, ridge cap and brick chimney for a more recognisable UK house silhouette.
  box(0,h+.12,0,w+.45,.28,d+.45,mats.roof,g);
- box(-w*.27,h+.52,-d*.2,.72,.72,.72,M(0x8a6550),g);
- box(-w*.27,h+.9,-d*.2,.86,.12,.86,M(0x6c5043),g);
+ const roofMat=kind==='shop'?M(0x55585a):M(0x494448);
+ const roofPanelA=box(0,h+.68,-d*.22,w+.8,.18,d*.66,roofMat,g);roofPanelA.rotation.x=-.43;
+ const roofPanelB=box(0,h+.68,d*.22,w+.8,.18,d*.66,roofMat,g);roofPanelB.rotation.x=.43;
+ box(0,h+1.04,0,w+.65,.16,.18,M(0x383a3d),g);
+ box(-w*.27,h+.85,-d*.2,.72,.9,.72,M(0x8a6550),g);
+ box(-w*.27,h+1.34,-d*.2,.86,.12,.86,M(0x6c5043),g);
  box(0,Math.min(h-1,2.4),d/2+.42,w*.56,1.35,.42,kind==='shop'?M(0xeee6d8):M(0xb9c9ce),g);
  box(0,Math.min(h-1,2.4)+.72,d/2+.66,w*.6,.12,.12,M(0xf0e5d4),g);
  box(-w*.39,Math.min(h-1,2.4),d/2+.42,.12,1.4,.12,M(0xf0e5d4),g);
@@ -204,6 +208,16 @@ if(kind==='house'||kind==='flat'){
     box(bx,.48,d/2+.2,Math.min(1.7,w*.18),.12,.42,M(0x8b9c88),g);
     for(let j=-1;j<=1;j++)box(bx+j*.35,.72,d/2+.24,.06,.42,.06,M(0xe4e0d3),g);
   }
+  // Small planted front beds with low railings; the doorway remains clear.
+  for(const bx of [-w*.38,w*.38]){
+    box(bx,.16,d/2+1.25,Math.min(1.7,w*.2),.24,1.15,M(0x536d45),g);
+    for(let j=-1;j<=2;j++)mesh(new THREE.SphereGeometry(.18,7,6),M(j%2?0x4c8248:0x718c4c),bx+j*.38,.48,d/2+1.25,g);
+    for(const side of [-1,1]){
+      box(bx+side*.86,.32,d/2+1.25,.07,.55,1.3,M(0xe2ded1),g);
+    }
+    box(bx,.48,d/2+.62,1.8,.08,.07,M(0xe2ded1),g);
+    box(bx,.48,d/2+1.88,1.8,.08,.07,M(0xe2ded1),g);
+  }
 }
  const sign=box(0,2.9,d/2+.54,Math.min(w*.86,8),.55,.18,kind==='shop'?M(0x237c58):M(0x5c493e),g);
  // small readable sign via canvas texture
@@ -231,6 +245,70 @@ const buildingData=[
 [-103,-103,16,13,17,'brick2','flat','APARTMENTS'],[103,103,16,13,19,'brick','flat','CITY FLATS']
 ];
 for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[7]);
+// Country-specific landmark corners. These are separate selectable neighbourhood details, not online servers.
+const regionLandmarks={};
+function signBoard(parent,x,y,z,title,subtitle,color=0x244b3b){
+  box(x,y,z,10,.16,.35,M(0x403c37),parent);
+  box(x,y+.9,z,10,1.55,.28,M(color),parent);
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#'+color.toString(16).padStart(6,'0');ctx.fillRect(0,0,512,128);
+  ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='bold 40px Arial';ctx.fillText(title,256,52);
+  ctx.font='24px Arial';ctx.fillText(subtitle,256,91);
+  const board=box(x,y+.9,z+.17,9.7,1.35,.04,new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(canvas),roughness:.9}),parent);
+  return board;
+}
+function landmarkGroup(region){
+  const g=new THREE.Group();scene.add(g);regionLandmarks[region]=g;
+  return g;
+}
+{
+ const g=landmarkGroup('london');
+ // London-inspired red telephone box and a double-decker bus-stop sign.
+ box(-158,1.25,-150,1.3,2.5,.9,M(0xc72f35),g);
+ for(const z of [-.47,.47])box(-158,1.25,-150+z,.09,2.25,.08,M(0xf1e8d5),g);
+ box(-158,2.18,-150,.9,.35,.94,M(0xb9272e),g);
+ box(-158,1.25,-150.48,.72,1.25,.04,M(0x8ec8d9,.3),g);
+ signBoard(g,-146,.6,-150,'LONDON','CITY CENTRE',0x9c292f);
+}
+{
+ const g=landmarkGroup('edinburgh');
+ // Sandstone tenement frontage and a distant castle-like skyline.
+ box(148,5,-150,18,10,8,M(0xb69b7d),g);
+ for(let y=2;y<10;y+=2.5)for(let x=-6;x<=6;x+=4){
+   box(148+x,y,-145.85,1.25,1.55,.12,M(0x343b43),g);
+   box(148+x,y+.83,-145.78,1.4,.1,.1,M(0xe2d5bf),g);
+ }
+ box(148,11,-150,19,.5,8,M(0x555054),g);
+ box(144,12.2,-150,2,2.4,2,M(0x8e7b68),g);
+ box(152,12.2,-150,2,2.4,2,M(0x8e7b68),g);
+ signBoard(g,145,.6,-137,'EDINBURGH','OLD TOWN',0x64584b);
+}
+{
+ const g=landmarkGroup('cardiff');
+ // Welsh dragon-coloured civic sign and a compact stadium silhouette.
+ const red=M(0xb93035),white=M(0xf0eee6),green=M(0x286448);
+ box(-150,3,150,16,6,8,M(0xb77c62),g);
+ for(let x=-156;x<=-144;x+=4)box(x,3,145.85,1.6,3.8,.12,white,g);
+ box(-150,5.1,145.75,14,.22,.12,red,g);
+ box(-150,1.1,150,18,1.2,9,green,g);
+ signBoard(g,-148,.6,137,'CARDIFF','CROESO / WELCOME',0x286448);
+}
+{
+ const g=landmarkGroup('belfast');
+ // Belfast-inspired red-brick industrial frontage and harbour cranes.
+ box(148,4,150,18,8,9,M(0x985b48),g);
+ for(let x=141;x<=155;x+=4)box(x,4,145.35,1.5,2,.12,M(0x343c42),g);
+ for(const x of [137,158]){
+   box(x,8,158,.45,16,.45,M(0x3f555b),g);
+   const beam=box(x+3,15,158,6,.38,.38,M(0x3f555b),g);beam.rotation.z=-.15;
+   box(x+5,12,158,.18,6,.18,M(0x3f555b),g);
+ }
+ signBoard(g,148,.6,137,'BELFAST','HARBOUR QUARTER',0x244c56);
+}
+function applyRegionLandmarks(region){
+ for(const [name,g] of Object.entries(regionLandmarks))g.visible=name===region;
+}
+applyRegionLandmarks('london');
 function tree(x,z){mesh(new THREE.CylinderGeometry(.3,.4,2.5,8),mats.trunk,x,1.25,z);mesh(new THREE.SphereGeometry(2.1,10,8),mats.tree,x,3.4,z)}
 for(let i=0;i<95;i++){let x=(Math.random()-.5)*330,z=(Math.random()-.5)*330;if(Math.abs(x%40)<9||Math.abs(z%40)<9)continue;if(blocked(x,z,3))continue;tree(x,z)}
 for(let x=-160;x<=160;x+=20)for(const z of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp);box(x,6,z,.8,.12,.4,M(0xffe8a5))}
@@ -325,7 +403,7 @@ renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
 let selectedRegion='london';
 const regionNames={london:'England · London',edinburgh:'Scotland · Edinburgh',cardiff:'Wales · Cardiff',belfast:'Northern Ireland · Belfast'};
-$('play').onclick=()=>{selectedRegion=$('regionChoice').value;playing=true;$('start').style.display='none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · Green = mission · Gold = doors';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+'! You start on foot.')};
+$('play').onclick=()=>{selectedRegion=$('regionChoice').value;applyRegionLandmarks(selectedRegion);playing=true;$('start').style.display='none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · Regional landmarks · Green = mission · Gold = doors';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+'! You start on foot.')};
 function buildDealer(){const root=$('dealerList');root.innerHTML='';for(const spec of specs){const row=document.createElement('div');row.style.cssText='padding:9px 0;border-bottom:1px solid #ffffff22;display:flex;align-items:center;justify-content:space-between;gap:8px';const textNode=document.createElement('div');textNode.innerHTML='<b>'+spec.name+'</b><div class="muted" style="font-size:11px">Top speed '+Math.round(spec.max*3.6)+' km/h · £'+carPrices[spec.id].toLocaleString('en-GB')+'</div>';const btn=document.createElement('button');btn.textContent=ownedCars.has(spec.id)?'Owned':'Buy';btn.disabled=ownedCars.has(spec.id);btn.style.cssText='padding:7px 10px;border-radius:8px;border:0;cursor:pointer';btn.onclick=()=>{const price=carPrices[spec.id];if(money<price){notify('You need £'+(price-money).toLocaleString('en-GB')+' more for this car');return}money-=price;syncFinance();ownedCars.add(spec.id);const c=createCar(spec,5+cars.length*3,10+cars.length*2,0);c.paint.color.set($('paintChoice').value);c.owned=true;notify('Purchased '+spec.name+' for £'+price.toLocaleString('en-GB'));buildDealer();saveUKLife(false)};row.append(textNode,btn);root.appendChild(row)}}
 $('dealershipBtn').addEventListener('click',()=>{buildDealer();$('dealershipPanel').style.display=$('dealershipPanel').style.display==='block'?'none':'block'});
 $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.display='none');
