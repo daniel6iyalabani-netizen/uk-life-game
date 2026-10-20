@@ -125,9 +125,42 @@ function mesh(g,m,x,y,z,p=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,
 function box(x,y,z,sx,sy,sz,m,p=scene){return mesh(new THREE.BoxGeometry(sx,sy,sz),m,x,y,z,p)}
 box(0,-.35,0,390,.5,390,mats.grass);
 function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);if(w>d){for(let i=-Math.floor(w/8);i<Math.floor(w/8);i++)box(x+i*8,.025,z,.13,.025,2.5,mats.line)}else{for(let i=-Math.floor(d/8);i<Math.floor(d/8);i++)box(x,.025,z+i*8,2.5,.025,.13,mats.line)}}
+// UK-style pavements, raised kerbs and road-edge drainage.
+const pavement=M(0xb9b8ae),kerb=M(0xd2d0c6),drainMat=M(0x25292c,.65,.25),slabLine=M(0x92948d);
+const streetRuns=[-120,-80,-40,0,40,80,120];
+for(const z of streetRuns){
+  for(const side of [-1,1]){
+    box(0,.015,z+side*7.55,360,.12,2.9,pavement);
+    box(0,.075,z+side*6.12,360,.16,.22,kerb);
+    for(let x=-174;x<=174;x+=5)box(x,.079,z+side*8.9,.035,.012,2.65,slabLine);
+    for(let x=-165;x<=165;x+=30)box(x,.09,z+side*5.55,.72,.025,.3,drainMat);
+  }
+}
+for(const x of streetRuns){
+  for(const side of [-1,1]){
+    box(x+side*7.55,.015,0,2.9,.12,360,pavement);
+    box(x+side*6.12,.075,0,.22,.16,360,kerb);
+    for(let z=-174;z<=174;z+=5)box(x+side*8.9,.079,z,2.65,.012,.035,slabLine);
+    for(let z=-165;z<=165;z+=30)box(x+side*5.55,.09,z,.3,.025,.72,drainMat);
+  }
+}
+// Zebra crossings around the central neighbourhood junctions.
+const crossingMat=M(0xf1f0e8);
+for(const x of [-40,0,40])for(const z of [-40,0,40]){
+  for(let k=-3;k<=3;k++){
+    box(x+k*1.35,.035,z-5.1,.72,.035,2.1,crossingMat);
+    box(x+k*1.35,.035,z+5.1,.72,.035,2.1,crossingMat);
+    box(x-5.1,.035,z+k*1.35,2.1,.035,.72,crossingMat);
+    box(x+5.1,.035,z+k*1.35,2.1,.035,.72,crossingMat);
+  }
+}
+// A few British-style refuge bollards on selected corners.
+for(const [x,z] of [[-13,-13],[13,-13],[-13,13],[13,13],[-53,-13],[53,13]]){
+  const b=M(0x25292b,.7);
+  mesh(new THREE.CylinderGeometry(.13,.16,.9,8),b,x,.45,z);
+  mesh(new THREE.CylinderGeometry(.135,.135,.16,8),M(0xe8e3d8),x,.67,z);
+}
 // larger connected street grid
-for(const z of [-120,-80,-40,0,40,80,120])road(0,z,360,12);
-for(const x of [-120,-80,-40,0,40,80,120])road(x,0,12,360);
 const obstacles=[],doors=[];
 function obstacle(x,z,w,d){obstacles.push({x,z,w,d})}
 function blocked(x,z,r){for(const b of obstacles)if(Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r)return true;return false}
@@ -143,14 +176,35 @@ function building(x,z,w,d,h,brick,kind='house',label='HOUSE'){
  box(0,Math.min(h-1,2.4)+.72,d/2+.66,w*.6,.12,.12,M(0xf0e5d4),g);
  box(-w*.39,Math.min(h-1,2.4),d/2+.42,.12,1.4,.12,M(0xf0e5d4),g);
  box(w*.39,Math.min(h-1,2.4),d/2+.42,.12,1.4,.12,M(0xf0e5d4),g);
- for(let xx=-w/2+1.4;xx<w/2-1;xx+=2.5)for(let yy=1.5;yy<h-1;yy+=2.2){box(xx,yy,d/2+.02,.82,1.12,.06,mats.glass,g);box(xx,yy+.61,d/2+.06,.94,.1,.08,mats.white,g)}
+ for(let xx=-w/2+1.4;xx<w/2-1;xx+=2.5)for(let yy=1.5;yy<h-1;yy+=2.2){
+  box(xx,yy,d/2+.02,.82,1.12,.06,mats.glass,g);
+  box(xx,yy+.61,d/2+.06,.94,.1,.08,mats.white,g);
+  box(xx,yy- .62,d/2+.1,1.02,.12,.18,M(0xd8d1c5),g);
+  box(xx,yy+.66,d/2+.1,1.02,.12,.16,M(0xe5ded2),g);
+  box(xx-.44,yy,d/2+.09,.09,1.2,.12,M(0xe5ded2),g);
+  box(xx+.44,yy,d/2+.09,.09,1.2,.12,M(0xe5ded2),g);
+}
  const doorMat=kind==='shop'?M(0x246447):M(0x333a40);
  // Door surround, step and shop awning add depth to the street frontage.
  box(0,1.12,d/2+.23,1.48,2.42,.16,M(0xe0d2bd),g);
  box(0,1.12,d/2+.34,1.08,2.08,.12,doorMat,g);
  box(0,.08,d/2+.42,1.8,.16,.75,M(0x9b9387),g);
  if(kind==='shop'){box(0,2.35,d/2+.48,Math.min(w*.92,9),.22,1.15,M(0x246447),g);for(let aw=-w*.4;aw<w*.4;aw+=1.2)box(aw,2.35,d/2+.49,.06,.24,1.17,M(0xe6d8bd),g)}
- for(let xx=-w/2+1.2;xx<w/2-1;xx+=2.5){box(xx,.82,d/2+.09,.94,.12,.1,M(0xd6c7b3),g);box(xx,2.2,d/2+.09,.94,.12,.1,M(0xd6c7b3),g)}
+ for(let xx=-w/2+1.2;xx<w/2-1;xx+=2.5){
+  box(xx,.82,d/2+.09,.94,.12,.1,M(0xd6c7b3),g);
+  box(xx,2.2,d/2+.09,.94,.12,.1,M(0xd6c7b3),g);
+}
+// Downpipes and small facade details give the fronts more depth.
+for(const px of [-w/2+.35,w/2-.35]){
+  box(px,h*.48,d/2+.14,.12,h*.94,.12,M(0x625d56),g);
+  box(px,.2,d/2+.19,.2,.16,.18,M(0x777168),g);
+}
+if(kind==='house'||kind==='flat'){
+  for(const bx of [-w*.3,w*.3]){
+    box(bx,.48,d/2+.2,Math.min(1.7,w*.18),.12,.42,M(0x8b9c88),g);
+    for(let j=-1;j<=1;j++)box(bx+j*.35,.72,d/2+.24,.06,.42,.06,M(0xe4e0d3),g);
+  }
+}
  const sign=box(0,2.9,d/2+.54,Math.min(w*.86,8),.55,.18,kind==='shop'?M(0x237c58):M(0x5c493e),g);
  // small readable sign via canvas texture
  const c=document.createElement('canvas');c.width=512;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle=kind==='shop'?'#237c58':'#5c493e';ctx.fillRect(0,0,512,96);ctx.fillStyle='white';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(label,256,62);
