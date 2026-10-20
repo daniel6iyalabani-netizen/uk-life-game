@@ -43,7 +43,7 @@ body.ui-hidden #prompt{display:none!important}
 <h1>UK LIFE <span style="color:#83e0b0">🏙️</span></h1>
 <p class="muted">A bigger original London-inspired neighbourhood with enterable buildings, wandering pedestrians, delivery jobs, shopping and your drivable cars.</p>
 <div class="row"><label for="regionChoice">Choose your UK location</label><select id="regionChoice"><option value="london">England · London</option><option value="edinburgh">Scotland · Edinburgh</option><option value="cardiff">Wales · Cardiff</option><option value="belfast">Northern Ireland · Belfast</option></select><label for="startChoice">Where would you like to start?</label><select id="startChoice"><option value="centre">City centre</option><option value="homes">Terraced homes</option><option value="shops">Shopping street</option><option value="park">Park and gardens</option><option value="oldtown">Old town / harbour</option></select><label for="paintChoice">Preferred car colour (for a future purchase)</label><select id="paintChoice"><option value="#d7443e">Red</option><option value="#287fc4">Blue</option><option value="#25292e">Black</option><option value="#e7c442">Yellow</option><option value="#eeeeea">White</option><option value="#398b5b">Green</option></select></div><p class="muted" style="font-size:12px">You start on foot with £250. Buy your first car from the dealership after earning or saving enough.</p>
-<div class="row"><button class="primary" id="play">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
+<div class="row"><button class="primary" id="play" type="button" onclick="window.ukLifeStartClick()">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
 <p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/mission · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
 <p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
 </div></div>
@@ -158,27 +158,27 @@ body.ui-hidden #prompt{display:none!important}
   <button id="closeLife">Close menu</button>
 </div>
 <script>
-(function(){
-  function showStartMessage(message){
-    var help=document.getElementById('help');
+window.ukLifeStartClick = function(){
+  var button = document.getElementById('play');
+  var help = document.getElementById('help');
+  function show(message){
     if(help){help.style.display='block';help.textContent=message;}
   }
-  document.addEventListener('click',function(event){
-    var button=event.target&&event.target.closest?event.target.closest('#play'):null;
-    if(!button)return;
-    if(typeof window.__startUKLifeGame==='function'){
-      event.preventDefault();
-      try{window.__startUKLifeGame();}catch(error){
-        console.error('UK Life start click failed',error);
-        showStartMessage('The game could not start: '+(error.message||error)+'. Refresh and try again.');
-      }
-    }else{
-      event.preventDefault();
-      window.__ukLifeStartClickPending=true;
-      showStartMessage('Loading the 3D game… your start request is saved. Please wait a moment.');
+  if(button){button.textContent='START CLICK RECEIVED';}
+  if(typeof window.__startUKLifeGame === 'function'){
+    try{
+      window.__startUKLifeGame();
+      if(button){button.textContent='START EXPLORING';}
+    }catch(error){
+      console.error('UK Life start click failed',error);
+      show('The game could not start: '+(error.message||error)+'. Refresh and try again.');
     }
-  },true);
-})();
+  }else{
+    window.__ukLifeStartClickPending=true;
+    show('The button is working, but the 3D game script has not finished loading. If this message stays here, refresh the page or try Chrome.');
+    if(button){button.textContent='GAME STILL LOADING';}
+  }
+};
 </script>
 <script type="module">
 let THREE;
