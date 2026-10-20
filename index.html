@@ -89,6 +89,8 @@
     <option value="shop">Corner shop — £1,800</option>
     <option value="delivery">Delivery company — £2,500</option>
     <option value="garage">Car repair garage — £3,200</option>
+    <option value="bakery">Local bakery — £2,100</option>
+    <option value="laundrette">Laundrette — £1,600</option>
   </select>
   <label for="businessLocationChoice">Business location</label>
   <select id="businessLocationChoice"><option value="city">City centre</option><option value="shops">Shopping street</option><option value="terraced">Terraced homes</option><option value="park">Park and gardens</option><option value="oldtown">Old town / harbour</option></select>
@@ -300,7 +302,9 @@ function syncBusinessBuildings(portfolio){
   cafe:{label:'CAFE',colour:0x287b52,wall:0xc78b62},
   shop:{label:'CORNER SHOP',colour:0x236b4a,wall:0xd4c4a1},
   delivery:{label:'DELIVERY DEPOT',colour:0x315b82,wall:0xb5b9bb},
-  garage:{label:'MOTOR GARAGE',colour:0x565b63,wall:0xa4a09a}
+  garage:{label:'MOTOR GARAGE',colour:0x565b63,wall:0xa4a09a},
+  bakery:{label:'BAKERY',colour:0x9b542d,wall:0xd7b78b},
+  laundrette:{label:'LAUNDRETTE',colour:0x367b9c,wall:0xb6d0d9}
  };
  portfolio.forEach((item,i)=>{
   const site=locationSites[item.location]||locationSites.city,info=typeInfo[item.id]||typeInfo.shop;
@@ -582,7 +586,10 @@ const missionList=[
  {title:'MISSION 02 · COFFEE BREAK',text:'Visit the Cafe and press F inside to collect a coffee order.',target:'CAFE',reward:180},
  {title:'MISSION 03 · FRESH FIT',text:'Visit the Clothing shop and press F inside to finish a styling errand.',target:'CLOTHING',reward:200},
  {title:'MISSION 04 · NEWS ROUND',text:'Visit the Newsagent and press F inside to deliver a local paper bundle.',target:'NEWSAGENT',reward:220},
- {title:'MISSION 05 · MARKET SUPPLIES',text:'Visit the Supermarket and press F inside to collect supplies.',target:'SUPERMARKET',reward:250}
+ {title:'MISSION 05 · MARKET SUPPLIES',text:'Visit the Supermarket and press F inside to collect supplies.',target:'SUPERMARKET',reward:250},
+ {title:'MISSION 06 · BAKERY DELIVERY',text:'Head to the Bakery and press F inside to deliver the morning order.',target:'BAKERY',reward:275},
+ {title:'MISSION 07 · FRESH LAUNDRY',text:'Visit the Laundrette and press F inside to collect a customer order.',target:'LAUNDRETTE',reward:300},
+ {title:'MISSION 08 · HIGH STREET ERRAND',text:'Visit the Phone Shop and press F inside to finish a quick errand.',target:'PHONE SHOP',reward:325}
 ];let missionIndex=0,missionStage=0,money=250;
 const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
 function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
@@ -736,7 +743,7 @@ function syncFinance(){
  $('slipGross').textContent='£'+ps.gross;$('slipTax').textContent='£'+ps.incomeTax;$('slipNI').textContent='£'+ps.ni;$('slipNet').textContent='£'+ps.net;
  $('slipDate').textContent=ps.day?'Payslip for in-game day '+ps.day:'No payslip yet — start a job to receive one.';
  $('taxStatus').textContent='Tax totals: income tax £'+(finance.taxPaid||0)+' · National Insurance £'+(finance.niPaid||0)+' · VAT estimate £'+(finance.vatPaid||0)+' · Vehicle tax £'+(finance.vedPaid||0)+' · Business tax £'+(finance.businessTaxPaid||0)+'. Council tax is listed in household bills.';
- const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage'};
+ const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage',bakery:'Local bakery',laundrette:'Laundrette'};
  const locationNames={city:'City centre',shops:'Shopping street',terraced:'Terraced homes',park:'Park and gardens',oldtown:'Old town / harbour'};
  const portfolio=Array.isArray(finance.businessesOwned)?finance.businessesOwned:[];
  syncBusinessBuildings(portfolio);
@@ -789,7 +796,7 @@ function weeklyCycle(){
  }
  if(finance.loan>0){const interest=Math.min(finance.loan,5);finance.loan+=interest;}
  const portfolio=Array.isArray(finance.businessesOwned)?finance.businessesOwned:[];
- const plans={cafe:{name:'Neighbourhood café',revenue:520,cost:260,price:1200},shop:{name:'Corner shop',revenue:620,cost:340,price:1800},delivery:{name:'Delivery company',revenue:850,cost:510,price:2500},garage:{name:'Car repair garage',revenue:1050,cost:650,price:3200}};
+ const plans={cafe:{name:'Neighbourhood café',revenue:520,cost:260,price:1200},shop:{name:'Corner shop',revenue:620,cost:340,price:1800},delivery:{name:'Delivery company',revenue:850,cost:510,price:2500},garage:{name:'Car repair garage',revenue:1050,cost:650,price:3200},bakery:{name:'Local bakery',revenue:720,cost:390,price:2100},laundrette:{name:'Laundrette',revenue:560,cost:285,price:1600}};
  for(const business of portfolio){
   const plan=plans[business.id];if(!plan)continue;
   const assistants=business.staffAssistant||0,supervisors=business.staffSupervisor||0,managers=business.staffManager||0;
@@ -825,7 +832,7 @@ function weeklyCycle(){
  if(ownedCount>0){const ved=ownedCount*3;const paid=Math.min(money,ved);money-=paid;finance.vedPaid=(finance.vedPaid||0)+paid;if(paid>0)notify('Vehicle tax (VED) paid: £'+paid+' for '+ownedCount+' owned vehicle(s)');}
  syncFinance();
 }
-const businessPlans={cafe:{name:'Neighbourhood café',price:1200},shop:{name:'Corner shop',price:1800},delivery:{name:'Delivery company',price:2500},garage:{name:'Car repair garage',price:3200}};
+const businessPlans={cafe:{name:'Neighbourhood café',price:1200},shop:{name:'Corner shop',price:1800},delivery:{name:'Delivery company',price:2500},garage:{name:'Car repair garage',price:3200},bakery:{name:'Local bakery',price:2100},laundrette:{name:'Laundrette',price:1600}};
 function selectedBusiness(){return finance.businessesOwned[finance.activeBusinessIndex]||null}
 $('ownedBusinessChoice').addEventListener('change',()=>{finance.activeBusinessIndex=Math.max(0,Number($('ownedBusinessChoice').value)||0);syncFinance()});
 $('buyBusiness').addEventListener('click',()=>{
