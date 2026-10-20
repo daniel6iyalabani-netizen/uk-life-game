@@ -189,6 +189,7 @@ window.ukLifeStartClick = function(){
 </script>
 <script>
 (async function ukLifeGameBoot(){
+  const $=id=>document.getElementById(id);
   window.__ukLifeClassicLoaderApplied=true;
 window.__ukLifeModuleStarted=true;
 if(window.__ukLifeStartWatchdog)clearTimeout(window.__ukLifeStartWatchdog);
@@ -734,7 +735,7 @@ function toggleGameUI(){document.body.classList.toggle('ui-hidden');const hidden
 $('uiToggle').addEventListener('click',toggleGameUI);
 let sirenEnabled=false,sirenContext=null,sirenOscA=null,sirenOscB=null,sirenGain=null,sirenClock=0;
 function toggleSiren(){if(!driving||!['police','ambulance','fireengine'].includes(driving.spec.id)){notify('Enter a police car, ambulance or fire engine first');return}sirenEnabled=!sirenEnabled;if(sirenEnabled){try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){sirenContext=sirenContext||new AC();if(sirenContext.state==='suspended')sirenContext.resume();sirenGain=sirenContext.createGain();sirenGain.gain.value=.035;sirenGain.connect(sirenContext.destination);sirenOscA=sirenContext.createOscillator();sirenOscB=sirenContext.createOscillator();sirenOscA.type='sawtooth';sirenOscB.type='sine';sirenOscA.frequency.value=650;sirenOscB.frequency.value=440;sirenOscA.connect(sirenGain);sirenOscB.connect(sirenGain);sirenOscA.start();sirenOscB.start();}notify('Emergency lights and siren ON · H to switch off')}catch(e){notify('Emergency lights ON · audio unavailable')}}else{if(sirenGain)sirenGain.gain.value=0;notify('Emergency lights and siren OFF')}}
-const $=id=>document.getElementById(id);
+
 updateMission();
 addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact();if(e.code==='KeyH')toggleSiren();if(e.code==='KeyU'&&playing)toggleGameUI()});
 addEventListener('keyup',e=>keys[e.code]=false);
