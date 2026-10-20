@@ -214,7 +214,7 @@ const d=doors.find(d=>d.label===m.target);if(d)marker.position.set(d.x,0,d.doorZ
 
 const keys={};let yaw=0,playing=false,driving=null,last=performance.now(),noticeTimer=0,cameraMode=0,playerReturn=new THREE.Vector3(0,0,5);
 const $=id=>document.getElementById(id);
-updateMission():
+updateMission();
 addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact()});
 addEventListener('keyup',e=>keys[e.code]=false);
 renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
