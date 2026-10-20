@@ -318,6 +318,7 @@ function syncBusinessBuildings(portfolio){
   if(item.id==='delivery'){box(-2.4,.8,-3.15,2.2,1.6,.12,trim,g);box(2.4,.8,-3.15,2.2,1.6,.12,trim,g)}
   if(item.id==='garage'){box(0,1.65,3.25,2.1,2.6,.08,M(0x333b42),g);box(0,.35,3.32,2.1,.2,.12,M(0xd2d3d1),g)}
   businessBuildingGroups.push(g);
+  doors.push({x,z,kind:'shop',businessType:item.id,label:info.label+' · '+(i+1),group:g,inside:false,doorX:x,doorZ:z+4.7,insidePos:new THREE.Vector3(x,0,z),w:7.2,d:6});
  });
 }
 // Country-specific landmark corners. These are separate selectable neighbourhood details, not online servers.
@@ -447,6 +448,40 @@ if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.0
 g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false,owned:false,traffic:false};cars.push(c);return c}
 // Ambient traffic uses the same vehicle models and stays on the marked street lanes.
 const trafficCars=[];
+const trafficSignals=[];
+let trafficSignalClock=0,trafficSignalPhase=0;
+function createTrafficSignal(x,z,axis){
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ const pole=M(0x33383b),housing=M(0x202528);
+ box(0,2.1,0,.16,4.2,.16,pole,g);box(0,4.15,0,.65,1.55,.52,housing,g);
+ const lamps=[];
+ for(let i=0;i<3;i++)lamps.push(mesh(new THREE.SphereGeometry(.16,10,8),M([0xe74a42,0xe5bf3c,0x42c46a][i]),0,4.62-i*.43,.29,g));
+ trafficSignals.push({x,z,axis,lamps});
+}
+for(const p of [-40,0,40]){
+ createTrafficSignal(p-6,p-6,'x');
+ createTrafficSignal(p+6,p+6,'z');
+}
+function updateTrafficSignals(dt){
+ trafficSignalClock+=dt;
+ if(trafficSignalClock>=8){trafficSignalClock=0;trafficSignalPhase=(trafficSignalPhase+1)%2}
+ for(const signal of trafficSignals){
+  const green=(signal.axis==='x')===(trafficSignalPhase===0);
+  signal.lamps[0].material.color.setHex(green?0x3b302f:0xe74a42);
+  signal.lamps[1].material.color.setHex(0x6a5b2b);
+  signal.lamps[2].material.color.setHex(green?0x42c46a:0x2b4836);
+ }
+}
+function trafficHasRedLight(c){
+ const pos=c.g.position,axis=c.trafficAxis,dir=c.trafficDir;
+ for(const signal of trafficSignals){
+  const green=(signal.axis==='x')===(trafficSignalPhase===0);
+  if(green)continue;
+  if(axis==='x'&&Math.abs(pos.z-signal.z)<4.8){const ahead=(signal.x-pos.x)*dir;if(ahead>0&&ahead<9)return true}
+  if(axis==='z'&&Math.abs(pos.x-signal.x)<4.8){const ahead=(signal.z-pos.z)*dir;if(ahead>0&&ahead<9)return true}
+ }
+ return false;
+}
 function spawnTraffic(){
  const trafficSpecs=[specs[0],specs[1],specs[3],specs[4],specs[7]];
  const horizontal=[-120,-80,-40,40,80,120],vertical=[-120,-80,-40,40,80,120];
@@ -507,7 +542,7 @@ prop(flatRoom,4,1.3,3,2.8,.14,1.05,0xd6cfc2);prop(flatRoom,5.2,1.8,3,.5,.9,.5,0x
 prop(cafeRoom,6,2.3,-9,3.2,1.6,.12,0xeee4d0);prop(cafeRoom,6,2.3,-8.9,2.8,1.2,.04,0x334c45);for(const x of [-5,0,5]){prop(cafeRoom,x,4.5,0,.08,1.1,.08,0x554a3f);prop(cafeRoom,x,3.9,0,.55,.18,.55,0xf3e2b2);}
 // Shop ceiling pendant fixtures.
 for(const x of [-5,0,5]){prop(shopRoom,x,4.5,0,.08,1.1,.08,0x554a3f);prop(shopRoom,x,3.9,0,.55,.18,.55,0xf3e2b2);}
-function showRoomFor(door){homeRoom.visible=false;shopRoom.visible=false;cafeRoom.visible=false;clothesRoom.visible=false;flatRoom.visible=false;if(!door)return;const label=door.label.toUpperCase();if(door.kind==='shop'&&/CAFE|COFFEE|TAKEAWAY|CHIPPY/.test(label))cafeRoom.visible=true;else if(/CLOTHING|BARBER/.test(label))clothesRoom.visible=true;else if(door.kind==='shop')shopRoom.visible=true;else if(door.kind==='flat'||/FLAT|APARTMENT|TOWER/.test(label))flatRoom.visible=true;else homeRoom.visible=true}
+function showRoomFor(door){homeRoom.visible=false;shopRoom.visible=false;cafeRoom.visible=false;clothesRoom.visible=false;flatRoom.visible=false;if(!door)return;const label=door.label.toUpperCase();if(door.businessType==='cafe'||(door.kind==='shop'&&/CAFE|COFFEE|TAKEAWAY|CHIPPY/.test(label)))cafeRoom.visible=true;else if(door.businessType==='garage')flatRoom.visible=true;else if(door.businessType==='delivery')shopRoom.visible=true;else if(/CLOTHING|BARBER/.test(label))clothesRoom.visible=true;else if(door.kind==='shop')shopRoom.visible=true;else if(door.kind==='flat'||/FLAT|APARTMENT|TOWER/.test(label))flatRoom.visible=true;else homeRoom.visible=true}
 showRoomFor(null);
 let activeDoor=null,inside=false;
 const missionList=[
@@ -560,7 +595,9 @@ function updateCar(c,dt){const s=c.spec,accelerating=keys.KeyW||keys.ArrowUp,bra
  const nx=c.g.position.x-Math.sin(c.heading)*c.speed*dt,nz=c.g.position.z-Math.cos(c.heading)*c.speed*dt;
  if(vehicleCollision(c,nx,nz)){c.speed*=-.2;if(Math.abs(c.speed)>7)notify('Collision! Slow down near buildings and parked cars')}else{c.g.position.x=nx;c.g.position.z=nz}c.wheels.forEach(w=>w.rotation.x+=c.speed*dt*1.4)}
 function updateTraffic(dt){
+ updateTrafficSignals(dt);
  for(const c of trafficCars){
+  if(trafficHasRedLight(c))continue;
   if(c.trafficAxis==='x'){
    c.g.position.x+=c.trafficDir*c.trafficSpeed*dt;
    if(c.g.position.x>174){c.g.position.x=-174;c.trafficDir=1}
