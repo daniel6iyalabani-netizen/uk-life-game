@@ -91,6 +91,15 @@
     <option value="garage">Car repair garage — £3,200</option>
   </select>
   <div class="finrow"><button id="buyBusiness">Buy business</button><button id="sellBusiness">Sell business</button></div>
+  <h4>👥 Hire and manage staff</h4>
+  <label for="staffRole">Employee role</label>
+  <select id="staffRole"><option value="assistant">Business assistant — £80/week</option><option value="supervisor">Supervisor — £120/week</option><option value="manager">Manager — £180/week</option></select>
+  <div class="finrow"><button id="hireStaff">Hire employee</button><button id="fireStaff">Let employee go</button></div>
+  <div class="stat" id="staffStatus">Buy a business before hiring staff. Employees receive wages every week.</div>
+  <h4>📈 Business upgrades</h4>
+  <p class="small">Each upgrade costs £500 × the next level (maximum level 3). Upgrades increase sales and add a small weekly maintenance cost.</p>
+  <div class="finrow"><button id="upgradeBusiness">Upgrade business</button></div>
+  <div class="stat" id="upgradeStatus">No business upgrades yet.</div>
   <div class="stat" id="businessStatus">You don't own a business yet. Buy one to start earning weekly income.</div>
   <div class="stat">This week: sales <b id="businessRevenue">£0</b> · operating costs <b id="businessCosts">£0</b><br>Business tax <b id="businessTax">£0</b> · net profit <b id="businessProfit">£0</b></div>
   <div class="stat" id="businessTotals">Lifetime sales £0 · costs £0 · business tax paid £0</div>
@@ -551,7 +560,7 @@ const finance = {
  fuel:100, condition:100, loan:0, loanPayment:0, food:3, essentials:2,
  employed:null, wage:0, lastWeeklyDay:0, arrears:0,
  lastPayslip:{gross:0,incomeTax:0,ni:0,net:0,day:0}, taxPaid:0,niPaid:0,vatPaid:0,vedPaid:0,
- business:null,businessTaxPaid:0,businessRevenueTotal:0,businessCostsTotal:0,businessLastRevenue:0,businessLastCosts:0,businessLastTax:0,businessLastProfit:0
+ business:null,staffAssistant:0,staffSupervisor:0,staffManager:0,businessUpgrade:0,businessTaxPaid:0,businessRevenueTotal:0,businessCostsTotal:0,businessLastRevenue:0,businessLastCosts:0,businessLastTax:0,businessLastProfit:0
 };
 const cashEl=()=>document.getElementById('money');
 function cash(){return Math.max(0,Math.floor(money))}
@@ -574,6 +583,10 @@ function syncFinance(){
  const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage'};
  const b=finance.business,br=finance.businessLastRevenue||0,bc=finance.businessLastCosts||0,bt=finance.businessLastTax||0,bp=finance.businessLastProfit||0;
  $('businessStatus').textContent=b?'Owned: '+(businessNames[b]||b)+'. Weekly sales and operating costs are settled every 7 in-game days.':'You don’t own a business yet. Buy one to start earning weekly income.';
+ const staffCount=(finance.staffAssistant||0)+(finance.staffSupervisor||0)+(finance.staffManager||0);
+ const staffWages=(finance.staffAssistant||0)*80+(finance.staffSupervisor||0)*120+(finance.staffManager||0)*180;
+ $('staffStatus').textContent=b?'Staff: '+(finance.staffAssistant||0)+' assistants, '+(finance.staffSupervisor||0)+' supervisors, '+(finance.staffManager||0)+' managers ('+staffCount+' total). Weekly wages: £'+staffWages+'. Hire staff to boost sales; fire staff to reduce payroll.':'Buy a business before hiring staff.';
+ $('upgradeStatus').textContent=b?'Upgrade level '+(finance.businessUpgrade||0)+' / 3. Sales boost: '+((finance.businessUpgrade||0)*15)+'%. Next upgrade: '+((finance.businessUpgrade||0)>=3?'maximum level reached':'£'+(500*((finance.businessUpgrade||0)+1))+'. Weekly maintenance: £'+((finance.businessUpgrade||0)*25)):'Buy a business before upgrading it.';
  $('businessRevenue').textContent='£'+br;$('businessCosts').textContent='£'+bc;$('businessTax').textContent='£'+bt;$('businessProfit').textContent='£'+bp;
  $('businessTotals').textContent='Lifetime sales £'+(finance.businessRevenueTotal||0)+' · costs £'+(finance.businessCostsTotal||0)+' · business tax paid £'+(finance.businessTaxPaid||0);
  $('shoppingStatus').textContent='Food stock: '+finance.food+' · Essentials stock: '+finance.essentials+'. Buy more before supplies run out.';
@@ -606,11 +619,16 @@ function weeklyCycle(){
   const plans={cafe:{name:'Neighbourhood café',revenue:520,cost:260,price:1200},shop:{name:'Corner shop',revenue:620,cost:340,price:1800},delivery:{name:'Delivery company',revenue:850,cost:510,price:2500},garage:{name:'Car repair garage',revenue:1050,cost:650,price:3200}};
   const plan=plans[finance.business];
   if(plan){
-   const revenue=plan.revenue,costs=plan.cost,profitBeforeTax=Math.max(0,revenue-costs),tax=Math.round(profitBeforeTax*.19),profit=revenue-costs-tax;
+   const assistants=finance.staffAssistant||0,supervisors=finance.staffSupervisor||0,managers=finance.staffManager||0;
+   const staffWages=assistants*80+supervisors*120+managers*180;
+   const salesBoost=Math.min(.60,assistants*.08+supervisors*.12+managers*.15+(finance.businessUpgrade||0)*.15);
+   const revenue=Math.round(plan.revenue*(1+salesBoost));
+   const costs=plan.cost+staffWages+(finance.businessUpgrade||0)*25;
+   const profitBeforeTax=Math.max(0,revenue-costs),tax=Math.round(profitBeforeTax*.19),profit=revenue-costs-tax;
    finance.businessLastRevenue=revenue;finance.businessLastCosts=costs;finance.businessLastTax=tax;finance.businessLastProfit=profit;
    finance.businessRevenueTotal=(finance.businessRevenueTotal||0)+revenue;finance.businessCostsTotal=(finance.businessCostsTotal||0)+costs;finance.businessTaxPaid=(finance.businessTaxPaid||0)+tax;
    money+=profit;
-   notify(plan.name+': £'+revenue+' sales − £'+costs+' operating costs − £'+tax+' business tax = £'+profit+' net profit');
+   notify(plan.name+': £'+revenue+' sales − £'+costs+' running costs (including £'+staffWages+' staff wages) − £'+tax+' business tax = £'+profit+' net profit');
   }
  }
  if(finance.employed){
@@ -644,9 +662,31 @@ $('buyBusiness').addEventListener('click',()=>{
 $('sellBusiness').addEventListener('click',()=>{
  if(!finance.business){notify('You do not own a business to sell');return}
  const plan=businessPlans[finance.business],proceeds=Math.round(plan.price*.7),name=plan.name;
- finance.business=null;finance.businessLastRevenue=0;finance.businessLastCosts=0;finance.businessLastTax=0;finance.businessLastProfit=0;
+ finance.business=null;finance.staffAssistant=0;finance.staffSupervisor=0;finance.staffManager=0;finance.businessUpgrade=0;finance.businessLastRevenue=0;finance.businessLastCosts=0;finance.businessLastTax=0;finance.businessLastProfit=0;
  addCash(proceeds,'Sale of '+name+' (estimated 70% resale value)');
  syncFinance();
+});
+const staffRoles={assistant:{name:'Business assistant',wage:80},supervisor:{name:'Supervisor',wage:120},manager:{name:'Manager',wage:180}};
+$('hireStaff').addEventListener('click',()=>{
+ if(!finance.business){notify('Buy a business before hiring employees');return}
+ const role=$('staffRole').value,job=staffRoles[role],key={assistant:'staffAssistant',supervisor:'staffSupervisor',manager:'staffManager'}[role];
+ if(!job||!key){notify('Choose a valid employee role');return}
+ if((finance[key]||0)>=10){notify('You can hire up to 10 employees in each role');return}
+ finance[key]=(finance[key]||0)+1;syncFinance();notify(job.name+' hired. Weekly wages increase by £'+job.wage+'.');
+});
+$('fireStaff').addEventListener('click',()=>{
+ if(!finance.business){notify('You do not own a business');return}
+ const role=$('staffRole').value,job=staffRoles[role],key={assistant:'staffAssistant',supervisor:'staffSupervisor',manager:'staffManager'}[role];
+ if(!job||!key||(finance[key]||0)<=0){notify('No employee in that role to let go');return}
+ finance[key]--;syncFinance();notify(job.name+' let go. Weekly wages decrease by £'+job.wage+'.');
+});
+$('upgradeBusiness').addEventListener('click',()=>{
+ if(!finance.business){notify('Buy a business before upgrading it');return}
+ const level=finance.businessUpgrade||0;
+ if(level>=3){notify('Your business is already at maximum upgrade level');return}
+ const price=500*(level+1);
+ if(!spend(price,'Business upgrade'))return;
+ finance.businessUpgrade=level+1;syncFinance();notify('Business upgraded to level '+finance.businessUpgrade+'. Sales improve, with £25 extra weekly maintenance per level.');
 });
 function gameDayTick(){
  finance.day++;
