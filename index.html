@@ -27,6 +27,13 @@ body.ui-hidden #prompt{display:none!important}
 #lifePanel{position:fixed;z-index:6;right:14px;top:120px;width:min(330px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:#101a21f2;border:1px solid #ffffff35;border-radius:16px;padding:14px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto}
 #lifePanel h2{margin:0 0 8px;font-size:18px}
 #achievementsBtn,#closeAchievements{margin-top:6px;background:#214a3c!important;border-color:#83e0b0!important}
+#updatesBtn{background:#10242bF2;border-color:#83e0b0!important}
+#updatesPanel button{cursor:pointer;font-weight:750}
+#updatesPanel .challenge{padding:9px;margin:7px 0;border:1px solid #ffffff22;border-radius:9px;background:#ffffff08}
+#updatesPanel .challenge button{width:100%;margin-top:6px;padding:8px;background:#83e0b0;color:#102019;border:0}
+#updatesPanel .challenge button:disabled{opacity:.55;cursor:default}
+body.ui-hidden #updatesBtn{display:none!important}
+@media(max-width:650px){#updatesBtn{right:8px;bottom:8px;font-size:11px;padding:8px 10px}#updatesPanel{font-size:12px}}
 #shareGameBtn{background:#83e0b0;color:#102019;font-weight:850;border:0}
 #feedbackGameBtn{background:#263a45;color:#fff}
 @media(max-width:650px){#start .card{padding:18px}#start .row button{flex:1 1 130px}#phoneBtn{top:270px!important}#busMapBtn{top:186px!important}#trainBtn{top:224px!important}}#lifePanel label{display:block;margin:8px 0 4px;font-size:12px}
@@ -57,6 +64,18 @@ body.ui-hidden #prompt{display:none!important}
 </div></div>
 <img src="https://librecounter.org/counter.svg" referrerpolicy="unsafe-url" alt="" aria-hidden="true" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 <button id="uiToggle" style="display:none" title="Toggle interface (U)">Hide UI · U</button>
+<button id="updatesBtn" class="pill" type="button" style="position:fixed;z-index:4;right:14px;bottom:14px;pointer-events:auto;cursor:pointer;font-weight:850;border-color:#83e0b0">🆕 WHAT'S NEW</button>
+<div id="updatesPanel" class="pill" role="dialog" aria-label="What's new and daily challenges" style="display:none;position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 24px));max-height:78vh;overflow:auto;background:#101a21f7;border:1px solid #83e0b088;box-shadow:0 18px 60px #000b;pointer-events:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:18px">🆕 UK LIFE UPDATE</b><button id="closeUpdates" type="button" aria-label="Close updates">✕</button></div>
+  <p style="font-size:12px;color:#c8d7dd;line-height:1.5">Your game updates at the same link. Refresh the page if you see an older version.</p>
+  <div style="padding:10px;border-radius:10px;background:#ffffff0b;margin:8px 0">
+    <b>What's new in this version</b>
+    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li></ul>
+  </div>
+  <b>📅 Daily challenges</b><p class="small" style="font-size:11px;color:#c8d7dd">Challenges refresh by calendar day on this device. Rewards are in-game only.</p>
+  <div id="dailyChallengesList" style="font-size:12px;line-height:1.5"></div>
+  <button id="closeUpdatesBottom" type="button" style="width:100%;margin-top:8px">Back to game</button>
+</div>
 <div id="hud">
 <div id="brand" class="pill">🇬🇧 UK LIFE <span style="color:#83e0b0">CITY UPDATE</span></div>
 <div id="stats"><div class="pill">🕒 <span id="gameClock">08:00</span></div><div class="pill">£<span id="money">250</span></div><div class="pill">MODE <span id="mode">ON FOOT</span></div><div class="pill">PEOPLE <span id="peopleCount">16</span></div></div>
@@ -1077,7 +1096,57 @@ document.getElementById('phoneText').addEventListener('click',()=>{const n=selec
 document.getElementById('phoneCall').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;n.friendship=Math.min(5,n.friendship+1);n.known=n.meetings>=1||n.friendship>=2;n.lastLine=['I’m free later — see you around!','Nice to hear from you!','I’m out and about in town.','Let’s catch up soon!'][Math.floor(Math.random()*4)];phoneResult('📞 Call connected with '+n.name+'. '+n.name+': “'+n.lastLine+'” · Friendship '+n.friendship+'/5');notify('Call with '+n.name+' finished');refreshPhoneContacts()});
 document.getElementById('phoneInvite').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;const club=doors.find(d=>/NIGHTCLUB|CLUB/i.test(d.label));if(!club){phoneResult('The nightclub could not be found.');return}n.to.set(club.doorX,0,club.doorZ);n.state='walk';n.stateTimer=45;n.shopDoor=club;n.lastLine='I’m heading to the nightclub — meet me there!';n.friendship=Math.min(5,n.friendship+1);phoneResult(n.name+' has been invited to the nightclub and is heading over. Meet them by the club entrance.');notify('🪩 You invited '+n.name+' to the nightclub');refreshPhoneContacts()});
 document.getElementById('busMapBtn').addEventListener('click',()=>{const panel=document.getElementById('busMapPanel');panel.style.display=panel.style.display==='block'?'none':'block'});document.getElementById('closeBusMap').addEventListener('click',()=>document.getElementById('busMapPanel').style.display='none');
-document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}function renderAchievements(){
+document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}const UK_LIFE_VERSION='2026.10-daily-challenges';
+const UK_LIFE_DAILY_KEY='ukLifeDailyChallengesV1';
+function localDayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function dailyState(){
+ const today=localDayKey();let data=null;
+ try{data=JSON.parse(localStorage.getItem(UK_LIFE_DAILY_KEY)||'null')}catch(e){}
+ if(!data||data.day!==today){
+  data={day:today,baseline:{missions:Number(missionIndex)||0,jobs:Number(jobCount)||0,xp:Number(xp)||0},claimed:[]};
+  try{localStorage.setItem(UK_LIFE_DAILY_KEY,JSON.stringify(data))}catch(e){}
+ }
+ if(!data.baseline)data.baseline={missions:0,jobs:0,xp:0};
+ if(!Array.isArray(data.claimed))data.claimed=[];
+ return data;
+}
+function renderDailyChallenges(){
+ const el=$('dailyChallengesList');if(!el)return;
+ const d=dailyState();
+ const tasks=[
+  {id:'mission',title:'🧭 Complete a starter mission',desc:'Finish one more city mission today.',progress:Math.max(0,(Number(missionIndex)||0)-d.baseline.missions),goal:1,reward:75},
+  {id:'job',title:'💼 Finish a job or contract',desc:'Complete one job or explorer contract today.',progress:Math.max(0,(Number(jobCount)||0)-d.baseline.jobs),goal:1,reward:100},
+  {id:'xp',title:'⭐ Earn 50 XP',desc:'Gain 50 XP through your activities today.',progress:Math.max(0,(Number(xp)||0)-d.baseline.xp),goal:50,reward:60}
+ ];
+ el.innerHTML=tasks.map(t=>{
+  const done=t.progress>=t.goal,claimed=d.claimed.includes(t.id);
+  return '<div class="challenge"><b>'+t.title+'</b><div style="color:#c8d7dd;font-size:11px">'+t.desc+'</div><div style="margin-top:4px">Progress: '+Math.min(t.progress,t.goal)+' / '+t.goal+'</div><div style="height:5px;border-radius:9px;background:#ffffff22;margin-top:5px;overflow:hidden"><div style="height:100%;width:'+Math.min(100,t.progress/t.goal*100)+'%;background:#83e0b0"></div></div><button type="button" data-daily-claim="'+t.id+'" '+(!done||claimed?'disabled':'')+'>'+ (claimed?'Reward claimed ✓':done?'Claim £'+t.reward:'Complete to earn £'+t.reward)+'</button></div>';
+ }).join('');
+ el.querySelectorAll('[data-daily-claim]').forEach(btn=>btn.addEventListener('click',()=>{
+  const task=tasks.find(t=>t.id===btn.getAttribute('data-daily-claim'));if(!task)return;
+  const fresh=dailyState();
+  if(fresh.claimed.includes(task.id)){renderDailyChallenges();return}
+  let progress=0;
+  if(task.id==='mission')progress=Math.max(0,(Number(missionIndex)||0)-fresh.baseline.missions);
+  if(task.id==='job')progress=Math.max(0,(Number(jobCount)||0)-fresh.baseline.jobs);
+  if(task.id==='xp')progress=Math.max(0,(Number(xp)||0)-fresh.baseline.xp);
+  if(progress<task.goal){renderDailyChallenges();return}
+  fresh.claimed.push(task.id);try{localStorage.setItem(UK_LIFE_DAILY_KEY,JSON.stringify(fresh))}catch(e){}
+  money+=task.reward;syncFinance();notify('Daily challenge complete! You earned £'+task.reward);renderDailyChallenges();
+ }));
+}
+function openUpdates(){
+ const p=$('updatesPanel');if(!p)return;
+ p.style.display='block';renderDailyChallenges();
+ try{localStorage.setItem('ukLifeSeenVersion',UK_LIFE_VERSION)}catch(e){}
+}
+function closeUpdates(){$('updatesPanel').style.display='none'}
+$('updatesBtn').addEventListener('click',openUpdates);
+$('closeUpdates').addEventListener('click',closeUpdates);
+$('closeUpdatesBottom').addEventListener('click',closeUpdates);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('updatesPanel').style.display==='block')closeUpdates()});
+try{if(localStorage.getItem('ukLifeSeenVersion')!==UK_LIFE_VERSION){setTimeout(openUpdates,900)}}catch(e){}
+function renderAchievements(){
  const el=$('achievementList');if(!el)return;
  const completedMissions=Math.min(missionIndex,missionList.length);
  const careerLevel=Math.max(1,Math.floor((Number(xp)||0)/100)+1);
