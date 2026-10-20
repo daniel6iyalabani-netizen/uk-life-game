@@ -1259,5 +1259,13 @@ function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)up
 camera.position.set(0,5,14);camera.lookAt(0,1,0);requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
-})().catch(function(error){console.error("UK Life game boot failed",error);var help=document.getElementById("help");if(help){help.style.display="block";help.textContent="The game could not finish loading: "+(error&&error.message?error.message:"unknown error")+". Please refresh and try again.";}});
+})().catch(function(error){
+ console.error("UK Life game boot failed",error);
+ var help=document.getElementById("help");
+ var button=document.getElementById("play");
+ var detail=(error&&error.message)?error.message:"unknown error";
+ if(help){help.style.display="block";help.textContent="Game startup failed: "+detail+". Reload this page with Ctrl + Shift + R. If it happens again, send me this exact message.";}
+ if(button){button.disabled=false;button.textContent="RETRY GAME START";}
+ window.__ukLifeBootFailed=true;
+});
 </script></body></html>
