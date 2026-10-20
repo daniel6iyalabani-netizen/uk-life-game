@@ -160,6 +160,16 @@ body.ui-hidden #prompt{display:none!important}
   <button id="closeLife">Close menu</button>
 </div>
 <script>
+// Register diagnostics before the module script is parsed, so startup errors are visible.
+window.addEventListener('error', function(event){
+  var help = document.getElementById('help');
+  if(help && !window.__startUKLifeGame && event && (event.message || event.error)){
+    help.style.display='block';
+    help.textContent='Game startup error: '+(event.message || (event.error && event.error.message) || 'unknown script error')+'. Reload the latest game link in Chrome.';
+    var button=document.getElementById('play');
+    if(button) button.textContent='STARTUP ERROR — RELOAD';
+  }
+});
 window.ukLifeStartClick = function(){
   var button = document.getElementById('play');
   var help = document.getElementById('help');
