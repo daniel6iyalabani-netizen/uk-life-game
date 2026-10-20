@@ -133,8 +133,13 @@ function building(x,z,w,d,h,brick,kind='house',label='HOUSE'){
  box(0,h/2,0,w,h,d,brick,g);box(0,h+.1,0,w+.3,.25,d+.3,mats.roof,g);
  for(let xx=-w/2+1.4;xx<w/2-1;xx+=2.5)for(let yy=1.5;yy<h-1;yy+=2.2){box(xx,yy,d/2+.02,.82,1.12,.06,mats.glass,g);box(xx,yy+.61,d/2+.06,.94,.1,.08,mats.white,g)}
  const doorMat=kind==='shop'?M(0x246447):M(0x333a40);
- box(0,1.12,d/2+.12,1.15,2.15,.18,doorMat,g);
- const sign=box(0,2.75,d/2+.13,Math.min(w*.86,8),.55,.18,kind==='shop'?M(0x237c58):M(0x5c493e),g);
+ // Door surround, step and shop awning add depth to the street frontage.
+ box(0,1.12,d/2+.23,1.48,2.42,.16,M(0xe0d2bd),g);
+ box(0,1.12,d/2+.34,1.08,2.08,.12,doorMat,g);
+ box(0,.08,d/2+.42,1.8,.16,.75,M(0x9b9387),g);
+ if(kind==='shop'){box(0,2.35,d/2+.48,Math.min(w*.92,9),.22,1.15,M(0x246447),g);for(let aw=-w*.4;aw<w*.4;aw+=1.2)box(aw,2.35,d/2+.49,.06,.24,1.17,M(0xe6d8bd),g)}
+ for(let xx=-w/2+1.2;xx<w/2-1;xx+=2.5){box(xx,.82,d/2+.09,.94,.12,.1,M(0xd6c7b3),g);box(xx,2.2,d/2+.09,.94,.12,.1,M(0xd6c7b3),g)}
+ const sign=box(0,2.9,d/2+.54,Math.min(w*.86,8),.55,.18,kind==='shop'?M(0x237c58):M(0x5c493e),g);
  // small readable sign via canvas texture
  const c=document.createElement('canvas');c.width=512;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle=kind==='shop'?'#237c58':'#5c493e';ctx.fillRect(0,0,512,96);ctx.fillStyle='white';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(label,256,62);
  sign.material=new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c),roughness:.8});
@@ -202,9 +207,25 @@ for(let i=0;i<24;i++)createNPC(i);
 const interior=new THREE.Group();scene.add(interior);interior.visible=false;
 const floor=box(0,-.15,0,24,.3,24,M(0xc9bba5),interior);box(0,3,-12,24,6,.3,M(0xe0d5c2),interior);box(-12,3,0,.3,6,24,M(0xe0d5c2),interior);box(12,3,0,.3,6,24,M(0xe0d5c2),interior);box(0,3,12,24,6,.3,M(0xe0d5c2),interior);
 box(0,5.8,0,24,.3,24,M(0xf1e9da),interior);
+// Distinct, furnished room layouts for homes, shops, cafés and clothing stores.
 const interiorProps=[];
-function prop(x,y,z,sx,sy,sz,color){interiorProps.push(box(x,y,z,sx,sy,sz,M(color),interior))}
-prop(-5,.7,-4,5,1.4,2,0x76503a);prop(-5,1.55,-4,4.7,.25,1.8,0x9c7656);prop(5,.55,-5,2.4,1.1,1.3,0x447d98);prop(5,1.2,-5,2.5,.2,1.4,0xd5d8d5);prop(0,1.2,4,4,2.4,.25,0x3c5c64);
+function prop(group,x,y,z,sx,sy,sz,color){const o=box(x,y,z,sx,sy,sz,M(color),group);interiorProps.push(o);return o}
+function makeRoomSet(){const g=new THREE.Group();interior.add(g);return g}
+const homeRoom=makeRoomSet(),shopRoom=makeRoomSet(),cafeRoom=makeRoomSet(),clothesRoom=makeRoomSet(),flatRoom=makeRoomSet();
+function shelf(group,x,z,colour=0x76503a){prop(group,x,1.45,z,3.8,2.9,.55,colour);prop(group,x,2.95,z,4,.12,.7,0x9b7656);for(let row=0;row<3;row++)for(let col=0;col<5;col++)prop(group,x-1.45+col*.72,1.05+row*.7,z+.34,.34,.42,.18,[0x3e9a63,0xd7b84b,0xc95b4c,0x4e8fbe][(row+col)%4])}
+function table(group,x,z){prop(group,x,.9,z,2,.16,1.5,0x9b7656);prop(group,x-.8,.45,z-.55,.14,.9,.14,0x76503a);prop(group,x+.8,.45,z-.55,.14,.9,.14,0x76503a);prop(group,x-.8,.45,z+.55,.14,.9,.14,0x76503a);prop(group,x+.8,.45,z+.55,.14,.9,.14,0x76503a)}
+// Home: sofa, rug, coffee table, TV and kitchen units.
+prop(homeRoom,-4,.12,-2,7,.08,4,0xb9a28a);prop(homeRoom,-4,.65,-3,4.2,1.1,1.1,0x447d98);prop(homeRoom,-4,1.25,-3,4.1,.2,1,0x5d9bb0);prop(homeRoom,1,.55,-4,2.5,1.1,.25,0x33383b);prop(homeRoom,1,1.35,-4,2.3,.35,.18,0x1b2428);prop(homeRoom,5,.55,2,3,1.1,1.2,0x76503a);prop(homeRoom,5,1.15,2,3.1,.18,1.3,0xc8c5bb);prop(homeRoom,-5,.5,5,3,1,.8,0xd5d8d5);
+// Shop / supermarket: stocked shelves and a checkout counter.
+for(const z of [-7,-2,3])shelf(shopRoom,-4,z);prop(shopRoom,5,.65,6,5,1.3,1.1,0x76503a);prop(shopRoom,5,1.35,6,5.1,.15,1.2,0x3d514a);prop(shopRoom,5,1.6,5.7,1,.35,.25,0xd6b64d);
+// Café: tables, chairs and a serving counter.
+for(const [x,z] of [[-5,-4],[1,-4],[-5,2],[1,2]])table(cafeRoom,x,z);prop(cafeRoom,6,.7,-5,2,1.4,7,0x76503a);prop(cafeRoom,6,1.45,-5,2.1,.12,7.1,0x4e3930);prop(cafeRoom,5,1.8,-7,1,.45,.5,0x3f7b9b);
+// Clothing shop: hanging rails, colourful folded stock and a changing screen.
+prop(clothesRoom,-5,1.7,-3,.15,3.1,7,0x8a8d91);prop(clothesRoom,-5,3.25,-3,.2,.15,7,0x9ca5aa);for(let i=0;i<7;i++){prop(clothesRoom,-4.7,2.45,-6+i*.9,.18,1.2,.48,[0x477eb8,0xd64b54,0x4d9c69,0xe0b64f][i%4])}prop(clothesRoom,4,.7,-4,3,1.4,2,0x76503a);prop(clothesRoom,4,1.45,-4,3.1,.15,2.1,0x9b7656);prop(clothesRoom,6,1.2,4,2,.12,3,0xb8b0a5);
+// Flats: bed, bedside table and kitchenette.
+prop(flatRoom,-4,.4,-4,4, .7,5,0x8b705d);prop(flatRoom,-4,.82,-4,3.8,.2,4.8,0xe4ddd0);prop(flatRoom,-4,1.05,-4,3.7,.35,1.1,0x7395ad);prop(flatRoom,4,.55,-4,2.5,1.1,.8,0xd5d8d5);prop(flatRoom,4,1.15,-4,2.6,.15,.9,0x8b8f91);prop(flatRoom,4,.55,3,3,1.1,1,0x76503a);
+function showRoomFor(door){homeRoom.visible=false;shopRoom.visible=false;cafeRoom.visible=false;clothesRoom.visible=false;flatRoom.visible=false;if(!door)return;const label=door.label.toUpperCase();if(door.kind==='shop'&&/CAFE|COFFEE|TAKEAWAY|CHIPPY/.test(label))cafeRoom.visible=true;else if(/CLOTHING|BARBER/.test(label))clothesRoom.visible=true;else if(door.kind==='shop')shopRoom.visible=true;else if(door.kind==='flat'||/FLAT|APARTMENT|TOWER/.test(label))flatRoom.visible=true;else homeRoom.visible=true}
+showRoomFor(null);
 let activeDoor=null,inside=false;
 const missionList=[
  {title:'MISSION 01 · CORNER SHOP RUN',text:'Go to the Corner Shop door and press F to pick up a parcel.',target:'CORNER SHOP',reward:150},
@@ -234,7 +255,7 @@ function nearestDoor(){let best=null,bd=Infinity;for(const d of doors){const p=n
 function useDoorOrCar(){
  if(inside){inside=false;interior.visible=false;scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);player.position.copy(playerReturn);player.visible=true;activeDoor=null;notify('Back outside');return}
  if(driving){const c=driving;const side=new THREE.Vector3(Math.cos(c.heading),0,-Math.sin(c.heading));const exit=c.g.position.clone().addScaledVector(side,c.spec.w/2+1.3);if(blocked(exit.x,exit.z,.5)){notify('No room to exit here — move the car first');return}player.position.set(exit.x,0,exit.z);player.visible=true;driving=null;c.occupied=false;notify('Exited '+c.spec.name);return}
- const door=nearestDoor();if(door){activeDoor=door;playerReturn.copy(player.position);inside=true;interior.visible=true;player.position.set(0,0,7);player.visible=true;camera.position.set(0,4,17);camera.lookAt(0,1,0);notify('Entered '+door.label);return}
+ const door=nearestDoor();if(door){activeDoor=door;showRoomFor(door);playerReturn.copy(player.position);inside=true;interior.visible=true;player.position.set(0,0,7);player.visible=true;camera.position.set(0,4,17);camera.lookAt(0,1,0);notify('Entered '+door.label);return}
  const c=nearestCar();if(c){driving=c;c.occupied=true;player.visible=false;yaw=c.heading;notify('Driving '+c.spec.name+' · E to exit');return}
  notify('Walk near a gold door or parked car and press E')
 }
