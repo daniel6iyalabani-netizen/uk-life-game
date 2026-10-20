@@ -90,12 +90,19 @@
     <option value="delivery">Delivery company — £2,500</option>
     <option value="garage">Car repair garage — £3,200</option>
   </select>
-  <div class="finrow"><button id="buyBusiness">Buy business</button><button id="sellBusiness">Sell business</button></div>
+  <label for="businessLocationChoice">Business location</label>
+  <select id="businessLocationChoice"><option value="city">City centre</option><option value="shops">Shopping street</option><option value="terraced">Terraced homes</option><option value="park">Park and gardens</option><option value="oldtown">Old town / harbour</option></select>
+  <div class="finrow"><button id="buyBusiness">Buy business</button><button id="sellBusiness">Sell selected business</button></div>
+  <label for="ownedBusinessChoice">Manage an owned business</label>
+  <select id="ownedBusinessChoice"><option value="-1">No businesses owned yet</option></select>
+  <div class="stat" id="businessPortfolioStatus">Own multiple businesses in different neighbourhoods.</div>
   <h4>👥 Hire and manage staff</h4>
   <label for="staffRole">Employee role</label>
   <select id="staffRole"><option value="assistant">Business assistant — £80/week</option><option value="supervisor">Supervisor — £120/week</option><option value="manager">Manager — £180/week</option></select>
   <div class="finrow"><button id="hireStaff">Hire employee</button><button id="fireStaff">Let employee go</button></div>
+  <div class="finrow"><button id="trainStaff">Train staff (£150)</button><button id="promoteStaff">Promote employee</button></div>
   <div class="stat" id="staffStatus">Buy a business before hiring staff. Employees receive wages every week.</div>
+  <div class="stat" id="staffProgressStatus">Training and promotions apply to the selected business.
   <h4>📈 Business upgrades</h4>
   <p class="small">Each upgrade costs £500 × the next level (maximum level 3). Upgrades increase sales and add a small weekly maintenance cost.</p>
   <div class="finrow"><button id="upgradeBusiness">Upgrade business</button></div>
@@ -151,6 +158,11 @@ function mesh(g,m,x,y,z,p=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,
 function box(x,y,z,sx,sy,sz,m,p=scene){return mesh(new THREE.BoxGeometry(sx,sy,sz),m,x,y,z,p)}
 box(0,-.35,0,390,.5,390,mats.grass);
 function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);if(w>d){for(let i=-Math.floor(w/8);i<Math.floor(w/8);i++)box(x+i*8,.025,z,.13,.025,2.5,mats.line)}else{for(let i=-Math.floor(d/8);i<Math.floor(d/8);i++)box(x,.025,z+i*8,2.5,.025,.13,mats.line)}}
+// Build visible asphalt roads beneath the pavements: the previous layout defined road markings but never called road().
+for(const z of [-120,-80,-40,0,40,80,120])road(0,z,360,15);
+for(const x of [-120,-80,-40,0,40,80,120])road(x,0,15,360);
+// Add a pair of wider main roads so the neighbourhood has a clearly visible connected road network.
+road(0,-20,360,22);road(20,0,22,360);
 // UK-style pavements, raised kerbs and road-edge drainage.
 const pavement=M(0xb9b8ae),kerb=M(0xd2d0c6),drainMat=M(0x25292c,.65,.25),slabLine=M(0x92948d);
 const streetRuns=[-120,-80,-40,0,40,80,120];
@@ -560,7 +572,7 @@ const finance = {
  fuel:100, condition:100, loan:0, loanPayment:0, food:3, essentials:2,
  employed:null, wage:0, lastWeeklyDay:0, arrears:0,
  lastPayslip:{gross:0,incomeTax:0,ni:0,net:0,day:0}, taxPaid:0,niPaid:0,vatPaid:0,vedPaid:0,
- business:null,staffAssistant:0,staffSupervisor:0,staffManager:0,businessUpgrade:0,businessTaxPaid:0,businessRevenueTotal:0,businessCostsTotal:0,businessLastRevenue:0,businessLastCosts:0,businessLastTax:0,businessLastProfit:0
+ business:null,businessesOwned:[],activeBusinessIndex:0,staffAssistant:0,staffSupervisor:0,staffManager:0,businessUpgrade:0,businessTaxPaid:0,businessRevenueTotal:0,businessCostsTotal:0,businessLastRevenue:0,businessLastCosts:0,businessLastTax:0,businessLastProfit:0
 };
 const cashEl=()=>document.getElementById('money');
 function cash(){return Math.max(0,Math.floor(money))}
@@ -581,14 +593,30 @@ function syncFinance(){
  $('slipDate').textContent=ps.day?'Payslip for in-game day '+ps.day:'No payslip yet — start a job to receive one.';
  $('taxStatus').textContent='Tax totals: income tax £'+(finance.taxPaid||0)+' · National Insurance £'+(finance.niPaid||0)+' · VAT estimate £'+(finance.vatPaid||0)+' · Vehicle tax £'+(finance.vedPaid||0)+' · Business tax £'+(finance.businessTaxPaid||0)+'. Council tax is listed in household bills.';
  const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage'};
- const b=finance.business,br=finance.businessLastRevenue||0,bc=finance.businessLastCosts||0,bt=finance.businessLastTax||0,bp=finance.businessLastProfit||0;
- $('businessStatus').textContent=b?'Owned: '+(businessNames[b]||b)+'. Weekly sales and operating costs are settled every 7 in-game days.':'You don’t own a business yet. Buy one to start earning weekly income.';
- const staffCount=(finance.staffAssistant||0)+(finance.staffSupervisor||0)+(finance.staffManager||0);
- const staffWages=(finance.staffAssistant||0)*80+(finance.staffSupervisor||0)*120+(finance.staffManager||0)*180;
- $('staffStatus').textContent=b?'Staff: '+(finance.staffAssistant||0)+' assistants, '+(finance.staffSupervisor||0)+' supervisors, '+(finance.staffManager||0)+' managers ('+staffCount+' total). Weekly wages: £'+staffWages+'. Hire staff to boost sales; fire staff to reduce payroll.':'Buy a business before hiring staff.';
- $('upgradeStatus').textContent=b?'Upgrade level '+(finance.businessUpgrade||0)+' / 3. Sales boost: '+((finance.businessUpgrade||0)*15)+'%. Next upgrade: '+((finance.businessUpgrade||0)>=3?'maximum level reached':'£'+(500*((finance.businessUpgrade||0)+1))+'. Weekly maintenance: £'+((finance.businessUpgrade||0)*25)):'Buy a business before upgrading it.';
+ const locationNames={city:'City centre',shops:'Shopping street',terraced:'Terraced homes',park:'Park and gardens',oldtown:'Old town / harbour'};
+ const portfolio=Array.isArray(finance.businessesOwned)?finance.businessesOwned:[];
+ const picker=$('ownedBusinessChoice'),previous=Number(picker.value);
+ picker.innerHTML='';
+ if(!portfolio.length){picker.innerHTML='<option value="-1">No businesses owned yet</option>';finance.activeBusinessIndex=0;finance.business=null;}
+ else{
+  portfolio.forEach((item,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=(businessNames[item.id]||item.id)+' — '+(locationNames[item.location]||item.location);picker.appendChild(option);});
+  finance.activeBusinessIndex=Math.max(0,Math.min(portfolio.length-1,Number.isFinite(previous)&&previous>=0?previous:(finance.activeBusinessIndex||0)));
+  picker.value=String(finance.activeBusinessIndex);
+ }
+ const active=portfolio[finance.activeBusinessIndex]||null;
+ if(active){
+  finance.business=active.id;finance.staffAssistant=active.staffAssistant||0;finance.staffSupervisor=active.staffSupervisor||0;finance.staffManager=active.staffManager||0;finance.businessUpgrade=active.upgrade||0;
+ }
+ const b=active?active.id:null,br=active?(active.lastRevenue||0):0,bc=active?(active.lastCosts||0):0,bt=active?(active.lastTax||0):0,bp=active?(active.lastProfit||0):0;
+ $('businessStatus').textContent=active?'Selected: '+(businessNames[b]||b)+' in '+(locationNames[active.location]||active.location)+'. Sales are settled every 7 in-game days.':'You don’t own a business yet. Buy one to start earning weekly income.';
+ $('businessPortfolioStatus').textContent=portfolio.length?'Businesses owned ('+portfolio.length+'): '+portfolio.map(item=>(businessNames[item.id]||item.id)+' at '+(locationNames[item.location]||item.location)).join(' · '):'Own multiple businesses in different neighbourhoods; each has its own staff, upgrades and weekly results.';
+ const staffCount=active?((active.staffAssistant||0)+(active.staffSupervisor||0)+(active.staffManager||0)):0;
+ const staffWages=active?((active.staffAssistant||0)*80+(active.staffSupervisor||0)*120+(active.staffManager||0)*180):0;
+ $('staffStatus').textContent=active?'Staff: '+(active.staffAssistant||0)+' assistants, '+(active.staffSupervisor||0)+' supervisors, '+(active.staffManager||0)+' managers ('+staffCount+' total). Weekly wages: £'+staffWages+'.':'Select or buy a business before hiring staff.';
+ $('staffProgressStatus').textContent=active?'Training level '+(active.training||0)+' / 3. Trained staff add up to '+((active.training||0)*3)+'% sales. Promotions move assistants to supervisors or supervisors to managers.':'Training and promotions apply to the selected business.';
+ $('upgradeStatus').textContent=active?'Upgrade level '+(active.upgrade||0)+' / 3. Sales boost: '+((active.upgrade||0)*15)+'%. Next upgrade: '+((active.upgrade||0)>=3?'maximum level reached':'£'+(500*((active.upgrade||0)+1))+'. Weekly maintenance: £'+((active.upgrade||0)*25)):'Buy a business before upgrading it.';
  $('businessRevenue').textContent='£'+br;$('businessCosts').textContent='£'+bc;$('businessTax').textContent='£'+bt;$('businessProfit').textContent='£'+bp;
- $('businessTotals').textContent='Lifetime sales £'+(finance.businessRevenueTotal||0)+' · costs £'+(finance.businessCostsTotal||0)+' · business tax paid £'+(finance.businessTaxPaid||0);
+ $('businessTotals').textContent='Lifetime sales £'+(active?(active.revenueTotal||0):0)+' · costs £'+(active?(active.costsTotal||0):0)+' · business tax paid £'+(finance.businessTaxPaid||0);
  $('shoppingStatus').textContent='Food stock: '+finance.food+' · Essentials stock: '+finance.essentials+'. Buy more before supplies run out.';
  $('careerStatus').textContent=finance.employed
   ? 'Employed as '+finance.employed+'. Weekly gross pay: £'+finance.wage+'. Payday is every 7 in-game days; simulated income tax is deducted.'
@@ -615,22 +643,24 @@ function weeklyCycle(){
   else {finance.credit=Math.min(850,finance.credit+2);notify('Weekly bills paid: £'+total)}
  }
  if(finance.loan>0){const interest=Math.min(finance.loan,5);finance.loan+=interest;}
- if(finance.business){
-  const plans={cafe:{name:'Neighbourhood café',revenue:520,cost:260,price:1200},shop:{name:'Corner shop',revenue:620,cost:340,price:1800},delivery:{name:'Delivery company',revenue:850,cost:510,price:2500},garage:{name:'Car repair garage',revenue:1050,cost:650,price:3200}};
-  const plan=plans[finance.business];
-  if(plan){
-   const assistants=finance.staffAssistant||0,supervisors=finance.staffSupervisor||0,managers=finance.staffManager||0;
-   const staffWages=assistants*80+supervisors*120+managers*180;
-   const salesBoost=Math.min(.60,assistants*.08+supervisors*.12+managers*.15+(finance.businessUpgrade||0)*.15);
-   const revenue=Math.round(plan.revenue*(1+salesBoost));
-   const costs=plan.cost+staffWages+(finance.businessUpgrade||0)*25;
-   const profitBeforeTax=Math.max(0,revenue-costs),tax=Math.round(profitBeforeTax*.19),profit=revenue-costs-tax;
-   finance.businessLastRevenue=revenue;finance.businessLastCosts=costs;finance.businessLastTax=tax;finance.businessLastProfit=profit;
-   finance.businessRevenueTotal=(finance.businessRevenueTotal||0)+revenue;finance.businessCostsTotal=(finance.businessCostsTotal||0)+costs;finance.businessTaxPaid=(finance.businessTaxPaid||0)+tax;
-   money+=profit;
-   notify(plan.name+': £'+revenue+' sales − £'+costs+' running costs (including £'+staffWages+' staff wages) − £'+tax+' business tax = £'+profit+' net profit');
-  }
+ const portfolio=Array.isArray(finance.businessesOwned)?finance.businessesOwned:[];
+ const plans={cafe:{name:'Neighbourhood café',revenue:520,cost:260,price:1200},shop:{name:'Corner shop',revenue:620,cost:340,price:1800},delivery:{name:'Delivery company',revenue:850,cost:510,price:2500},garage:{name:'Car repair garage',revenue:1050,cost:650,price:3200}};
+ for(const business of portfolio){
+  const plan=plans[business.id];if(!plan)continue;
+  const assistants=business.staffAssistant||0,supervisors=business.staffSupervisor||0,managers=business.staffManager||0;
+  const staffWages=assistants*80+supervisors*120+managers*180;
+  const upgrade=business.upgrade||0,training=business.training||0;
+  const salesBoost=Math.min(.75,assistants*.08+supervisors*.12+managers*.15+upgrade*.15+training*.03);
+  const revenue=Math.round(plan.revenue*(1+salesBoost));
+  const costs=plan.cost+staffWages+upgrade*25;
+  const profitBeforeTax=Math.max(0,revenue-costs),tax=Math.round(profitBeforeTax*.19),profit=revenue-costs-tax;
+  business.lastRevenue=revenue;business.lastCosts=costs;business.lastTax=tax;business.lastProfit=profit;
+  business.revenueTotal=(business.revenueTotal||0)+revenue;business.costsTotal=(business.costsTotal||0)+costs;
+  finance.businessRevenueTotal=(finance.businessRevenueTotal||0)+revenue;finance.businessCostsTotal=(finance.businessCostsTotal||0)+costs;finance.businessTaxPaid=(finance.businessTaxPaid||0)+tax;
+  money+=profit;
+  notify(plan.name+' ('+business.location+'): £'+revenue+' sales − £'+costs+' costs including £'+staffWages+' wages − £'+tax+' tax = £'+profit+' net');
  }
+
  if(finance.employed){
   const gross=finance.wage;
   const weeklyAllowance=12570/52, basicLimit=50270/52, higherLimit=125140/52;
@@ -651,42 +681,54 @@ function weeklyCycle(){
  syncFinance();
 }
 const businessPlans={cafe:{name:'Neighbourhood café',price:1200},shop:{name:'Corner shop',price:1800},delivery:{name:'Delivery company',price:2500},garage:{name:'Car repair garage',price:3200}};
+function selectedBusiness(){return finance.businessesOwned[finance.activeBusinessIndex]||null}
+$('ownedBusinessChoice').addEventListener('change',()=>{finance.activeBusinessIndex=Math.max(0,Number($('ownedBusinessChoice').value)||0);syncFinance()});
 $('buyBusiness').addEventListener('click',()=>{
- if(finance.business){notify('You already own a business. Sell it before buying another.');return}
- const id=$('businessChoice').value,plan=businessPlans[id];
+ const id=$('businessChoice').value,plan=businessPlans[id],location=$('businessLocationChoice').value;
  if(!plan){notify('Choose a valid business');return}
  if(!spend(plan.price,plan.name+' purchase'))return;
- finance.business=id;finance.businessLastRevenue=0;finance.businessLastCosts=0;finance.businessLastTax=0;finance.businessLastProfit=0;
- syncFinance();notify(plan.name+' purchased. First sales and operating costs arrive at the next weekly cycle.');
+ const item={id,location,staffAssistant:0,staffSupervisor:0,staffManager:0,upgrade:0,training:0,lastRevenue:0,lastCosts:0,lastTax:0,lastProfit:0,revenueTotal:0,costsTotal:0};
+ finance.businessesOwned.push(item);finance.activeBusinessIndex=finance.businessesOwned.length-1;syncFinance();
+ notify(plan.name+' purchased in '+location+'. You can now own and manage several businesses.');
 });
 $('sellBusiness').addEventListener('click',()=>{
- if(!finance.business){notify('You do not own a business to sell');return}
- const plan=businessPlans[finance.business],proceeds=Math.round(plan.price*.7),name=plan.name;
- finance.business=null;finance.staffAssistant=0;finance.staffSupervisor=0;finance.staffManager=0;finance.businessUpgrade=0;finance.businessLastRevenue=0;finance.businessLastCosts=0;finance.businessLastTax=0;finance.businessLastProfit=0;
- addCash(proceeds,'Sale of '+name+' (estimated 70% resale value)');
- syncFinance();
+ const item=selectedBusiness();if(!item){notify('Select a business to sell');return}
+ const plan=businessPlans[item.id],proceeds=Math.round(plan.price*.7),name=plan.name;
+ finance.businessesOwned.splice(finance.activeBusinessIndex,1);finance.activeBusinessIndex=Math.max(0,finance.activeBusinessIndex-1);
+ finance.business=selectedBusiness()?.id||null;addCash(proceeds,'Sale of '+name+' (estimated 70% resale value)');syncFinance();
 });
 const staffRoles={assistant:{name:'Business assistant',wage:80},supervisor:{name:'Supervisor',wage:120},manager:{name:'Manager',wage:180}};
 $('hireStaff').addEventListener('click',()=>{
- if(!finance.business){notify('Buy a business before hiring employees');return}
+ const business=selectedBusiness();if(!business){notify('Buy or select a business before hiring employees');return}
  const role=$('staffRole').value,job=staffRoles[role],key={assistant:'staffAssistant',supervisor:'staffSupervisor',manager:'staffManager'}[role];
  if(!job||!key){notify('Choose a valid employee role');return}
- if((finance[key]||0)>=10){notify('You can hire up to 10 employees in each role');return}
- finance[key]=(finance[key]||0)+1;syncFinance();notify(job.name+' hired. Weekly wages increase by £'+job.wage+'.');
+ if((business[key]||0)>=10){notify('You can hire up to 10 employees in each role');return}
+ business[key]=(business[key]||0)+1;syncFinance();notify(job.name+' hired. Weekly wages increase by £'+job.wage+'.');
 });
 $('fireStaff').addEventListener('click',()=>{
- if(!finance.business){notify('You do not own a business');return}
+ const business=selectedBusiness();if(!business){notify('Select a business first');return}
  const role=$('staffRole').value,job=staffRoles[role],key={assistant:'staffAssistant',supervisor:'staffSupervisor',manager:'staffManager'}[role];
- if(!job||!key||(finance[key]||0)<=0){notify('No employee in that role to let go');return}
- finance[key]--;syncFinance();notify(job.name+' let go. Weekly wages decrease by £'+job.wage+'.');
+ if(!job||!key||(business[key]||0)<=0){notify('No employee in that role to let go');return}
+ business[key]--;syncFinance();notify(job.name+' let go. Weekly wages decrease by £'+job.wage+'.');
+});
+$('trainStaff').addEventListener('click',()=>{
+ const business=selectedBusiness();if(!business){notify('Select a business before training staff');return}
+ if((business.training||0)>=3){notify('Staff training is already at level 3');return}
+ if(!spend(150,'Staff training'))return;
+ business.training=(business.training||0)+1;syncFinance();notify('Staff training improved to level '+business.training+'. Sales efficiency increases by 3%.');
+});
+$('promoteStaff').addEventListener('click',()=>{
+ const business=selectedBusiness();if(!business){notify('Select a business first');return}
+ const role=$('staffRole').value;
+ if(role==='assistant'&&(business.staffAssistant||0)>0){business.staffAssistant--;business.staffSupervisor=(business.staffSupervisor||0)+1;syncFinance();notify('One assistant promoted to supervisor. Weekly wages rise by £40.');return}
+ if(role==='supervisor'&&(business.staffSupervisor||0)>0){business.staffSupervisor--;business.staffManager=(business.staffManager||0)+1;syncFinance();notify('One supervisor promoted to manager. Weekly wages rise by £60.');return}
+ notify('Select assistants or supervisors with staff available to promote.');
 });
 $('upgradeBusiness').addEventListener('click',()=>{
- if(!finance.business){notify('Buy a business before upgrading it');return}
- const level=finance.businessUpgrade||0;
- if(level>=3){notify('Your business is already at maximum upgrade level');return}
- const price=500*(level+1);
- if(!spend(price,'Business upgrade'))return;
- finance.businessUpgrade=level+1;syncFinance();notify('Business upgraded to level '+finance.businessUpgrade+'. Sales improve, with £25 extra weekly maintenance per level.');
+ const business=selectedBusiness();if(!business){notify('Select a business before upgrading it');return}
+ const level=business.upgrade||0;if(level>=3){notify('Your business is already at maximum upgrade level');return}
+ const price=500*(level+1);if(!spend(price,'Business upgrade'))return;
+ business.upgrade=level+1;syncFinance();notify('Business upgraded to level '+business.upgrade+'. Sales improve, with £25 extra weekly maintenance per level.');
 });
 function gameDayTick(){
  finance.day++;
@@ -795,6 +837,7 @@ function saveUKLife(showMessage=false){
   return false;
  }
 }
+function businessPlansForLoad(id){return ['cafe','shop','delivery','garage'].includes(id)}
 function loadUKLife(){
  try{
   const raw=localStorage.getItem(UK_LIFE_SAVE_KEY);if(!raw)return;
@@ -812,6 +855,10 @@ function loadUKLife(){
     else if(typeof current==='boolean'&&typeof v==='boolean')finance[k]=v;
     else if(current===null&&(typeof v==='string'||v===null))finance[k]=v;
    }
+   if(Array.isArray(d.finance.businessesOwned))finance.businessesOwned=d.finance.businessesOwned.filter(x=>x&&typeof x.id==='string'&&businessPlansForLoad(x.id)).map(x=>({...x}));
+  }
+  if(!finance.businessesOwned.length&&finance.business){
+   finance.businessesOwned.push({id:finance.business,location:'city',staffAssistant:finance.staffAssistant||0,staffSupervisor:finance.staffSupervisor||0,staffManager:finance.staffManager||0,upgrade:finance.businessUpgrade||0,training:0,lastRevenue:finance.businessLastRevenue||0,lastCosts:finance.businessLastCosts||0,lastTax:finance.businessLastTax||0,lastProfit:finance.businessLastProfit||0,revenueTotal:finance.businessRevenueTotal||0,costsTotal:finance.businessCostsTotal||0});
   }
   if(d.look&&typeof d.look==='object'){
    if(Number.isFinite(d.look.hair))playerHair.color.setHex(d.look.hair);
