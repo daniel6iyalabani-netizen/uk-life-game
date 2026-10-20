@@ -282,7 +282,14 @@ const buildingData=[
 [-143,-23,15,13,12,'brick','shop','SUPERMARKET'],[143,23,14,12,13,'brick2','house','HOME'],
 [-143,63,14,12,10,'brick2','shop','CHIPPY'],[143,-63,14,12,11,'brick','shop','NEWSAGENT'],
 [-63,103,14,12,15,'brick2','house','HOME'],[63,-103,14,12,12,'brick','shop','COFFEE'],
-[-103,-103,16,13,17,'brick2','flat','APARTMENTS'],[103,103,16,13,19,'brick','flat','CITY FLATS']
+[-103,-103,16,13,17,'brick2','flat','APARTMENTS'],[103,103,16,13,19,'brick','flat','CITY FLATS'],
+// Extra residential streets and independent high-street shops.
+[-163,-103,14,12,9,'brick','house','COTTAGE'],[-163,-83,14,12,11,'brick2','shop','BOOKSHOP'],
+[163,-103,14,12,10,'brick2','house','SEMI-DETACHED HOME'],[163,-83,14,12,12,'brick','shop','FLORIST'],
+[-163,103,14,12,10,'brick2','shop','HARDWARE SHOP'],[-163,83,14,12,8,'brick','house','TERRACED HOME'],
+[163,103,14,12,12,'brick','shop','POST OFFICE'],[163,83,14,12,9,'brick2','house','COTTAGE'],
+[-83,143,14,12,10,'brick','shop','POLICE STATION'],[83,143,14,12,10,'brick2','house','SEMI-DETACHED HOME'],
+[-123,143,14,12,9,'brick2','shop','TOY SHOP'],[123,143,14,12,11,'brick','shop','GARDEN CENTRE']
 ];
 for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[7]);
 
@@ -599,7 +606,10 @@ const missionList=[
  {title:'MISSION 08 · HIGH STREET ERRAND',text:'Visit the Phone Shop and press F inside to finish a quick errand.',target:'PHONE SHOP',reward:325},
  {title:'MISSION 09 · BARBER PICKUP',text:'Visit the Barber and press F inside to collect a customer booking.',target:'BARBER',reward:350},
  {title:'MISSION 10 · CHIP SHOP RUN',text:'Head to the Chippy and press F inside to pick up a takeaway order.',target:'CHIPPY',reward:375},
- {title:'MISSION 11 · COMMUNITY ROUTE',text:'Visit the Delivery Depot and press F inside to complete a community delivery.',target:'DELIVERY DEPOT',reward:400}
+ {title:'MISSION 11 · COMMUNITY ROUTE',text:'Visit the Delivery Depot and press F inside to complete a community delivery.',target:'DELIVERY DEPOT',reward:400},
+ {title:'MISSION 12 · POLICE STATION VISIT',text:'Head to the Police Station and press F inside to check in for a patrol briefing.',target:'POLICE STATION',reward:425},
+ {title:'MISSION 13 · LOST PROPERTY',text:'Visit the Police Station and press F inside to return a found item.',target:'POLICE STATION',reward:450},
+ {title:'MISSION 14 · NEIGHBOURHOOD PATROL',text:'Take a look around the new neighbourhood and report back at the Police Station.',target:'POLICE STATION',reward:475}
 ];let missionIndex=0,missionStage=0,money=250;
 const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
 function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
