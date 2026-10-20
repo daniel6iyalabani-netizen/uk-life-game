@@ -290,7 +290,7 @@ const mats={grass:M(0x688d5b),road:M(0x20262c),brick:M(0x9c5d49),brick2:M(0xb67d
 function mesh(g,m,x,y,z,p=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
 function box(x,y,z,sx,sy,sz,m,p=scene){return mesh(new THREE.BoxGeometry(sx,sy,sz),m,x,y,z,p)}
 box(0,-.35,0,390,.5,390,mats.grass);
-function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);const yellow=M(0xf0c92f);for(const off of [.42,.78]){if(w>d){box(x,.028,z-w/2+off,w,.035,.12,yellow);box(x,.028,z+w/2-off,w,.035,.12,yellow)}else{box(x-w/2+off,.028,z,.12,.035,d,yellow);box(x+w/2-off,.028,z,.12,.035,d,yellow)}}}
+function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);const yellow=M(0xf0c92f);for(const off of [.42,.78]){if(w>d){box(x,.028,z-d/2+off,w,.035,.12,yellow);box(x,.028,z+d/2-off,w,.035,.12,yellow)}else{box(x-w/2+off,.028,z,.12,.035,d,yellow);box(x+w/2-off,.028,z,.12,.035,d,yellow)}}}
 // Build visible asphalt roads beneath the pavements: the previous layout defined road markings but never called road().
 for(const z of [-120,-80,-40,0,40,80,120])road(0,z,360,15);
 for(const x of [-120,-80,-40,0,40,80,120])road(x,0,15,360);
@@ -454,7 +454,7 @@ const buildingData=[
 [-83,143,14,12,10,'brick','shop','POLICE STATION'],[83,143,14,12,10,'brick2','house','SEMI-DETACHED HOME'],
 [-123,143,14,12,9,'brick2','shop','TOY SHOP'],[123,143,14,12,11,'brick','shop','GARDEN CENTRE'],
 // Civic and leisure quarter: expanded northern neighbourhood.
-[-143,-143,16,13,13,'brick2','shop','LIBRARY'],[-103,-143,16,13,12,'brick','shop','HEALTH CLINIC'],[-63,-143,16,13,12,'brick2','house','SCHOOL'],[-23,-143,16,13,12,'brick','shop','COMMUNITY CENTRE'],[23,-143,16,13,16,'brick2','shop','CINEMA'],[63,-143,16,13,12,'brick','shop','FIRE STATION'],[103,-143,16,13,12,'brick2','shop','AMBULANCE STATION'],[143,-143,16,13,11,'brick','house','SEMI-DETACHED HOME'],[-143,143,14,12,10,'brick','house','COTTAGE'],[83,-103,16,13,12,'brick2','shop','NIGHTCLUB']
+[-143,-143,16,13,13,'brick2','shop','LIBRARY'],[-103,-143,16,13,12,'brick','shop','HEALTH CLINIC'],[-63,-143,16,13,12,'brick2','house','SCHOOL'],[-23,-143,16,13,12,'brick','shop','COMMUNITY CENTRE'],[23,-143,16,13,16,'brick2','shop','CINEMA'],[63,-143,16,13,12,'brick','shop','FIRE STATION'],[103,-143,16,13,12,'brick2','shop','AMBULANCE STATION'],[143,-143,16,13,11,'brick','house','SEMI-DETACHED HOME'],[-143,143,14,12,10,'brick','house','COTTAGE'],[103,-103,16,13,12,'brick2','shop','NIGHTCLUB']
 ];
 for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[7]);
 
