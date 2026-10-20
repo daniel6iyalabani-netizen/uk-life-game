@@ -714,8 +714,8 @@ function update(dt){
  for(const w of businessWorkers.children)w.position.y=Math.sin(performance.now()*.002+w.userData.workPhase)*.045;
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').style.display='none'}
  marker.rotation.y+=dt*.65;halo.rotation.z+=dt;marker.position.y=Math.sin(performance.now()*.002)*.12;
- if(dispatchOffer){dispatchOfferClock-=dt;if(dispatchOfferClock<=0){dispatchOffer=null;$('dispatchPanel').style.display='none';dispatchClock=100+Math.random()*75;notify('Dispatch offer expired')}}else if(!activeDispatch){dispatchClock-=dt;if(dispatchClock<=0)offerDispatch()}
- if(activeDispatch){activeDispatch.time-=dt;if(activeDispatch.time<=0){notify('Emergency call-out timed out');activeDispatch=null;dispatchClock=105+Math.random()*70;updateMission()}else marker.position.set(activeDispatch.x,0,activeDispatch.z)}
+ if(playing){if(dispatchOffer){dispatchOfferClock-=dt;if(dispatchOfferClock<=0){dispatchOffer=null;$('dispatchPanel').style.display='none';dispatchClock=100+Math.random()*75;notify('Dispatch offer expired')}}else if(!activeDispatch){dispatchClock-=dt;if(dispatchClock<=0)offerDispatch()}
+ if(activeDispatch){activeDispatch.time-=dt;if(activeDispatch.time<=0){notify('Emergency call-out timed out');activeDispatch=null;dispatchClock=105+Math.random()*70;updateMission()}else marker.position.set(activeDispatch.x,0,activeDispatch.z)}}
  if(playing)updateMiniMap();
  // pedestrians walk between randomly chosen nearby points; reverse when blocked or reaching destination
  for(const n of npcs){if(inside)break;const dx=n.to.x-n.g.position.x,dz=n.to.z-n.g.position.z,dist=Math.hypot(dx,dz);if(dist<1.2||blocked(n.to.x,n.to.z,1)){n.to.set(n.g.position.x+(Math.random()-.5)*22,0,n.g.position.z+(Math.random()-.5)*22)}else{const vx=dx/dist*n.speed*dt,vz=dz/dist*n.speed*dt;if(!blocked(n.g.position.x+vx,n.g.position.z+vz,.4)){n.g.position.x+=vx;n.g.position.z+=vz;n.g.rotation.y=Math.atan2(vx,vz)}else n.to.set(n.g.position.x+(Math.random()-.5)*20,0,n.g.position.z+(Math.random()-.5)*20)}}
