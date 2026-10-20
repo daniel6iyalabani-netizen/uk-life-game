@@ -291,6 +291,7 @@ function syncBusinessBuildings(portfolio){
  const signature=portfolio.map((b,i)=>[i,b.id,b.location].join(':')).join('|');
  if(signature===businessBuildingSignature)return;
  for(const g of businessBuildingGroups){scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map)m.map.dispose();m.dispose()})}})}
+ for(let i=doors.length-1;i>=0;i--)if(doors[i].businessType)doors.splice(i,1);
  businessBuildingGroups.length=0;businessBuildingSignature=signature;
  const locationSites={
   city:{x:-9,z:-10},shops:{x:31,z:-30},terraced:{x:-50,z:-50},park:{x:18,z:108},oldtown:{x:150,z:14}
