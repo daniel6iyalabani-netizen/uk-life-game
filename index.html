@@ -287,7 +287,7 @@ function useDoorOrCar(){
  const c=nearestCar();if(c){driving=c;c.occupied=true;player.visible=false;yaw=c.heading;notify('Driving '+c.spec.name+' · E to exit');return}
  notify('Walk near a gold door or parked car and press E')
 }
-function switchCar(){if(driving||inside){notify('Exit first to switch vehicles');return}const c=nearestCar();if(c){$('carChoice').value=c.spec.id;c.paint.color.set($('paintChoice').value);notify('Selected '+c.spec.name)}else notify('Walk closer to a car')}
+function switchCar(){if(driving||inside){notify('Exit first to switch vehicles');return}const c=nearestCar();if(c){c.paint.color.set($('paintChoice').value);notify('Selected '+c.spec.name)}else notify('Walk closer to a car')}
 function interact(){
  if(inside){const m=currentMission();if(missionIndex>=missionList.length){notify('No more starter missions — free roam!');return}if(activeDoor&&activeDoor.label===m.target){money+=m.reward;$('money').textContent=money;syncFinance();notify('JOB COMPLETE · +£'+m.reward);missionIndex++;missionStage=0;updateMission()}else notify('This is not the shop for your current job');return}
  const pos=driving?driving.g.position:player.position;if(missionIndex<missionList.length&&pos.distanceTo(marker.position)<7){const m=currentMission();if(missionStage===0){const target=doors.find(d=>d.label===m.target);if(target&&target.kind==='shop'){notify('Job started: enter '+m.target+' and press F');missionStage=1;updateMission()}else{notify('Head to '+m.target);}}else notify('Enter the target building to finish the job')}else notify('Follow the green marker to your next job')
