@@ -390,6 +390,34 @@ if(kind==='house'||kind==='flat'){
     box(bx,.48,d/2+1.88,1.8,.08,.07,M(0xe2ded1),g);
   }
 }
+ // Individual residential character: bay windows, lintels, varied front doors and a garden path.
+if(kind==='house'){
+ const variation=Math.abs(Math.floor((x*13+z*7)%4));
+ const trim=[0xe6dfd0,0xd8c6a9,0xc7d4d2,0xf0e6d7][variation];
+ for(const bx of [-w*.27,w*.27]){
+  box(bx,2.05,d/2+.23,1.65,1.55,.42,M([0xb8cbd0,0x8eaaa8,0xd5c5ae,0xb2beca][variation]),g);
+  box(bx,2.83,d/2+.46,1.8,.13,.16,trim,g);
+  box(bx,1.25,d/2+.46,1.8,.13,.16,trim,g);
+  box(bx,2.05,d/2+.47,.1,1.45,.12,trim,g);
+ }
+ box(0,2.38,d/2+.49,1.22,.1,.12,trim,g);
+ // Front path and a low brick or painted garden wall, with a clear gap to the door.
+ box(0,.055,d/2+2.55,1.45,.11,3.5,M(variation%2?0xaaa59b:0xc0b9ab),g);
+ for(const side of [-1,1]){
+  box(side*(w/2+.25),.35,d/2+2.15,.22,.7,4.5,M([0x9b9b91,0xb4a18b,0x858b85,0xc1b8a9][variation]),g);
+  for(let k=0;k<4;k++)box(side*(w/2+.25),.72,d/2+.55+k*1.05,.3,.12,.12,M(0xe2ded1),g);
+ }
+ // A wheelie bin and a small porch light make the frontage feel lived-in.
+ box(-w*.39,.48,d/2+2.5,.62,.95,.62,M(variation%2?0x315b45:0x394e63),g);
+ box(.88,2.05,d/2+.48,.14,.22,.1,M(0xffdf91),g);
+}
+if(kind==='flat'){
+ for(let yy=3;yy<h-1;yy+=2.7){
+  box(0,yy,d/2+.14,w*.75,1.05,.1,M(0x8db6c2),g);
+  for(let xx=-w*.3;xx<=w*.3;xx+=w*.3)box(xx,yy,.08+d/2, .08,1.05,.12,M(0xe2ded1),g);
+ }
+ box(0,.22,d/2+1.3,w*.85,.22,1.7,M(0x8d969a),g);
+}
  const sign=box(0,2.9,d/2+.54,Math.min(w*.86,8),.55,.18,kind==='shop'?M(0x237c58):M(0x5c493e),g);
  // small readable sign via canvas texture
  const c=document.createElement('canvas');c.width=512;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle=kind==='shop'?'#237c58':'#5c493e';ctx.fillRect(0,0,512,96);ctx.fillStyle='white';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(label,256,62);
@@ -742,7 +770,15 @@ const npcGreetings=[['Morning! Bit chilly today, isn’t it?','Have a good one!'
 function createNPC(i){const g=new THREE.Group(),col=M(npcColors[i%npcColors.length]),skin=M([0xd6a17c,0x8d5c3f,0xe5c19d,0xb97955][i%4]),pants=M([0x26394b,0x373737,0x4a3b32,0x253c30][i%4]);box(0,1.25,0,.58,.8,.34,col,g);mesh(new THREE.SphereGeometry(.23,12,10),skin,0,1.83,0,g);const leftArm=new THREE.Group(),rightArm=new THREE.Group(),leftLeg=new THREE.Group(),rightLeg=new THREE.Group();leftArm.position.set(-.36,1.52,0);rightArm.position.set(.36,1.52,0);leftLeg.position.set(-.16,.76,0);rightLeg.position.set(.16,.76,0);g.add(leftArm,rightArm,leftLeg,rightLeg);box(0,-.29,0,.15,.58,.17,col,leftArm);box(0,-.29,0,.15,.58,.17,col,rightArm);box(0,-.34,0,.17,.68,.2,pants,leftLeg);box(0,-.34,0,.17,.68,.2,pants,rightLeg);box(0,-.66,.07,.19,.12,.32,M(0x292b2d),leftLeg);box(0,-.66,.07,.19,.12,.32,M(0x292b2d),rightLeg);let x,z,attempt=0;do{x=(Math.random()-.5)*280;z=(Math.random()-.5)*280;attempt++}while(attempt<80&&(blocked(x,z,1.2)||Math.abs(x%40)<9||Math.abs(z%40)<9));g.position.set(x,0,z);scene.add(g);const roll=Math.random(),npc={g,name:npcNames[i%npcNames.length],to:new THREE.Vector3(x,0,z),speed:.8+Math.random()*1.05,phase:Math.random()*5,leftArm,rightArm,leftLeg,rightLeg,walkClock:Math.random()*6,state:'walk',stateTimer:1+Math.random()*4,chatCooldown:0,style:roll<.2?'commuter':roll<.4?'shopper':roll<.55?'jogger':'local',lastGreeting:0,lastLine:'Have a good one!',routineOffset:Math.random()*24,shopDoor:null,shopVisits:0,friendship:0,meetings:0,known:false,waitingForBus:false,busStop:null,persistentId:i};npcs.push(npc);chooseNPCDestination(npc)}
 function chooseNPCDestination(n){const hour=(worldClockSeconds||28800)/3600;const shops=doors.filter(d=>d.kind==='shop'&&!d.businessType);const wantsShop=n.style==='shopper'&&shops.length&&hour>=8&&hour<20&&Math.random()<.62;if(wantsShop){const d=shops[Math.floor(Math.random()*shops.length)];n.shopDoor=d;n.to.set(d.doorX,0,d.doorZ);n.state='toShop';n.stateTimer=8+Math.random()*8;return}n.shopDoor=null;if(Math.random()<.16&&busStops.length&&hour>=6&&hour<23){const stop=busStops[Math.floor(Math.random()*busStops.length)];n.to.set(stop.x+(Math.random()-.5)*2,0,stop.z+(Math.random()-.5)*2);n.state='walkingToBus';n.busStop=stop;n.stateTimer=10;return}for(let tries=0;tries<10;tries++){let tx=n.g.position.x+(Math.random()-.5)*24,tz=n.g.position.z+(Math.random()-.5)*24;if(n.style==='commuter'&&(hour<9||hour>=16&&hour<19)){tx+=Math.random()<.5?18:-18;tz+=Math.random()<.5?18:-18}if(n.style==='jogger'){tx+=Math.random()<.5?12:-12;tz+=Math.random()<.5?12:-12}if(!blocked(tx,tz,1.1)&&Math.abs(tx%40)>7&&Math.abs(tz%40)>7){n.to.set(tx,0,tz);n.state='walk';n.stateTimer=2+Math.random()*5;return}}n.to.set(n.g.position.x+(Math.random()-.5)*8,0,n.g.position.z+(Math.random()-.5)*8);n.state='walk';n.stateTimer=2}
 function nearestNPC(maxDistance=3.2){const pos=driving?driving.g.position:player.position;let best=null,bestD=maxDistance;for(const n of npcs){const d=Math.hypot(n.g.position.x-pos.x,n.g.position.z-pos.z);if(d<bestD){best=n;bestD=d}}return best}
-function talkToNPC(n){if(!n)return false;const now=performance.now()/1000;if(now-n.lastGreeting<3){notify(n.name+': '+n.lastLine+' · Friendship '+n.friendship+'/5');return true}n.lastGreeting=now;n.meetings++;n.friendship=Math.min(5,n.friendship+1);n.known=n.meetings>=2;const level=n.friendship>=5?'Good friend':n.friendship>=3?'Friendly face':n.friendship>=2?'Getting to know you':'New acquaintance';const lines=n.friendship>=4?[[`Good to see you again!`,`Fancy a catch-up later?`],[`I was just telling someone about you.`,`See you soon!`]]:n.known?[[`Alright, it's you again!`,`How's things?`],[`Nice to bump into you again.`,`Catch you later!`]]:npcGreetings;const pair=lines[Math.floor(Math.random()*lines.length)];n.lastLine=pair[Math.floor(Math.random()*pair.length)];n.state='chat';n.stateTimer=2.8;n.to.copy(n.g.position);const p=player.position;n.g.rotation.y=Math.atan2(p.x-n.g.position.x,p.z-n.g.position.z);notify(n.name+': '+n.lastLine+' · '+level+' ('+n.friendship+'/5)');return true}
+function talkToNPC(n){if(!n)return false;const now=performance.now()/1000;if(now-n.lastGreeting<3){notify(n.name+': '+n.lastLine+' · Friendship '+n.friendship+'/5');return true}n.lastGreeting=now;n.meetings++;n.friendship=Math.min(5,n.friendship+1);n.known=n.meetings>=2;const level=n.friendship>=5?'Good friend':n.friendship>=3?'Friendly face':n.friendship>=2?'Getting to know you':'New acquaintance';const lines=n.friendship>=4?[[`Good to see you again!`,`Fancy a catch-up later?`],[`I was just telling someone about you.`,`See you soon!`]]:n.known?[[`Alright, it's you again!`,`How's things?`],[`Nice to bump into you again.`,`Catch you later!`]]:npcGreetings;const pair=lines[Math.floor(Math.random()*lines.length)];n.lastLine=pair[Math.floor(Math.random()*pair.length)];n.state='chat';n.stateTimer=2.8;n.to.copy(n.g.position);const p=player.position;n.g.rotation.y=Math.atan2(p.x-n.g.position.x,p.z-n.g.position.z);
+let inviteText='';
+if(n.friendship>=2&&typeof doors!=='undefined'){
+ const residential=doors.filter(d=>(d.kind==='house'||d.kind==='flat')&&d.label!=='YOUR HOME'&&!d.invited);
+ let nearestHome=null,nearestHomeDist=Infinity;
+ for(const d of residential){const dd=Math.hypot(d.doorX-p.x,d.doorZ-p.z);if(dd<nearestHomeDist){nearestHome=d;nearestHomeDist=dd}}
+ if(nearestHome&&nearestHomeDist<20){nearestHome.invited=true;inviteText=' '+n.name+' invites you into '+nearestHome.label+' — you can enter that home now.'}
+}
+notify(n.name+': '+n.lastLine+' · '+level+' ('+n.friendship+'/5).'+inviteText);return true}
 for(let i=0;i<24;i++)createNPC(i);
 
 // doors/building interiors are instanced as compact rooms; entering teleports to room, E returns to door.
@@ -916,7 +952,10 @@ function nearestDoor(){let best=null,bd=Infinity;for(const d of doors){const p=n
 function useDoorOrCar(){
  if(inside){inside=false;interior.visible=false;scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);player.position.copy(playerReturn);player.visible=true;activeDoor=null;notify('Back outside');return}
  if(driving){const c=driving;const side=new THREE.Vector3(Math.cos(c.heading),0,-Math.sin(c.heading));const exit=c.g.position.clone().addScaledVector(side,c.spec.w/2+1.3);if(blocked(exit.x,exit.z,.5)){notify('No room to exit here — move the car first');return}player.position.set(exit.x,0,exit.z);player.visible=true;driving=null;c.occupied=false;notify('Exited '+c.spec.name);return}
- const door=nearestDoor();if(door){activeDoor=door;showRoomFor(door);playerReturn.copy(player.position);inside=true;interior.visible=true;player.position.set(0,0,7);player.visible=true;camera.position.set(0,4,17);camera.lookAt(0,1,0);notify('Entered '+door.label);return}
+ const door=nearestDoor();if(door){
+  const isResidential=door.kind==='house'||door.kind==='flat';
+  if(isResidential&&door.label!=='YOUR HOME'&&!door.invited){notify('Private home · You can only enter your own home or a home you have been invited into. Talk to residents nearby and build a friendship to receive an invitation.');return}
+  activeDoor=door;showRoomFor(door);playerReturn.copy(player.position);inside=true;interior.visible=true;player.position.set(0,0,7);player.visible=true;camera.position.set(0,4,17);camera.lookAt(0,1,0);notify(door.label==='YOUR HOME'?'Welcome home.':'Entered '+door.label+(door.invited?' · visiting by invitation':''));return}
  const c=nearestCar();if(c){driving=c;c.occupied=true;player.visible=false;yaw=c.heading;notify('Driving '+c.spec.name+' · E to exit');return}
  notify('Walk near a gold door or parked car and press E')
 }
