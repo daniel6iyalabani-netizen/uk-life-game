@@ -15,6 +15,9 @@
 .card{width:min(660px,100%);padding:25px;border:1px solid #ffffff35;border-radius:22px;background:#111e26;box-shadow:0 20px 70px #0008}h1{font-size:clamp(30px,6vw,48px);letter-spacing:-.05em;margin:3px 0 8px}.muted{color:#c8d7dd;line-height:1.5}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}button,select{font:inherit;border-radius:10px;border:1px solid #ffffff28;padding:11px 13px;color:white;background:#263a45;cursor:pointer}button.primary{background:#83e0b0;color:#102019;border:0;font-weight:900}label{font-size:13px;color:#d4e1e5}
 #mapPanel{position:absolute;right:14px;bottom:105px;width:160px;font-size:11px;display:none}
+#uiToggle{position:fixed;z-index:4;left:50%;top:12px;transform:translateX(-50%);pointer-events:auto;font-size:12px;padding:8px 12px;background:#101a21e8;color:#fff;border:1px solid #ffffff45;border-radius:999px;cursor:pointer;box-shadow:0 3px 14px #0004}
+body.ui-hidden #brand,body.ui-hidden #stats,body.ui-hidden #mission,body.ui-hidden #bottom,body.ui-hidden #dealershipBtn,body.ui-hidden #lifeBtn,body.ui-hidden #financeBtn,body.ui-hidden #mapPanel,body.ui-hidden #dealershipPanel,body.ui-hidden #lifePanel,body.ui-hidden #financePanel{display:none!important}
+body.ui-hidden #prompt{display:none!important}
 #lifeBtn{position:fixed;z-index:4;right:14px;top:72px;pointer-events:auto}
 #lifePanel{position:fixed;z-index:6;right:14px;top:120px;width:min(330px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:#101a21f2;border:1px solid #ffffff35;border-radius:16px;padding:14px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto}
 #lifePanel h2{margin:0 0 8px;font-size:18px}#lifePanel label{display:block;margin:8px 0 4px;font-size:12px}
@@ -40,6 +43,7 @@
 <p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/mission · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
 <p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
 </div></div>
+<button id="uiToggle" style="display:none" title="Toggle interface (U)">Hide UI · U</button>
 <div id="hud">
 <div id="brand" class="pill">🇬🇧 UK LIFE <span style="color:#83e0b0">CITY UPDATE</span></div>
 <div id="stats"><div class="pill">£<span id="money">250</span></div><div class="pill">MODE <span id="mode">ON FOOT</span></div><div class="pill">PEOPLE <span id="peopleCount">16</span></div></div>
@@ -518,7 +522,7 @@ function trafficHasRedLight(c){
  return false;
 }
 function spawnTraffic(){
- const trafficSpecs=[specs[0],specs[1],specs[3],specs[4],specs[7]];
+ const trafficSpecs=[specs[0],specs[1],specs[3],specs[4],specs[7],specs.find(s=>s.id==='police'),specs.find(s=>s.id==='ambulance'),specs.find(s=>s.id==='fireengine')];
  const horizontal=[-120,-80,-40,40,80,120],vertical=[-120,-80,-40,40,80,120];
  for(let i=0;i<12;i++){
   const z=horizontal[i%horizontal.length],dir=i%2===0?1:-1;
@@ -620,26 +624,30 @@ const missionList=[
  {title:'MISSION 13 · LOST PROPERTY',text:'Visit the Police Station and press F inside to return a found item.',target:'POLICE STATION',reward:450},
  {title:'MISSION 14 · NEIGHBOURHOOD PATROL',text:'Take a look around the new neighbourhood and report back at the Police Station.',target:'POLICE STATION',reward:475},
  {title:'MISSION 15 · FIRE STATION CALL-OUT',text:'Report to the Fire Station for your emergency response briefing.',target:'FIRE STATION',reward:500},
- {title:'MISSION 16 · AMBULANCE RESPONSE',text:'Visit the Ambulance Station to receive your first response assignment.',target:'AMBULANCE STATION',reward:525}
+ {title:'MISSION 16 · AMBULANCE RESPONSE',text:'Visit the Ambulance Station to receive your first response assignment.',target:'AMBULANCE STATION',reward:525},
+ {title:'MISSION 17 · FIRE ENGINE DISPATCH',text:'Take a Fire Engine to the marked incident. Drive close to the green marker and press F.',target:'FIRE STATION',vehicleMission:'fireengine',targetPos:{x:63,z:-105},reward:650},
+ {title:'MISSION 18 · AMBULANCE CALL-OUT',text:'Drive an Ambulance to the marked incident. Drive close to the green marker and press F.',target:'AMBULANCE STATION',vehicleMission:'ambulance',targetPos:{x:103,z:-105},reward:700}
 ];let missionIndex=0,missionStage=0,money=250;
 const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
 function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
 function updateMission(){const m=currentMission();$('missionTitle').textContent=missionIndex>=missionList.length?'CITY LIFE · FREE ROAM':m.title;$('missionText').textContent=missionIndex>=missionList.length?'All starter missions complete! Explore the city and visit any building.':(missionStage===0?m.text:'Inside the '+m.target+' — press F to complete this job.');$('progress').textContent=Math.min(missionIndex,missionList.length)+' / '+missionList.length;
-const d=doors.find(d=>d.label===m.target);if(d)marker.position.set(d.x,0,d.doorZ)}
+const d=doors.find(d=>d.label===m.target);if(m.targetPos)marker.position.set(m.targetPos.x,0,m.targetPos.z);else if(d)marker.position.set(d.x,0,d.doorZ)}
 
 const keys={};let yaw=0,playing=false,driving=null,last=performance.now(),noticeTimer=0,cameraMode=0,playerReturn=new THREE.Vector3(0,0,5);
+function toggleGameUI(){document.body.classList.toggle('ui-hidden');const hidden=document.body.classList.contains('ui-hidden');$('uiToggle').textContent=hidden?'Show UI · U':'Hide UI · U';if(hidden){$('lifePanel').style.display='none';$('financePanel').style.display='none';$('dealershipPanel').style.display='none'}}
+$('uiToggle').addEventListener('click',toggleGameUI);
 let sirenEnabled=false,sirenContext=null,sirenOscA=null,sirenOscB=null,sirenGain=null,sirenClock=0;
 function toggleSiren(){if(!driving||!['police','ambulance','fireengine'].includes(driving.spec.id)){notify('Enter a police car, ambulance or fire engine first');return}sirenEnabled=!sirenEnabled;if(sirenEnabled){try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){sirenContext=sirenContext||new AC();if(sirenContext.state==='suspended')sirenContext.resume();sirenGain=sirenContext.createGain();sirenGain.gain.value=.035;sirenGain.connect(sirenContext.destination);sirenOscA=sirenContext.createOscillator();sirenOscB=sirenContext.createOscillator();sirenOscA.type='sawtooth';sirenOscB.type='sine';sirenOscA.frequency.value=650;sirenOscB.frequency.value=440;sirenOscA.connect(sirenGain);sirenOscB.connect(sirenGain);sirenOscA.start();sirenOscB.start();}notify('Emergency lights and siren ON · H to switch off')}catch(e){notify('Emergency lights ON · audio unavailable')}}else{if(sirenGain)sirenGain.gain.value=0;notify('Emergency lights and siren OFF')}}
 const $=id=>document.getElementById(id);
 updateMission();
-addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact();if(e.code==='KeyH')toggleSiren()});
+addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact();if(e.code==='KeyH')toggleSiren();if(e.code==='KeyU'&&playing)toggleGameUI()});
 addEventListener('keyup',e=>keys[e.code]=false);
 renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
 let selectedRegion='london';
 const regionNames={london:'England · London',edinburgh:'Scotland · Edinburgh',cardiff:'Wales · Cardiff',belfast:'Northern Ireland · Belfast'};
 const startPoints={centre:{x:0,z:5,label:'City centre'},homes:{x:-34,z:-34,label:'Terraced homes'},shops:{x:33,z:-35,label:'Shopping street'},park:{x:4,z:92,label:'Park and gardens'},oldtown:{x:150,z:0,label:'Old town / harbour'}};
-$('play').onclick=()=>{selectedRegion=$('regionChoice').value;applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);yaw=0;playing=true;$('start').style.display='none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')};
+$('play').onclick=()=>{selectedRegion=$('regionChoice').value;applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);yaw=0;playing=true;$('start').style.display='none';$('uiToggle').style.display='block';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')};
 function buildDealer(){const root=$('dealerList');root.innerHTML='';for(const spec of specs){const row=document.createElement('div');row.style.cssText='padding:9px 0;border-bottom:1px solid #ffffff22;display:flex;align-items:center;justify-content:space-between;gap:8px';const textNode=document.createElement('div');textNode.innerHTML='<b>'+spec.name+'</b><div class="muted" style="font-size:11px">Top speed '+Math.round(spec.max*3.6)+' km/h · £'+carPrices[spec.id].toLocaleString('en-GB')+'</div>';const btn=document.createElement('button');btn.textContent=ownedCars.has(spec.id)?'Owned':'Buy';btn.disabled=ownedCars.has(spec.id);btn.style.cssText='padding:7px 10px;border-radius:8px;border:0;cursor:pointer';btn.onclick=()=>{const price=carPrices[spec.id];if(money<price){notify('You need £'+(price-money).toLocaleString('en-GB')+' more for this car');return}money-=price;syncFinance();ownedCars.add(spec.id);const c=createCar(spec,5+cars.length*3,10+cars.length*2,0);c.paint.color.set($('paintChoice').value);c.owned=true;notify('Purchased '+spec.name+' for £'+price.toLocaleString('en-GB'));buildDealer();saveUKLife(false)};row.append(textNode,btn);root.appendChild(row)}}
 $('dealershipBtn').addEventListener('click',()=>{buildDealer();$('dealershipPanel').style.display=$('dealershipPanel').style.display==='block'?'none':'block'});
 $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.display='none');
@@ -656,7 +664,9 @@ function useDoorOrCar(){
  notify('Walk near a gold door or parked car and press E')
 }
 function switchCar(){if(driving||inside){notify('Exit first to switch vehicles');return}const c=nearestCar();if(c){c.paint.color.set($('paintChoice').value);notify('Selected '+c.spec.name)}else notify('Walk closer to a car')}
+function positionalDistance(pos,target){return Math.hypot(pos.x-target.x,pos.z-target.z)}
 function interact(){
+ if(missionIndex<missionList.length&&currentMission().vehicleMission){const m=currentMission();if(!m.targetPos)return;if(positionalDistance(driving?driving.g.position:player.position,m.targetPos)<10){if(!driving||driving.spec.id!==m.vehicleMission){notify('Use the '+(m.vehicleMission==='fireengine'?'Fire Engine':'Ambulance')+' to respond to this call-out');return}money+=m.reward;$('money').textContent=money;notify('CALL-OUT COMPLETE · +£'+m.reward);missionIndex++;missionStage=0;updateMission();syncFinance()}else notify('Follow the green marker to the incident');return}
  if(inside){const m=currentMission();if(missionIndex>=missionList.length){notify('No more starter missions — free roam!');return}if(activeDoor&&activeDoor.label===m.target){money+=m.reward;$('money').textContent=money;syncFinance();notify('JOB COMPLETE · +£'+m.reward);missionIndex++;missionStage=0;updateMission()}else notify('This is not the shop for your current job');return}
  const pos=driving?driving.g.position:player.position;if(missionIndex<missionList.length&&pos.distanceTo(marker.position)<7){const m=currentMission();if(missionStage===0){const target=doors.find(d=>d.label===m.target);if(target&&target.kind==='shop'){notify('Job started: enter '+m.target+' and press F');missionStage=1;updateMission()}else{notify('Head to '+m.target);}}else notify('Enter the target building to finish the job')}else notify('Follow the green marker to your next job')
 }
@@ -683,6 +693,7 @@ function updateTraffic(dt){
    c.heading=c.trafficDir>0?Math.PI:0;
   }
   c.g.position.y=0;c.g.rotation.y=c.heading;
+  if(c.g.userData.emergencyBeacons){const phase=Math.floor(performance.now()/190)%2;c.g.userData.emergencyBeacons[0].material.color.setHex(phase===0?0x35a2ff:0x242d36);c.g.userData.emergencyBeacons[1].material.color.setHex(phase===1?0xff3838:0x242d36)}
   c.wheels.forEach(w=>w.rotation.x+=c.trafficSpeed*dt*1.4);
  }
 }
