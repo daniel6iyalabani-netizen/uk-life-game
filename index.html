@@ -35,7 +35,7 @@
 <div style="color:#83e0b0;font-weight:900;letter-spacing:.16em">CITY EXPANSION UPDATE</div>
 <h1>UK LIFE <span style="color:#83e0b0">🏙️</span></h1>
 <p class="muted">A bigger original London-inspired neighbourhood with enterable buildings, wandering pedestrians, delivery jobs, shopping and your drivable cars.</p>
-<div class="row"><label for="regionChoice">Choose your UK location</label><select id="regionChoice"><option value="london">England · London</option><option value="edinburgh">Scotland · Edinburgh</option><option value="cardiff">Wales · Cardiff</option><option value="belfast">Northern Ireland · Belfast</option></select><label for="paintChoice">Preferred car colour (for a future purchase)</label><select id="paintChoice"><option value="#d7443e">Red</option><option value="#287fc4">Blue</option><option value="#25292e">Black</option><option value="#e7c442">Yellow</option><option value="#eeeeea">White</option><option value="#398b5b">Green</option></select></div><p class="muted" style="font-size:12px">You start on foot with £250. Buy your first car from the dealership after earning or saving enough.</p>
+<div class="row"><label for="regionChoice">Choose your UK location</label><select id="regionChoice"><option value="london">England · London</option><option value="edinburgh">Scotland · Edinburgh</option><option value="cardiff">Wales · Cardiff</option><option value="belfast">Northern Ireland · Belfast</option></select><label for="startChoice">Where would you like to start?</label><select id="startChoice"><option value="centre">City centre</option><option value="homes">Terraced homes</option><option value="shops">Shopping street</option><option value="park">Park and gardens</option><option value="oldtown">Old town / harbour</option></select><label for="paintChoice">Preferred car colour (for a future purchase)</label><select id="paintChoice"><option value="#d7443e">Red</option><option value="#287fc4">Blue</option><option value="#25292e">Black</option><option value="#e7c442">Yellow</option><option value="#eeeeea">White</option><option value="#398b5b">Green</option></select></div><p class="muted" style="font-size:12px">You start on foot with £250. Buy your first car from the dealership after earning or saving enough.</p>
 <div class="row"><button class="primary" id="play">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
 <p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/mission · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
 <p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
@@ -309,6 +309,29 @@ function applyRegionLandmarks(region){
  for(const [name,g] of Object.entries(regionLandmarks))g.visible=name===region;
 }
 applyRegionLandmarks('london');
+// British street furniture: traffic lights, speed limits, direction signs and bus shelters.
+const signPole=M(0x34383a,.6,.15),signWhite=M(0xf4f1e8);
+function trafficLight(x,z,rot=0){
+ const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);
+ box(0,2.4,0,.16,4.8,.16,signPole,g);box(0,4.3,.18,.7,1.55,.42,M(0x24282b),g);
+ for(const [y,c] of [[4.78,0xd83b36],[4.3,0xe4b33d],[3.82,0x4baf66]])mesh(new THREE.SphereGeometry(.17,10,8),M(c,.35),0,y,.42,g);
+}
+for(const [x,z,r] of [[-8,-8,0],[8,-8,Math.PI],[8,8,Math.PI],[-8,8,0],[-48,-8,0],[48,8,Math.PI],[8,48,Math.PI]])trafficLight(x,z,r);
+function roadsideSign(x,z,top,bottom,speed=true){
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(0,1.65,0,.12,3.3,.12,signPole,g);
+ box(0,3.05,.06,1.5,1.5,.12,speed?M(0xc83b35):M(0x244b3b),g);box(0,3.05,.14,1.28,1.28,.06,speed?signWhite:M(0x235b43),g);
+ const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.fillStyle=speed?'#f8f7f0':'#235b43';ctx.fillRect(0,0,256,256);ctx.textAlign='center';ctx.fillStyle=speed?'#202326':'#ffffff';ctx.font='bold 76px Arial';ctx.fillText(top,128,105);ctx.font='bold 31px Arial';ctx.fillText(bottom,128,160);
+ box(0,3.05,.19,1.22,1.22,.025,new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c),roughness:.9}),g);
+}
+roadsideSign(-11,-15,'30','MPH',true);roadsideSign(11,15,'30','MPH',true);roadsideSign(-11,27,'P','PARKING',false);roadsideSign(51,-11,'BUS','STOP',false);
+function busStop(x,z){
+ const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);
+ box(0,1.35,0,2.8,2.7,.12,M(0x4b5556),g);box(0,1.4,-.1,2.5,2.25,.08,M(0x8ec8d9,.35),g);box(0,.45,-.45,2.6,.18,.7,M(0x4a4b48),g);
+ box(-1.25,1.3,0,.1,2.6,.14,signPole,g);box(1.25,1.3,0,.1,2.6,.14,signPole,g);box(1.55,2.9,0,.85,.85,.15,M(0x244b3b),g);
+ const c=document.createElement('canvas');c.width=128;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#f4f1e8';ctx.fillRect(0,0,128,128);ctx.fillStyle='#234d3b';ctx.font='bold 62px Arial';ctx.textAlign='center';ctx.fillText('B',64,82);
+ box(1.55,2.9,.13,.65,.65,.02,new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c)}),g);
+}
+busStop(-16,18);busStop(16,-58);
 function tree(x,z){mesh(new THREE.CylinderGeometry(.3,.4,2.5,8),mats.trunk,x,1.25,z);mesh(new THREE.SphereGeometry(2.1,10,8),mats.tree,x,3.4,z)}
 for(let i=0;i<95;i++){let x=(Math.random()-.5)*330,z=(Math.random()-.5)*330;if(Math.abs(x%40)<9||Math.abs(z%40)<9)continue;if(blocked(x,z,3))continue;tree(x,z)}
 for(let x=-160;x<=160;x+=20)for(const z of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp);box(x,6,z,.8,.12,.4,M(0xffe8a5))}
@@ -379,6 +402,17 @@ for(const [x,z] of [[-5,-4],[1,-4],[-5,2],[1,2]])table(cafeRoom,x,z);prop(cafeRo
 prop(clothesRoom,-5,1.7,-3,.15,3.1,7,0x8a8d91);prop(clothesRoom,-5,3.25,-3,.2,.15,7,0x9ca5aa);for(let i=0;i<7;i++){prop(clothesRoom,-4.7,2.45,-6+i*.9,.18,1.2,.48,[0x477eb8,0xd64b54,0x4d9c69,0xe0b64f][i%4])}prop(clothesRoom,4,.7,-4,3,1.4,2,0x76503a);prop(clothesRoom,4,1.45,-4,3.1,.15,2.1,0x9b7656);prop(clothesRoom,6,1.2,4,2,.12,3,0xb8b0a5);
 // Flats: bed, bedside table and kitchenette.
 prop(flatRoom,-4,.4,-4,4, .7,5,0x8b705d);prop(flatRoom,-4,.82,-4,3.8,.2,4.8,0xe4ddd0);prop(flatRoom,-4,1.05,-4,3.7,.35,1.1,0x7395ad);prop(flatRoom,4,.55,-4,2.5,1.1,.8,0xd5d8d5);prop(flatRoom,4,1.15,-4,2.6,.15,.9,0x8b8f91);prop(flatRoom,4,.55,3,3,1.1,1,0x76503a);
+// More home detail: cupboards, cooker, sink, wall picture and a standing lamp.
+prop(homeRoom,5,.9,-5,3.4,1.8,.7,0xd5d0c5);prop(homeRoom,5,1.86,-5,.95,.12,.78,0xb9c1c2);prop(homeRoom,6,.5,-5,1.1,.8,.8,0x30383b);prop(homeRoom,6,.93,-5,1.12,.12,.82,0x171b1e);
+prop(homeRoom,-8,2.5,-6,2.2,1.5,.12,0x79533a);prop(homeRoom,-8,2.5,-5.91,1.85,1.15,.05,0x769d83);prop(homeRoom,7,.12,5,.12,.12,.12,0x8e7b57);prop(homeRoom,7,1.1,5,.12,2,.12,0x8e7b57);prop(homeRoom,7,2.1,5,.65,.12,.65,0xe7d9b4);
+// Bathroom fixtures: bath, tiled shower screen and toilet.
+prop(homeRoom,-7,.18,5,2.8,.32,1.4,0xe9e8e1);prop(homeRoom,-7,.62,5,.8,.62,.9,0xf8f7f0);prop(homeRoom,-9,1.2,7,1.8,2.2,.18,0x9ecbd7);prop(homeRoom,-9,1.2,6.86,1.4,1.8,.05,0x7caebb);prop(homeRoom,-5,.22,7,.8,.44,1,0xf4f2eb);prop(homeRoom,-5,.5,7,.45,.25,.5,0xffffff);
+// Flat kitchenette and bedside lamp.
+prop(flatRoom,4,1.3,3,2.8,.14,1.05,0xd6cfc2);prop(flatRoom,5.2,1.8,3,.5,.9,.5,0x87999c);prop(flatRoom,-6,.9,-7,.12,1.6,.12,0x8e7b57);prop(flatRoom,-6,1.8,-7,.6,.12,.6,0xe7d9b4);
+// Café wall menu, coffee machine and pendant lamps.
+prop(cafeRoom,6,2.3,-9,3.2,1.6,.12,0xeee4d0);prop(cafeRoom,6,2.3,-8.9,2.8,1.2,.04,0x334c45);for(const x of [-5,0,5]){prop(cafeRoom,x,4.5,0,.08,1.1,.08,0x554a3f);prop(cafeRoom,x,3.9,0,.55,.18,.55,0xf3e2b2);}
+// Shop ceiling pendant fixtures.
+for(const x of [-5,0,5]){prop(shopRoom,x,4.5,0,.08,1.1,.08,0x554a3f);prop(shopRoom,x,3.9,0,.55,.18,.55,0xf3e2b2);}
 function showRoomFor(door){homeRoom.visible=false;shopRoom.visible=false;cafeRoom.visible=false;clothesRoom.visible=false;flatRoom.visible=false;if(!door)return;const label=door.label.toUpperCase();if(door.kind==='shop'&&/CAFE|COFFEE|TAKEAWAY|CHIPPY/.test(label))cafeRoom.visible=true;else if(/CLOTHING|BARBER/.test(label))clothesRoom.visible=true;else if(door.kind==='shop')shopRoom.visible=true;else if(door.kind==='flat'||/FLAT|APARTMENT|TOWER/.test(label))flatRoom.visible=true;else homeRoom.visible=true}
 showRoomFor(null);
 let activeDoor=null,inside=false;
@@ -403,7 +437,8 @@ renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
 let selectedRegion='london';
 const regionNames={london:'England · London',edinburgh:'Scotland · Edinburgh',cardiff:'Wales · Cardiff',belfast:'Northern Ireland · Belfast'};
-$('play').onclick=()=>{selectedRegion=$('regionChoice').value;applyRegionLandmarks(selectedRegion);playing=true;$('start').style.display='none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · Regional landmarks · Green = mission · Gold = doors';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+'! You start on foot.')};
+const startPoints={centre:{x:0,z:5,label:'City centre'},homes:{x:-34,z:-34,label:'Terraced homes'},shops:{x:33,z:-35,label:'Shopping street'},park:{x:4,z:92,label:'Park and gardens'},oldtown:{x:150,z:0,label:'Old town / harbour'}};
+$('play').onclick=()=>{selectedRegion=$('regionChoice').value;applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);yaw=0;playing=true;$('start').style.display='none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')};
 function buildDealer(){const root=$('dealerList');root.innerHTML='';for(const spec of specs){const row=document.createElement('div');row.style.cssText='padding:9px 0;border-bottom:1px solid #ffffff22;display:flex;align-items:center;justify-content:space-between;gap:8px';const textNode=document.createElement('div');textNode.innerHTML='<b>'+spec.name+'</b><div class="muted" style="font-size:11px">Top speed '+Math.round(spec.max*3.6)+' km/h · £'+carPrices[spec.id].toLocaleString('en-GB')+'</div>';const btn=document.createElement('button');btn.textContent=ownedCars.has(spec.id)?'Owned':'Buy';btn.disabled=ownedCars.has(spec.id);btn.style.cssText='padding:7px 10px;border-radius:8px;border:0;cursor:pointer';btn.onclick=()=>{const price=carPrices[spec.id];if(money<price){notify('You need £'+(price-money).toLocaleString('en-GB')+' more for this car');return}money-=price;syncFinance();ownedCars.add(spec.id);const c=createCar(spec,5+cars.length*3,10+cars.length*2,0);c.paint.color.set($('paintChoice').value);c.owned=true;notify('Purchased '+spec.name+' for £'+price.toLocaleString('en-GB'));buildDealer();saveUKLife(false)};row.append(textNode,btn);root.appendChild(row)}}
 $('dealershipBtn').addEventListener('click',()=>{buildDealer();$('dealershipPanel').style.display=$('dealershipPanel').style.display==='block'?'none':'block'});
 $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.display='none');
