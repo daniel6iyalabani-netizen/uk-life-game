@@ -450,6 +450,68 @@ $('applyCareer').addEventListener('click',()=>{
 });
 syncFinance();
 
+// UK_LIFE_SAVE_V1: autosave progress locally on this device/browser.
+const UK_LIFE_SAVE_KEY='ukLifeSaveV1';
+function saveUKLife(showMessage=false){
+ try{
+  const save={
+   money,missionIndex,missionStage,yaw,cameraMode,
+   player:{x:player.position.x,y:player.position.y,z:player.position.z},
+   finance:{...finance},
+   look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short'},
+   cars:cars.map(c=>({x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),
+   xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,
+   activeJob:typeof activeJob==='number'?activeJob:null,jobStarted:typeof jobStarted==='boolean'?jobStarted:false
+  };
+  localStorage.setItem(UK_LIFE_SAVE_KEY,JSON.stringify(save));
+  const status=$('saveStatus');if(status)status.textContent='Saved on this device';
+  if(showMessage)notify('Game progress saved on this device');
+  return true;
+ }catch(e){
+  const status=$('saveStatus');if(status)status.textContent='Save unavailable in this browser';
+  if(showMessage)notify('Could not save in this browser. Your game is still playable.');
+  return false;
+ }
+}
+function loadUKLife(){
+ try{
+  const raw=localStorage.getItem(UK_LIFE_SAVE_KEY);if(!raw)return;
+  const d=JSON.parse(raw);if(!d||typeof d!=='object')return;
+  if(Number.isFinite(d.money))money=Math.max(0,d.money);
+  if(Number.isFinite(d.missionIndex))missionIndex=Math.max(0,Math.min(missionList.length,d.missionIndex));
+  if(Number.isFinite(d.missionStage))missionStage=Math.max(0,Math.min(1,d.missionStage));
+  if(Number.isFinite(d.yaw))yaw=d.yaw;
+  if(Number.isFinite(d.cameraMode))cameraMode=d.cameraMode===1?1:0;
+  if(d.player&&[d.player.x,d.player.y,d.player.z].every(Number.isFinite))player.position.set(d.player.x,d.player.y,d.player.z);
+  if(d.finance&&typeof d.finance==='object'){
+   for(const k of Object.keys(finance)){
+    const v=d.finance[k],current=finance[k];
+    if(typeof current==='number'&&Number.isFinite(v))finance[k]=v;
+    else if(typeof current==='boolean'&&typeof v==='boolean')finance[k]=v;
+    else if(current===null&&(typeof v==='string'||v===null))finance[k]=v;
+   }
+  }
+  if(d.look&&typeof d.look==='object'){
+   if(Number.isFinite(d.look.hair))playerHair.color.setHex(d.look.hair);
+   if(Number.isFinite(d.look.skin))playerSkin.color.setHex(d.look.skin);
+   if(Number.isFinite(d.look.outfit))outfit.color.setHex(d.look.outfit);
+   if(typeof d.look.hairStyle==='string'&&$('hairStyle'))$('hairStyle').value=d.look.hairStyle;
+   applyHairStyle();
+   if($('hairColor'))$('hairColor').value='#'+playerHair.color.getHexString();
+   if($('skinColor'))$('skinColor').value='#'+playerSkin.color.getHexString();
+   if($('topColor'))$('topColor').value='#'+outfit.color.getHexString();
+  }
+  if(Array.isArray(d.cars))d.cars.forEach((v,i)=>{const c=cars[i];if(c&&v&&[v.x,v.y,v.z,v.heading].every(Number.isFinite)){c.g.position.set(v.x,v.y,v.z);c.heading=v.heading;c.g.rotation.y=v.heading;if(Number.isFinite(v.speed))c.speed=v.speed}});
+  if(typeof xp!=='undefined'&&Number.isFinite(d.xp))xp=Math.max(0,d.xp);
+  if(typeof jobCount!=='undefined'&&Number.isFinite(d.jobCount))jobCount=Math.max(0,d.jobCount);
+  if(typeof activeJob!=='undefined'){activeJob=Number.isFinite(d.activeJob)?d.activeJob:null;jobStarted=!!d.jobStarted}
+  updateMission();syncFinance();
+  const status=$('saveStatus');if(status)status.textContent='Saved progress loaded';
+ }catch(e){const status=$('saveStatus');if(status)status.textContent='No saved game found';}
+}
+loadUKLife();
+setInterval(()=>saveUKLife(false),5000);
+addEventListener('beforeunload',()=>saveUKLife(false));
 function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)}
 camera.position.set(0,5,14);camera.lookAt(0,1,0);requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
