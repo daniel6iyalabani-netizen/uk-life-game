@@ -540,17 +540,17 @@ const hairCap=mesh(new THREE.SphereGeometry(.33,12,8,0,Math.PI*2,0,Math.PI*.55),
 const hairExtras=new THREE.Group();player.add(hairExtras);
 // Face details: eyes, pupils, nose, mouth, ears and a front hair fringe.
 const eyeWhite=M(0xf8f4e9),eyeDark=M(0x211b19),mouthMat=M(0x542b2a),earInner=M(0x9e5c46);
-mesh(new THREE.SphereGeometry(.052,12,10),eyeWhite,-.115,2.13,.279,player);
-mesh(new THREE.SphereGeometry(.052,12,10),eyeWhite,.115,2.13,.279,player);
-mesh(new THREE.SphereGeometry(.026,10,8),eyeDark,-.108,2.13,.324,player);
-mesh(new THREE.SphereGeometry(.026,10,8),eyeDark,.122,2.13,.324,player);
-mesh(new THREE.SphereGeometry(.043,10,8),playerSkin,0,2.055,.315,player);
-box(0,1.985,.302,.105,.025,.025,mouthMat,player);
+mesh(new THREE.SphereGeometry(.052,12,10),eyeWhite,-.115,2.13,-.279,player);
+mesh(new THREE.SphereGeometry(.052,12,10),eyeWhite,.115,2.13,-.279,player);
+mesh(new THREE.SphereGeometry(.026,10,8),eyeDark,-.108,2.13,-.324,player);
+mesh(new THREE.SphereGeometry(.026,10,8),eyeDark,.122,2.13,-.324,player);
+mesh(new THREE.SphereGeometry(.043,10,8),playerSkin,0,2.055,-.315,player);
+box(0,1.985,-.302,.105,.025,.025,mouthMat,player);
 mesh(new THREE.SphereGeometry(.09,12,10),playerSkin,-.315,2.075,0,player);
 mesh(new THREE.SphereGeometry(.09,12,10),playerSkin,.315,2.075,0,player);
-mesh(new THREE.SphereGeometry(.043,10,8),earInner,-.365,2.075,.035,player);
-mesh(new THREE.SphereGeometry(.043,10,8),earInner,.365,2.075,.035,player);
-mesh(new THREE.SphereGeometry(.17,12,8),playerHair,0,2.25,.22,player);
+mesh(new THREE.SphereGeometry(.043,10,8),earInner,-.365,2.075,-.035,player);
+mesh(new THREE.SphereGeometry(.043,10,8),earInner,.365,2.075,-.035,player);
+mesh(new THREE.SphereGeometry(.17,12,8),playerHair,0,2.25,-.22,player);
 
 const legL=box(-.22,.55,0,.27,.8,.3,mats.pants,player),legR=box(.22,.55,0,.27,.8,.3,mats.pants,player);box(-.22,.13,-.07,.3,.18,.48,mats.shoe,player);box(.22,.13,-.07,.3,.18,.48,mats.shoe,player);
 // Simple articulated arms: shirt sleeves, forearms and hands, pivoting at each shoulder.
@@ -907,8 +907,8 @@ function applyHairStyle(){
  else if(style==='bun'){sphere(0,2.24,0,.34,.2,.32);sphere(0,2.5,-.02,.14,.14,.14)}
  else if(style==='curly'||style==='afro'){sphere(0,2.3,0,style==='afro'?.43:.37,style==='afro'?.34:.26,.36);for(let i=0;i<7;i++)sphere(Math.cos(i*Math.PI*2/7)*.27,2.32,Math.sin(i*Math.PI*2/7)*.24,.13,.13,.13)}
  else if(style==='mohawk'){sphere(0,2.43,0,.12,.28,.17);sphere(0,2.27,.01,.33,.12,.31)}
- else if(style==='ponytail'){sphere(0,2.28,0,.34,.2,.32);sphere(0,2.04,-.29,.12,.34,.12)}
- else if(style==='fringe'||style==='shaggy'){sphere(0,2.3,0,.35,.23,.33);sphere(0,2.17,.25,.3,.14,.12);if(style==='shaggy'){sphere(-.28,2.03,0,.1,.28,.12);sphere(.28,2.03,0,.1,.28,.12)}}
+ else if(style==='ponytail'){sphere(0,2.28,0,.34,.2,.32);sphere(0,2.04,.29,.12,.34,.12)}
+ else if(style==='fringe'||style==='shaggy'){sphere(0,2.3,0,.35,.23,.33);sphere(0,2.17,-.25,.3,.14,.12);if(style==='shaggy'){sphere(-.28,2.03,0,.1,.28,.12);sphere(.28,2.03,0,.1,.28,.12)}}
  else sphere(0,2.3,0,style==='buzz'?.32:.35,style==='buzz'?.13:.18,.32);
 }
 document.getElementById('applyLook').addEventListener('click',()=>{
