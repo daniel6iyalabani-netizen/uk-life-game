@@ -27,6 +27,7 @@ body.ui-hidden #prompt{display:none!important}
 #lifePanel{position:fixed;z-index:6;right:14px;top:120px;width:min(330px,calc(100vw - 28px));max-height:72vh;overflow:auto;background:#101a21f2;border:1px solid #ffffff35;border-radius:16px;padding:14px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto}
 #lifePanel h2{margin:0 0 8px;font-size:18px}
 #achievementsBtn,#closeAchievements{margin-top:6px;background:#214a3c!important;border-color:#83e0b0!important}
+#styleRewardsBtn,#closeStyleRewards{margin-top:6px;background:#34465a!important;border-color:#83e0b0!important}#styleRewardsPanel .styleReward{padding:8px;margin:7px 0;border:1px solid #ffffff22;border-radius:9px;background:#ffffff08}#styleRewardsPanel .styleReward button{margin-top:5px}
 #updatesBtn{background:#10242bF2;border-color:#83e0b0!important}
 #updatesPanel button{cursor:pointer;font-weight:750}
 #updatesPanel .challenge{padding:9px;margin:7px 0;border:1px solid #ffffff22;border-radius:9px;background:#ffffff08}
@@ -70,7 +71,7 @@ body.ui-hidden #updatesBtn{display:none!important}
   <p style="font-size:12px;color:#c8d7dd;line-height:1.5">Your game updates at the same link. Refresh the page if you see an older version.</p>
   <div style="padding:10px;border-radius:10px;background:#ffffff0b;margin:8px 0">
     <b>What's new in this version</b>
-    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li></ul>
+    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li><li>Career-based outfit colour unlocks</li></ul>
   </div>
   <b>📅 Daily challenges</b><p class="small" style="font-size:11px;color:#c8d7dd">Challenges refresh by calendar day on this device. Rewards are in-game only.</p>
   <div id="dailyChallengesList" style="font-size:12px;line-height:1.5"></div>
@@ -204,6 +205,8 @@ body.ui-hidden #updatesBtn{display:none!important}
   <button id="achievementsBtn" type="button">🏆 Achievements & goals</button>
   <button id="closeLife">Close menu</button>
   <div id="achievementsPanel" style="display:none;margin-top:10px;padding:10px;border:1px solid #ffffff30;border-radius:10px;background:#0b171e"><b>🏆 YOUR ACHIEVEMENTS</b><p class="small">Earn XP, complete missions, try jobs and explore the city to unlock milestones.</p><div id="achievementList" class="small" style="line-height:1.8"></div><button id="closeAchievements" type="button">Close achievements</button></div>
+  <button id="styleRewardsBtn" type="button">🎨 Style rewards & unlocks</button>
+  <div id="styleRewardsPanel" style="display:none;margin-top:10px;padding:10px;border:1px solid #ffffff30;border-radius:10px;background:#0b171e"><b>🎨 CAREER STYLE REWARDS</b><p class="small">Earn XP, complete missions and try jobs to unlock extra outfit colours. Choose an unlocked reward to wear it.</p><div id="styleRewardList" class="small" style="line-height:1.6"></div><button id="closeStyleRewards" type="button">Close style rewards</button></div>
 </div>
 <script>
 // Register diagnostics before the module script is parsed, so startup errors are visible.
@@ -1096,7 +1099,7 @@ document.getElementById('phoneText').addEventListener('click',()=>{const n=selec
 document.getElementById('phoneCall').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;n.friendship=Math.min(5,n.friendship+1);n.known=n.meetings>=1||n.friendship>=2;n.lastLine=['I’m free later — see you around!','Nice to hear from you!','I’m out and about in town.','Let’s catch up soon!'][Math.floor(Math.random()*4)];phoneResult('📞 Call connected with '+n.name+'. '+n.name+': “'+n.lastLine+'” · Friendship '+n.friendship+'/5');notify('Call with '+n.name+' finished');refreshPhoneContacts()});
 document.getElementById('phoneInvite').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;const club=doors.find(d=>/NIGHTCLUB|CLUB/i.test(d.label));if(!club){phoneResult('The nightclub could not be found.');return}n.to.set(club.doorX,0,club.doorZ);n.state='walk';n.stateTimer=45;n.shopDoor=club;n.lastLine='I’m heading to the nightclub — meet me there!';n.friendship=Math.min(5,n.friendship+1);phoneResult(n.name+' has been invited to the nightclub and is heading over. Meet them by the club entrance.');notify('🪩 You invited '+n.name+' to the nightclub');refreshPhoneContacts()});
 document.getElementById('busMapBtn').addEventListener('click',()=>{const panel=document.getElementById('busMapPanel');panel.style.display=panel.style.display==='block'?'none':'block'});document.getElementById('closeBusMap').addEventListener('click',()=>document.getElementById('busMapPanel').style.display='none');
-document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}const UK_LIFE_VERSION='2026.10-daily-challenges';
+document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}const UK_LIFE_VERSION='2026.10-style-rewards';
 const UK_LIFE_DAILY_KEY='ukLifeDailyChallengesV1';
 function localDayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function dailyState(){
@@ -1135,6 +1138,28 @@ function renderDailyChallenges(){
   money+=task.reward;syncFinance();notify('Daily challenge complete! You earned £'+task.reward);renderDailyChallenges();
  }));
 }
+function renderStyleRewards(){
+ const el=$('styleRewardList');if(!el)return;
+ const missions=Math.min(Number(missionIndex)||0,missionList.length);
+ const jobs=Number(jobCount)||0,careerXP=Number(xp)||0;
+ const rewards=[
+  {id:'streetwear',name:'🧢 Streetwear Teal',desc:'Reach 100 XP',need:careerXP>=100,color:0x2aa895},
+  {id:'nightshift',name:'🌙 Night Shift Purple',desc:'Complete 3 jobs or contracts',need:jobs>=3,color:0x7654b8},
+  {id:'royalblue',name:'👑 Royal Blue',desc:'Complete 3 city missions',need:missions>=3,color:0x315bd6},
+  {id:'goldtrim',name:'✨ Golden Hour',desc:'Reach 500 XP',need:careerXP>=500,color:0xc99a28}
+ ];
+ el.innerHTML=rewards.map(r=>'<div class="styleReward"><b>'+r.name+'</b><div>'+r.desc+'</div><button type="button" data-style-reward="'+r.id+'" '+(!r.need?'disabled':'')+'>'+(r.need?'Wear this style':'🔒 Keep playing to unlock')+'</button></div>').join('');
+ el.querySelectorAll('[data-style-reward]').forEach(btn=>btn.addEventListener('click',()=>{
+  const reward=rewards.find(r=>r.id===btn.getAttribute('data-style-reward'));if(!reward||!reward.need)return;
+  outfit.color.setHex(reward.color);selectedUniform='custom';
+  if($('uniformChoice'))$('uniformChoice').value='custom';
+  if($('topColor'))$('topColor').value='#'+outfit.color.getHexString();
+  uniformBadge.visible=false;uniformCap.visible=false;
+  saveUKLife(false);notify('Style unlocked and equipped: '+reward.name);renderStyleRewards();
+ }));
+}
+$('styleRewardsBtn').addEventListener('click',()=>{const p=$('styleRewardsPanel');p.style.display=p.style.display==='block'?'none':'block';if(p.style.display==='block')renderStyleRewards()});
+$('closeStyleRewards').addEventListener('click',()=>$('styleRewardsPanel').style.display='none');
 function openUpdates(){
  const p=$('updatesPanel');if(!p)return;
  p.style.display='block';renderDailyChallenges();
