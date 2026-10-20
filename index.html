@@ -472,7 +472,7 @@ box(0,.36,0,w,.72,l,paint,g);box(0,1.0,-.25,w*.78,.62,l*.44,glass,g);box(0,1.33,
 const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){const wh=mesh(new THREE.CylinderGeometry(.37,.37,.22,16),M(0x17191b),xx,.37,zz,g);wh.rotation.z=Math.PI/2;wheels.push(wh)}
 for(const xx of [-w*.34,w*.34]){box(xx,.55,l/2+.05,.34,.17,.08,M(0xfff2c0),g);box(xx,.55,-l/2-.05,.34,.17,.08,M(0xff3028),g)}
 if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.04,.28,M(0x1e292d),g)}
-if(['police','ambulance','fireengine'].includes(s.id)){box(0,1.39,-.22,w*.43,.12,.28,M(0x252d33),g);for(const xx of [-w*.19,w*.19])box(xx,1.49,-.22,.18,.13,.24,M(s.id==='fireengine'?0xff3030:0x287cff),g);if(s.id==='ambulance'){box(0,.78,l*.12,.12,.45,.035,M(0xd52f32),g);box(0,.78,l*.12,.42,.12,.035,M(0xd52f32),g)}if(s.id==='fireengine'){box(0,1.04,-l*.12,w*.68,.1,.08,M(0xf1c84b),g);box(0,1.15,-l*.28,w*.5,.12,.08,M(0xd5d8dc),g)}}
+if(['police','ambulance','fireengine'].includes(s.id)){box(0,1.39,-.22,w*.43,.12,.28,M(0x252d33),g);const beaconL=box(-w*.19,1.49,-.22,.18,.13,.24,M(s.id==='fireengine'?0xff3030:0x287cff),g),beaconR=box(w*.19,1.49,-.22,.18,.13,.24,M(s.id==='fireengine'?0x287cff:0xff3030),g);g.userData.emergencyBeacons=[beaconL,beaconR];g.userData.emergencyType=s.id;if(s.id==='ambulance'){box(0,.78,l*.12,.12,.45,.035,M(0xd52f32),g);box(0,.78,l*.12,.42,.12,.035,M(0xd52f32),g)}if(s.id==='fireengine'){box(0,1.04,-l*.12,w*.68,.1,.08,M(0xf1c84b),g);box(0,1.15,-l*.28,w*.5,.12,.08,M(0xd5d8dc),g)}}
 g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false,owned:false,traffic:false};cars.push(c);return c}
 // Ambient traffic uses the same vehicle models and stays on the marked street lanes.
 const trafficCars=[];
@@ -618,7 +618,9 @@ const missionList=[
  {title:'MISSION 11 · COMMUNITY ROUTE',text:'Visit the Delivery Depot and press F inside to complete a community delivery.',target:'DELIVERY DEPOT',reward:400},
  {title:'MISSION 12 · POLICE STATION VISIT',text:'Head to the Police Station and press F inside to check in for a patrol briefing.',target:'POLICE STATION',reward:425},
  {title:'MISSION 13 · LOST PROPERTY',text:'Visit the Police Station and press F inside to return a found item.',target:'POLICE STATION',reward:450},
- {title:'MISSION 14 · NEIGHBOURHOOD PATROL',text:'Take a look around the new neighbourhood and report back at the Police Station.',target:'POLICE STATION',reward:475}
+ {title:'MISSION 14 · NEIGHBOURHOOD PATROL',text:'Take a look around the new neighbourhood and report back at the Police Station.',target:'POLICE STATION',reward:475},
+ {title:'MISSION 15 · FIRE STATION CALL-OUT',text:'Report to the Fire Station for your emergency response briefing.',target:'FIRE STATION',reward:500},
+ {title:'MISSION 16 · AMBULANCE RESPONSE',text:'Visit the Ambulance Station to receive your first response assignment.',target:'AMBULANCE STATION',reward:525}
 ];let missionIndex=0,missionStage=0,money=250;
 const marker=new THREE.Group();scene.add(marker);mesh(new THREE.CylinderGeometry(.13,.13,1.1,12),mats.green,0,.6,0,marker);const halo=mesh(new THREE.TorusGeometry(1.1,.12,8,24),mats.green,0,1.35,0,marker);halo.rotation.x=Math.PI/2;
 function currentMission(){return missionList[Math.min(missionIndex,missionList.length-1)]}
@@ -626,9 +628,11 @@ function updateMission(){const m=currentMission();$('missionTitle').textContent=
 const d=doors.find(d=>d.label===m.target);if(d)marker.position.set(d.x,0,d.doorZ)}
 
 const keys={};let yaw=0,playing=false,driving=null,last=performance.now(),noticeTimer=0,cameraMode=0,playerReturn=new THREE.Vector3(0,0,5);
+let sirenEnabled=false,sirenContext=null,sirenOscA=null,sirenOscB=null,sirenGain=null,sirenClock=0;
+function toggleSiren(){if(!driving||!['police','ambulance','fireengine'].includes(driving.spec.id)){notify('Enter a police car, ambulance or fire engine first');return}sirenEnabled=!sirenEnabled;if(sirenEnabled){try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){sirenContext=sirenContext||new AC();if(sirenContext.state==='suspended')sirenContext.resume();sirenGain=sirenContext.createGain();sirenGain.gain.value=.035;sirenGain.connect(sirenContext.destination);sirenOscA=sirenContext.createOscillator();sirenOscB=sirenContext.createOscillator();sirenOscA.type='sawtooth';sirenOscB.type='sine';sirenOscA.frequency.value=650;sirenOscB.frequency.value=440;sirenOscA.connect(sirenGain);sirenOscB.connect(sirenGain);sirenOscA.start();sirenOscB.start();}notify('Emergency lights and siren ON · H to switch off')}catch(e){notify('Emergency lights ON · audio unavailable')}}else{if(sirenGain)sirenGain.gain.value=0;notify('Emergency lights and siren OFF')}}
 const $=id=>document.getElementById(id);
 updateMission();
-addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact()});
+addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact();if(e.code==='KeyH')toggleSiren()});
 addEventListener('keyup',e=>keys[e.code]=false);
 renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
@@ -658,6 +662,7 @@ function interact(){
 }
 function vehicleCollision(c,nx,nz){const r=c.spec.w*.45;if(blocked(nx,nz,r))return true;for(const o of cars){if(o===c)continue;const dx=nx-o.g.position.x,dz=nz-o.g.position.z,reach=(c.spec.l+o.spec.l)*.34;if(dx*dx+dz*dz<reach*reach)return true}return false}
 function updateCar(c,dt){const s=c.spec,accelerating=keys.KeyW||keys.ArrowUp,braking=keys.KeyS||keys.ArrowDown,hand=keys.Space;
+ if(c.g.userData.emergencyBeacons){const phase=Math.floor(performance.now()/180)%2,on=sirenEnabled&&driving===c; c.g.userData.emergencyBeacons[0].material.color.setHex(on&&phase===0?0x35a2ff:0x242d36);c.g.userData.emergencyBeacons[1].material.color.setHex(on&&phase===1?0xff3838:0x242d36)}
  if(accelerating)c.speed=Math.min(s.max,c.speed+s.acc*dt);else if(braking){if(c.speed>1)c.speed=Math.max(0,c.speed-22*dt);else c.speed=Math.max(-s.max*.3,c.speed-s.acc*.65*dt)}else c.speed*=Math.pow(hand?.91:.982,dt*60);
  if(hand)c.speed*=Math.pow(.91,dt*60);const steer=(keys.KeyA||keys.ArrowLeft?-1:0)+(keys.KeyD||keys.ArrowRight?1:0);c.heading+=steer*s.turn*(.25+.75*Math.min(1,Math.abs(c.speed)/10))*Math.sign(c.speed||1)*dt*(hand?.65:1);c.g.rotation.y=c.heading;
  const nx=c.g.position.x-Math.sin(c.heading)*c.speed*dt,nz=c.g.position.z-Math.cos(c.heading)*c.speed*dt;
@@ -682,6 +687,7 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
+ if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
  updateTraffic(dt);
  for(const w of businessWorkers.children)w.position.y=Math.sin(performance.now()*.002+w.userData.workPhase)*.045;
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').style.display='none'}
