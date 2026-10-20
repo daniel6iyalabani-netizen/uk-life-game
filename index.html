@@ -283,6 +283,43 @@ const buildingData=[
 [-103,-103,16,13,17,'brick2','flat','APARTMENTS'],[103,103,16,13,19,'brick','flat','CITY FLATS']
 ];
 for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[7]);
+
+// Visible portfolio buildings: each purchased business gets a signposted premises in its chosen neighbourhood.
+const businessBuildingGroups=[];
+let businessBuildingSignature='';
+function syncBusinessBuildings(portfolio){
+ const signature=portfolio.map((b,i)=>[i,b.id,b.location].join(':')).join('|');
+ if(signature===businessBuildingSignature)return;
+ for(const g of businessBuildingGroups){scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map)m.map.dispose();m.dispose()})}})}
+ businessBuildingGroups.length=0;businessBuildingSignature=signature;
+ const locationSites={
+  city:{x:-9,z:-10},shops:{x:31,z:-30},terraced:{x:-50,z:-50},park:{x:18,z:108},oldtown:{x:150,z:14}
+ };
+ const typeInfo={
+  cafe:{label:'CAFE',colour:0x287b52,wall:0xc78b62},
+  shop:{label:'CORNER SHOP',colour:0x236b4a,wall:0xd4c4a1},
+  delivery:{label:'DELIVERY DEPOT',colour:0x315b82,wall:0xb5b9bb},
+  garage:{label:'MOTOR GARAGE',colour:0x565b63,wall:0xa4a09a}
+ };
+ portfolio.forEach((item,i)=>{
+  const site=locationSites[item.location]||locationSites.city,info=typeInfo[item.id]||typeInfo.shop;
+  const col=i%3,row=Math.floor(i/3),x=site.x+col*9,z=site.z+row*10;
+  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+  const wall=M(info.wall),roof=M(0x45474b),trim=M(0xe8e0d0),glass=M(0x86c7d9,.25);
+  box(0,2.1,0,7.2,4.2,6,wall,g);box(0,4.3,0,7.7,.35,6.5,roof,g);
+  box(0,1.6,3.08,1.25,2.7,.16,trim,g);box(0,1.55,3.18,.92,2.35,.12,roof,g);
+  box(-2.05,2.15,3.12,1.35,1.25,.1,glass,g);box(2.05,2.15,3.12,1.35,1.25,.1,glass,g);
+  box(0,3.65,3.28,6.5,.72,.22,M(info.colour),g);
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=96;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#'+info.colour.toString(16).padStart(6,'0');ctx.fillRect(0,0,512,96);
+  ctx.fillStyle='#ffffff';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(info.label,256,49);
+  const signMat=new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(canvas),roughness:.75});
+  box(0,3.65,3.405,6.35,.6,.04,signMat,g);
+  if(item.id==='delivery'){box(-2.4,.8,-3.15,2.2,1.6,.12,trim,g);box(2.4,.8,-3.15,2.2,1.6,.12,trim,g)}
+  if(item.id==='garage'){box(0,1.65,3.25,2.1,2.6,.08,M(0x333b42),g);box(0,.35,3.32,2.1,.2,.12,M(0xd2d3d1),g)}
+  businessBuildingGroups.push(g);
+ });
+}
 // Country-specific landmark corners. These are separate selectable neighbourhood details, not online servers.
 const regionLandmarks={};
 function signBoard(parent,x,y,z,title,subtitle,color=0x244b3b){
@@ -407,7 +444,26 @@ box(0,.36,0,w,.72,l,paint,g);box(0,1.0,-.25,w*.78,.62,l*.44,glass,g);box(0,1.33,
 const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){const wh=mesh(new THREE.CylinderGeometry(.37,.37,.22,16),M(0x17191b),xx,.37,zz,g);wh.rotation.z=Math.PI/2;wheels.push(wh)}
 for(const xx of [-w*.34,w*.34]){box(xx,.55,l/2+.05,.34,.17,.08,M(0xfff2c0),g);box(xx,.55,-l/2-.05,.34,.17,.08,M(0xff3028),g)}
 if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.04,.28,M(0x1e292d),g)}
-g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false};cars.push(c);return c}
+g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false,owned:false,traffic:false};cars.push(c);return c}
+// Ambient traffic uses the same vehicle models and stays on the marked street lanes.
+const trafficCars=[];
+function spawnTraffic(){
+ const trafficSpecs=[specs[0],specs[1],specs[3],specs[4],specs[7]];
+ const horizontal=[-120,-80,-40,40,80,120],vertical=[-120,-80,-40,40,80,120];
+ for(let i=0;i<12;i++){
+  const z=horizontal[i%horizontal.length],dir=i%2===0?1:-1;
+  const spec=trafficSpecs[i%trafficSpecs.length],x=dir>0?-150+(i%3)*16:150-(i%3)*16;
+  const c=createCar(spec,x,z+(dir>0?-3.5:3.5),dir>0?-Math.PI/2:Math.PI/2);
+  c.traffic=true;c.trafficAxis='x';c.trafficDir=dir;c.trafficLane=z+(dir>0?-3.5:3.5);c.trafficSpeed=5.5+(i%4)*1.3;trafficCars.push(c);
+ }
+ for(let i=0;i<8;i++){
+  const x=vertical[i%vertical.length],dir=i%2===0?1:-1;
+  const spec=trafficSpecs[(i+2)%trafficSpecs.length],z=dir>0?-145+(i%3)*18:145-(i%3)*18;
+  const c=createCar(spec,x+(dir>0?3.5:-3.5),z,dir>0?Math.PI:0);
+  c.traffic=true;c.trafficAxis='z';c.trafficDir=dir;c.trafficLane=x+(dir>0?3.5:-3.5);c.trafficSpeed=5+(i%3)*1.5;trafficCars.push(c);
+ }
+}
+spawnTraffic();
 // No player-owned vehicle at spawn. Cars appear only after purchase from the dealership.
 const ownedCars=new Set();
 const carPrices={hatch:1800,saloon:6500,suv:9800,taxi:4200,estate:5200,sports:18500,electric:14500,van:7200};
@@ -483,7 +539,7 @@ $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.dis
 $('controlsBtn').onclick=()=>{$('help').style.display=$('help').style.display==='none'?'block':'none'};
 $('paintChoice').onchange=e=>{const c=driving||nearestCar();if(c){c.paint.color.set(e.target.value);notify(c.spec.name+' colour changed')}};
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
-function nearestCar(){let best=null,bd=Infinity;for(const c of cars){if(c===driving||!c.owned)continue;const d=player.position.distanceTo(c.g.position);if(d<bd){best=c;bd=d}}return bd<7?best:null}
+function nearestCar(){let best=null,bd=Infinity;for(const c of cars){if(c===driving||!c.owned||c.traffic)continue;const d=player.position.distanceTo(c.g.position);if(d<bd){best=c;bd=d}}return bd<7?best:null}
 function nearestDoor(){let best=null,bd=Infinity;for(const d of doors){const p=new THREE.Vector3(d.doorX,0,d.doorZ),dist=player.position.distanceTo(p);if(dist<bd){best=d;bd=dist}}return bd<5?best:null}
 function useDoorOrCar(){
  if(inside){inside=false;interior.visible=false;scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);player.position.copy(playerReturn);player.visible=true;activeDoor=null;notify('Back outside');return}
@@ -503,7 +559,25 @@ function updateCar(c,dt){const s=c.spec,accelerating=keys.KeyW||keys.ArrowUp,bra
  if(hand)c.speed*=Math.pow(.91,dt*60);const steer=(keys.KeyA||keys.ArrowLeft?-1:0)+(keys.KeyD||keys.ArrowRight?1:0);c.heading+=steer*s.turn*(.25+.75*Math.min(1,Math.abs(c.speed)/10))*Math.sign(c.speed||1)*dt*(hand?.65:1);c.g.rotation.y=c.heading;
  const nx=c.g.position.x-Math.sin(c.heading)*c.speed*dt,nz=c.g.position.z-Math.cos(c.heading)*c.speed*dt;
  if(vehicleCollision(c,nx,nz)){c.speed*=-.2;if(Math.abs(c.speed)>7)notify('Collision! Slow down near buildings and parked cars')}else{c.g.position.x=nx;c.g.position.z=nz}c.wheels.forEach(w=>w.rotation.x+=c.speed*dt*1.4)}
+function updateTraffic(dt){
+ for(const c of trafficCars){
+  if(c.trafficAxis==='x'){
+   c.g.position.x+=c.trafficDir*c.trafficSpeed*dt;
+   if(c.g.position.x>174){c.g.position.x=-174;c.trafficDir=1}
+   if(c.g.position.x< -174){c.g.position.x=174;c.trafficDir=-1}
+   c.heading=c.trafficDir>0?-Math.PI/2:Math.PI/2;
+  }else{
+   c.g.position.z+=c.trafficDir*c.trafficSpeed*dt;
+   if(c.g.position.z>174){c.g.position.z=-174;c.trafficDir=1}
+   if(c.g.position.z< -174){c.g.position.z=174;c.trafficDir=-1}
+   c.heading=c.trafficDir>0?Math.PI:0;
+  }
+  c.g.position.y=0;c.g.rotation.y=c.heading;
+  c.wheels.forEach(w=>w.rotation.x+=c.trafficSpeed*dt*1.4);
+ }
+}
 function update(dt){
+ updateTraffic(dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').style.display='none'}
  marker.rotation.y+=dt*.65;halo.rotation.z+=dt;marker.position.y=Math.sin(performance.now()*.002)*.12;
  // pedestrians walk between randomly chosen nearby points; reverse when blocked or reaching destination
@@ -595,6 +669,7 @@ function syncFinance(){
  const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage'};
  const locationNames={city:'City centre',shops:'Shopping street',terraced:'Terraced homes',park:'Park and gardens',oldtown:'Old town / harbour'};
  const portfolio=Array.isArray(finance.businessesOwned)?finance.businessesOwned:[];
+ syncBusinessBuildings(portfolio);
  const picker=$('ownedBusinessChoice');
  picker.innerHTML='';
  if(!portfolio.length){picker.innerHTML='<option value="-1">No businesses owned yet</option>';finance.activeBusinessIndex=0;finance.business=null;}
