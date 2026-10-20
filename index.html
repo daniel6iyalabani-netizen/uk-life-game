@@ -174,9 +174,10 @@ const hairCap=mesh(new THREE.SphereGeometry(.33,12,8,0,Math.PI*2,0,Math.PI*.55),
 const hairExtras=new THREE.Group();player.add(hairExtras);
 const legL=box(-.22,.55,0,.27,.8,.3,mats.pants,player),legR=box(.22,.55,0,.27,.8,.3,mats.pants,player);box(-.22,.13,-.07,.3,.18,.48,mats.shoe,player);box(.22,.13,-.07,.3,.18,.48,mats.shoe,player);
 // Simple articulated arms: shirt sleeves, forearms and hands, pivoting at each shoulder.
-const armL=new THREE.Group(),armR=new THREE.Group();armL.position.set(-.46,1.72,0);armR.position.set(.46,1.72,0);player.add(armL,armR);
-box(0,-.22,0,.25,.46,.29,outfit,armL);box(0,-.59,-.015,.19,.34,.22,playerSkin,armL);mesh(new THREE.SphereGeometry(.105,10,8),playerSkin,0,-.79,-.015,armL);
-box(0,-.22,0,.25,.46,.29,outfit,armR);box(0,-.59,-.015,.19,.34,.22,playerSkin,armR);mesh(new THREE.SphereGeometry(.105,10,8),playerSkin,0,-.79,-.015,armR);
+const armL=new THREE.Group(),armR=new THREE.Group();armL.position.set(-.5,1.72,.24);armR.position.set(.5,1.72,.24);armL.rotation.z=.14;armR.rotation.z=-.14;player.add(armL,armR);
+// Keep the arms slightly in front of the torso and wide enough to remain visible.
+box(0,-.22,0,.3,.46,.34,outfit,armL);box(0,-.59,.015,.23,.34,.27,playerSkin,armL);mesh(new THREE.SphereGeometry(.12,10,8),playerSkin,0,-.79,.015,armL);
+box(0,-.22,0,.3,.46,.34,outfit,armR);box(0,-.59,.015,.23,.34,.27,playerSkin,armR);mesh(new THREE.SphereGeometry(.12,10,8),playerSkin,0,-.79,.015,armR);
 player.position.set(0,0,5);
 
 // cars
