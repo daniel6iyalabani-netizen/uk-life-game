@@ -175,12 +175,22 @@ window.ukLifeStartClick = function(){
     }
   }else{
     window.__ukLifeStartClickPending=true;
-    show('The button is working, but the 3D game script has not finished loading. If this message stays here, refresh the page or try Chrome.');
-    if(button){button.textContent='GAME STILL LOADING';}
+    show('The button works. Waiting for the 3D game script to start…');
+    if(button){button.textContent='WAITING FOR GAME SCRIPT';}
+    if(window.__ukLifeStartWatchdog)clearTimeout(window.__ukLifeStartWatchdog);
+    window.__ukLifeStartWatchdog=setTimeout(function(){
+      if(typeof window.__startUKLifeGame!=='function'){
+        show('The 3D game script has not started. This usually means the browser is blocking module scripts or the latest page has not loaded. Open the game in Chrome, allow JavaScript, then close and reopen the page. If it still happens, tell me which browser/device you use.');
+        if(button){button.textContent='GAME SCRIPT DID NOT START';}
+      }
+    },18000);
   }
 };
 </script>
 <script type="module">
+window.__ukLifeModuleStarted=true;
+if(window.__ukLifeStartWatchdog)clearTimeout(window.__ukLifeStartWatchdog);
+if(window.__ukLifeStartClickPending){const loadingHelp=document.getElementById('help');if(loadingHelp){loadingHelp.style.display='block';loadingHelp.textContent='The 3D game script has started. Loading the engine…';}}
 let THREE;
 function loadThreeWithTimeout(url, timeoutMs) {
   return Promise.race([
