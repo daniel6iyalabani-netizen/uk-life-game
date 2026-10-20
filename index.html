@@ -538,6 +538,20 @@ const playerSkin=M(0xb97950),playerHair=M(0x352820);
 mesh(new THREE.SphereGeometry(.32,16,12),playerSkin,0,2.08,0,player);
 const hairCap=mesh(new THREE.SphereGeometry(.33,12,8,0,Math.PI*2,0,Math.PI*.55),playerHair,0,2.22,0,player);
 const hairExtras=new THREE.Group();player.add(hairExtras);
+// Face details: eyes, pupils, nose, mouth, ears and a front hair fringe.
+const eyeWhite=M(0xf8f4e9),eyeDark=M(0x211b19),mouthMat=M(0x542b2a),earInner=M(0x9e5c46);
+mesh(new THREE.SphereGeometry(.052,12,10),eyeWhite,-.115,2.13,.279,player);
+mesh(new THREE.SphereGeometry(.052,12,10),eyeWhite,.115,2.13,.279,player);
+mesh(new THREE.SphereGeometry(.026,10,8),eyeDark,-.108,2.13,.324,player);
+mesh(new THREE.SphereGeometry(.026,10,8),eyeDark,.122,2.13,.324,player);
+mesh(new THREE.SphereGeometry(.043,10,8),playerSkin,0,2.055,.315,player);
+box(0,1.985,.302,.105,.025,.025,mouthMat,player);
+mesh(new THREE.SphereGeometry(.09,12,10),playerSkin,-.315,2.075,0,player);
+mesh(new THREE.SphereGeometry(.09,12,10),playerSkin,.315,2.075,0,player);
+mesh(new THREE.SphereGeometry(.043,10,8),earInner,-.365,2.075,.035,player);
+mesh(new THREE.SphereGeometry(.043,10,8),earInner,.365,2.075,.035,player);
+mesh(new THREE.SphereGeometry(.17,12,8),playerHair,0,2.25,.22,player);
+
 const legL=box(-.22,.55,0,.27,.8,.3,mats.pants,player),legR=box(.22,.55,0,.27,.8,.3,mats.pants,player);box(-.22,.13,-.07,.3,.18,.48,mats.shoe,player);box(.22,.13,-.07,.3,.18,.48,mats.shoe,player);
 // Simple articulated arms: shirt sleeves, forearms and hands, pivoting at each shoulder.
 const armL=new THREE.Group(),armR=new THREE.Group();armL.position.set(-.5,1.72,.24);armR.position.set(.5,1.72,.24);armL.rotation.z=.14;armR.rotation.z=-.14;player.add(armL,armR);
@@ -834,7 +848,7 @@ function update(dt){
  if(inside){if(keys.KeyW||keys.ArrowUp)player.position.z-=4*dt;if(keys.KeyS||keys.ArrowDown)player.position.z+=4*dt;if(keys.KeyA||keys.ArrowLeft)player.position.x-=4*dt;if(keys.KeyD||keys.ArrowRight)player.position.x+=4*dt;player.position.x=THREE.MathUtils.clamp(player.position.x,-9,9);player.position.z=THREE.MathUtils.clamp(player.position.z,-9,9);camera.position.lerp(new THREE.Vector3(player.position.x,4.3,player.position.z+10),.12);camera.lookAt(player.position.x,1,player.position.z)}
  else{
   if(driving){updateCar(driving,dt);player.position.copy(driving.g.position);yaw=driving.heading}
-  else{const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)),move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(fwd);if(keys.KeyS||keys.ArrowDown)move.sub(fwd);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq()){const sprintHeld=!!(keys.ShiftLeft||keys.ShiftRight||keys.Shift);const sprinting=sprintHeld&&stamina>0;if(sprinting)stamina=Math.max(0,stamina-18*dt);else stamina=Math.min(MAX_STAMINA,stamina+12*dt);move.normalize().multiplyScalar((sprinting?13.2:5.7)*dt);moveCollision(player.position,move.x,move.z,.45);player.rotation.y=yaw;const t=performance.now()*(sprinting?.025:.012);const stride=sprinting?.72:.45;legL.rotation.x=Math.sin(t)*stride;legR.rotation.x=-legL.rotation.x;armL.rotation.x=-legL.rotation.x;armR.rotation.x=-legR.rotation.x}else{stamina=Math.min(MAX_STAMINA,stamina+12*dt);legL.rotation.x=0;legR.rotation.x=0;armL.rotation.x=0;armR.rotation.x=0}}
+  else{const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)),move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(fwd);if(keys.KeyS||keys.ArrowDown)move.sub(fwd);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq()){const sprintHeld=!!(keys.ShiftLeft||keys.ShiftRight||keys.Shift);const sprinting=sprintHeld&&stamina>0;if(sprinting)stamina=Math.max(0,stamina-18*dt);else stamina=Math.min(MAX_STAMINA,stamina+12*dt);move.normalize().multiplyScalar((sprinting?13.2:5.7)*dt);moveCollision(player.position,move.x,move.z,.45);player.rotation.y=yaw;const t=performance.now()*(sprinting?.025:.012);const stride=sprinting?.82:.48;const swing=Math.sin(t)*stride;legL.rotation.x=swing;legR.rotation.x=-swing;armL.rotation.x=-swing*.8;armR.rotation.x=swing*.8;player.position.y=Math.abs(Math.cos(t))*(sprinting?.055:.018)}}
   const target=driving?driving.g.position:player.position;const desired=new THREE.Vector3(target.x+Math.sin(yaw)*(cameraMode===0?8:0),target.y+(cameraMode===0?(driving?4.5:4.2):3),target.z+Math.cos(yaw)*(cameraMode===0?8:0));camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(target.x,target.y+(driving?1.2:1.6),target.z)
  }
  const near=nearestCar(),door=inside?null:nearestDoor();$('nearby').textContent=inside?(activeDoor?.label||'Inside'):driving?driving.spec.name:door?door.label:near?near.spec.name:'—';$('mode').textContent=inside?'INSIDE':driving?'DRIVING':'ON FOOT';$('speed').textContent=driving?Math.round(Math.abs(driving.speed)*3.6):0;$('peopleCount').textContent=npcs.length;
