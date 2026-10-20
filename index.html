@@ -138,6 +138,7 @@
     <div><label for="skinColor">Skin colour</label><input type="color" id="skinColor" value="#b97950"></div>
   </div>
   <label for="topColor">Outfit colour</label><input type="color" id="topColor" value="#3478b8">
+  <label for="uniformChoice">Uniform style</label><select id="uniformChoice"><option value="custom">Custom outfit</option><option value="police">Police uniform</option><option value="fire">Fire service uniform</option><option value="ambulance">Ambulance uniform</option><option value="highvis">High-visibility workwear</option></select>
   <button id="applyLook">Apply appearance</button>
   <hr style="border-color:#ffffff25">
   <h2>💼 100 Jobs</h2>
@@ -289,7 +290,9 @@ const buildingData=[
 [-163,103,14,12,10,'brick2','shop','HARDWARE SHOP'],[-163,83,14,12,8,'brick','house','TERRACED HOME'],
 [163,103,14,12,12,'brick','shop','POST OFFICE'],[163,83,14,12,9,'brick2','house','COTTAGE'],
 [-83,143,14,12,10,'brick','shop','POLICE STATION'],[83,143,14,12,10,'brick2','house','SEMI-DETACHED HOME'],
-[-123,143,14,12,9,'brick2','shop','TOY SHOP'],[123,143,14,12,11,'brick','shop','GARDEN CENTRE']
+[-123,143,14,12,9,'brick2','shop','TOY SHOP'],[123,143,14,12,11,'brick','shop','GARDEN CENTRE'],
+// Civic and leisure quarter: expanded northern neighbourhood.
+[-143,-143,16,13,13,'brick2','shop','LIBRARY'],[-103,-143,16,13,12,'brick','shop','HEALTH CLINIC'],[-63,-143,16,13,12,'brick2','house','SCHOOL'],[-23,-143,16,13,12,'brick','shop','COMMUNITY CENTRE'],[23,-143,16,13,16,'brick2','shop','CINEMA'],[63,-143,16,13,12,'brick','shop','FIRE STATION'],[103,-143,16,13,12,'brick2','shop','AMBULANCE STATION'],[143,-143,16,13,11,'brick','house','SEMI-DETACHED HOME'],[-143,143,14,12,10,'brick','house','COTTAGE']
 ];
 for(const a of buildingData)building(a[0],a[1],a[2],a[3],a[4],mats[a[5]],a[6],a[7]);
 
@@ -433,6 +436,9 @@ for(let z=-160;z<=160;z+=20)for(const x of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp
 // player
 const player=new THREE.Group();scene.add(player);
 const outfit=M(0x3478b8);box(0,1.35,0,.8,1,.45,outfit,player);
+const uniformBadge=box(-.18,1.52,.238,.16,.17,.025,M(0xf1d15b),player);const uniformCap=mesh(new THREE.SphereGeometry(.34,12,8,0,Math.PI*2,0,Math.PI*.32),M(0x26394d),0,2.3,0,player);uniformCap.visible=false;
+let selectedUniform='custom';
+function applyUniform(style){selectedUniform=style;const palette={custom:null,police:0x26394d,fire:0xc92f26,ambulance:0xf1f1e8,highvis:0xe2c923};if(palette[style]!=null)outfit.color.setHex(palette[style]);uniformBadge.visible=style!=='custom';uniformBadge.material.color.setHex(style==='police'?0xf0d34f:style==='fire'?0xf1d4c0:style==='ambulance'?0xd62e2e:0x26394d);uniformCap.visible=style==='police'||style==='fire';uniformCap.material.color.setHex(style==='fire'?0xc92f26:0x26394d);if($('topColor'))$('topColor').value='#'+outfit.color.getHexString();}
 const playerSkin=M(0xb97950),playerHair=M(0x352820);
 mesh(new THREE.SphereGeometry(.32,16,12),playerSkin,0,2.08,0,player);
 const hairCap=mesh(new THREE.SphereGeometry(.33,12,8,0,Math.PI*2,0,Math.PI*.55),playerHair,0,2.22,0,player);
@@ -456,7 +462,9 @@ const specs=[
 {id:'electric',name:'Electric City Car',w:1.95,l:3.7,max:32,acc:15,turn:1.8,color:0xe6e9e9},
 {id:'van',name:'Delivery Van',w:2.3,l:5.2,max:24,acc:8,turn:1.1,color:0xf1f0e8},
 {id:'minibus',name:'Community Minibus',w:2.35,l:5.5,max:22,acc:7.5,turn:1.0,color:0x398b5b},
-{id:'police',name:'Police Patrol Car',w:2.1,l:4.5,max:38,acc:14,turn:1.7,color:0x253b59}
+{id:'police',name:'Police Patrol Car',w:2.1,l:4.5,max:38,acc:14,turn:1.7,color:0x253b59},
+{id:'ambulance',name:'Ambulance',w:2.35,l:5.4,max:27,acc:9,turn:1.15,color:0xf2f0e8},
+{id:'fireengine',name:'Fire Engine',w:2.5,l:6.2,max:25,acc:8.5,turn:1.0,color:0xc92f26}
 ];
 const cars=[];
 function createCar(s,x,z,heading=0){const g=new THREE.Group(),paint=M(s.color,.38,.2),glass=M(0x8ec6d9,.25,.1),chrome=M(0xb7c1c5,.3,.6),w=s.w,l=s.l;
@@ -464,6 +472,7 @@ box(0,.36,0,w,.72,l,paint,g);box(0,1.0,-.25,w*.78,.62,l*.44,glass,g);box(0,1.33,
 const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){const wh=mesh(new THREE.CylinderGeometry(.37,.37,.22,16),M(0x17191b),xx,.37,zz,g);wh.rotation.z=Math.PI/2;wheels.push(wh)}
 for(const xx of [-w*.34,w*.34]){box(xx,.55,l/2+.05,.34,.17,.08,M(0xfff2c0),g);box(xx,.55,-l/2-.05,.34,.17,.08,M(0xff3028),g)}
 if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.04,.28,M(0x1e292d),g)}
+if(['police','ambulance','fireengine'].includes(s.id)){box(0,1.39,-.22,w*.43,.12,.28,M(0x252d33),g);for(const xx of [-w*.19,w*.19])box(xx,1.49,-.22,.18,.13,.24,M(s.id==='fireengine'?0xff3030:0x287cff),g);if(s.id==='ambulance'){box(0,.78,l*.12,.12,.45,.035,M(0xd52f32),g);box(0,.78,l*.12,.42,.12,.035,M(0xd52f32),g)}if(s.id==='fireengine'){box(0,1.04,-l*.12,w*.68,.1,.08,M(0xf1c84b),g);box(0,1.15,-l*.28,w*.5,.12,.08,M(0xd5d8dc),g)}}
 g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false,owned:false,traffic:false};cars.push(c);return c}
 // Ambient traffic uses the same vehicle models and stays on the marked street lanes.
 const trafficCars=[];
@@ -537,7 +546,7 @@ for(const p of [-80,-40,0,40,80]){
 }
 // No player-owned vehicle at spawn. Cars appear only after purchase from the dealership.
 const ownedCars=new Set();
-const carPrices={hatch:1800,saloon:6500,suv:9800,taxi:4200,estate:5200,sports:18500,electric:14500,van:7200,minibus:8900,police:12500};
+const carPrices={hatch:1800,saloon:6500,suv:9800,taxi:4200,estate:5200,sports:18500,electric:14500,van:7200,minibus:8900,police:12500,ambulance:18500,fireengine:32000};
 
 // pedestrians: simple colourful characters following sidewalk waypoints and avoiding building footprints.
 const npcs=[],npcColors=[0x8b5e3c,0xd34e4e,0x4e9b67,0x8b66bd,0xe0a33c,0x3478b8,0x22252a,0xb1b4ba];
@@ -731,7 +740,8 @@ function applyHairStyle(){
 document.getElementById('applyLook').addEventListener('click',()=>{
  playerHair.color.set(document.getElementById('hairColor').value);
  playerSkin.color.set(document.getElementById('skinColor').value);
- outfit.color.set(document.getElementById('topColor').value);
+ if(document.getElementById('uniformChoice').value==='custom')outfit.color.set(document.getElementById('topColor').value);
+ applyUniform(document.getElementById('uniformChoice').value);
  applyHairStyle();notify('Your 3D character look has been updated');
 });
 document.getElementById('hairStyle').addEventListener('change',applyHairStyle);
@@ -995,7 +1005,7 @@ function saveUKLife(showMessage=false){
    money,missionIndex,missionStage,yaw,cameraMode,
    player:{x:player.position.x,y:player.position.y,z:player.position.z},
    finance:{...finance},
-   look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short'},
+   look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short',uniform:selectedUniform},
    cars:cars.filter(c=>c.owned).map(c=>({id:c.spec.id,x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),ownedCars:[...ownedCars],region:selectedRegion,
    xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,
    activeJob:typeof activeJob==='number'?activeJob:null,jobStarted:typeof jobStarted==='boolean'?jobStarted:false
@@ -1037,6 +1047,7 @@ function loadUKLife(){
    if(Number.isFinite(d.look.hair))playerHair.color.setHex(d.look.hair);
    if(Number.isFinite(d.look.skin))playerSkin.color.setHex(d.look.skin);
    if(Number.isFinite(d.look.outfit))outfit.color.setHex(d.look.outfit);
+   if(typeof d.look.uniform==='string'&&$('uniformChoice')){$('uniformChoice').value=d.look.uniform;applyUniform(d.look.uniform);}
    if(typeof d.look.hairStyle==='string'&&$('hairStyle'))$('hairStyle').value=d.look.hairStyle;
    applyHairStyle();
    if($('hairColor'))$('hairColor').value='#'+playerHair.color.getHexString();
