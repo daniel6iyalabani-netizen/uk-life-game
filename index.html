@@ -82,6 +82,19 @@
   <h3>💳 Loans and credit</h3>
   <div class="finrow"><button id="takeLoan">Take £300 loan</button><button id="repayLoan">Repay £50</button></div>
   <p id="loanStatus" class="small">Outstanding loan: £0. On-time bill payments can improve credit; missed payments can lower it.</p>
+  <h3>🏢 Businesses & business finances</h3>
+  <label for="businessChoice">Choose a business to buy</label>
+  <select id="businessChoice">
+    <option value="cafe">Neighbourhood café — £1,200</option>
+    <option value="shop">Corner shop — £1,800</option>
+    <option value="delivery">Delivery company — £2,500</option>
+    <option value="garage">Car repair garage — £3,200</option>
+  </select>
+  <div class="finrow"><button id="buyBusiness">Buy business</button><button id="sellBusiness">Sell business</button></div>
+  <div class="stat" id="businessStatus">You don't own a business yet. Buy one to start earning weekly income.</div>
+  <div class="stat">This week: sales <b id="businessRevenue">£0</b> · operating costs <b id="businessCosts">£0</b><br>Business tax <b id="businessTax">£0</b> · net profit <b id="businessProfit">£0</b></div>
+  <div class="stat" id="businessTotals">Lifetime sales £0 · costs £0 · business tax paid £0</div>
+  <p class="small">Business income, running costs and 19% simulated corporation tax are processed every 7 in-game days. A business makes no income while you don't own one.</p>
   <h3>🧾 UK tax account & payslips</h3>
   <div class="stat">Latest payslip<br>Gross pay: <b id="slipGross">£0</b> · Income tax: <b id="slipTax">£0</b><br>National Insurance: <b id="slipNI">£0</b> · Net pay: <b id="slipNet">£0</b><br><span id="slipDate">No payslip yet</span></div>
   <div class="stat" id="taxStatus">Tax totals will appear here after payday and purchases.</div>
@@ -537,7 +550,8 @@ const finance = {
  rent:0, council:0, utilities:0, phone:false, internet:false, insured:false,
  fuel:100, condition:100, loan:0, loanPayment:0, food:3, essentials:2,
  employed:null, wage:0, lastWeeklyDay:0, arrears:0,
- lastPayslip:{gross:0,incomeTax:0,ni:0,net:0,day:0}, taxPaid:0,niPaid:0,vatPaid:0,vedPaid:0
+ lastPayslip:{gross:0,incomeTax:0,ni:0,net:0,day:0}, taxPaid:0,niPaid:0,vatPaid:0,vedPaid:0,
+ business:null,businessTaxPaid:0,businessRevenueTotal:0,businessCostsTotal:0,businessLastRevenue:0,businessLastCosts:0,businessLastTax:0,businessLastProfit:0
 };
 const cashEl=()=>document.getElementById('money');
 function cash(){return Math.max(0,Math.floor(money))}
@@ -556,7 +570,12 @@ function syncFinance(){
  const ps=finance.lastPayslip||{gross:0,incomeTax:0,ni:0,net:0,day:0};
  $('slipGross').textContent='£'+ps.gross;$('slipTax').textContent='£'+ps.incomeTax;$('slipNI').textContent='£'+ps.ni;$('slipNet').textContent='£'+ps.net;
  $('slipDate').textContent=ps.day?'Payslip for in-game day '+ps.day:'No payslip yet — start a job to receive one.';
- $('taxStatus').textContent='Tax totals: income tax £'+(finance.taxPaid||0)+' · National Insurance £'+(finance.niPaid||0)+' · VAT estimate £'+(finance.vatPaid||0)+' · Vehicle tax £'+(finance.vedPaid||0)+'. Council tax is listed in household bills.';
+ $('taxStatus').textContent='Tax totals: income tax £'+(finance.taxPaid||0)+' · National Insurance £'+(finance.niPaid||0)+' · VAT estimate £'+(finance.vatPaid||0)+' · Vehicle tax £'+(finance.vedPaid||0)+' · Business tax £'+(finance.businessTaxPaid||0)+'. Council tax is listed in household bills.';
+ const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage'};
+ const b=finance.business,br=finance.businessLastRevenue||0,bc=finance.businessLastCosts||0,bt=finance.businessLastTax||0,bp=finance.businessLastProfit||0;
+ $('businessStatus').textContent=b?'Owned: '+(businessNames[b]||b)+'. Weekly sales and operating costs are settled every 7 in-game days.':'You don’t own a business yet. Buy one to start earning weekly income.';
+ $('businessRevenue').textContent='£'+br;$('businessCosts').textContent='£'+bc;$('businessTax').textContent='£'+bt;$('businessProfit').textContent='£'+bp;
+ $('businessTotals').textContent='Lifetime sales £'+(finance.businessRevenueTotal||0)+' · costs £'+(finance.businessCostsTotal||0)+' · business tax paid £'+(finance.businessTaxPaid||0);
  $('shoppingStatus').textContent='Food stock: '+finance.food+' · Essentials stock: '+finance.essentials+'. Buy more before supplies run out.';
  $('careerStatus').textContent=finance.employed
   ? 'Employed as '+finance.employed+'. Weekly gross pay: £'+finance.wage+'. Payday is every 7 in-game days; simulated income tax is deducted.'
@@ -583,6 +602,17 @@ function weeklyCycle(){
   else {finance.credit=Math.min(850,finance.credit+2);notify('Weekly bills paid: £'+total)}
  }
  if(finance.loan>0){const interest=Math.min(finance.loan,5);finance.loan+=interest;}
+ if(finance.business){
+  const plans={cafe:{name:'Neighbourhood café',revenue:520,cost:260,price:1200},shop:{name:'Corner shop',revenue:620,cost:340,price:1800},delivery:{name:'Delivery company',revenue:850,cost:510,price:2500},garage:{name:'Car repair garage',revenue:1050,cost:650,price:3200}};
+  const plan=plans[finance.business];
+  if(plan){
+   const revenue=plan.revenue,costs=plan.cost,profitBeforeTax=Math.max(0,revenue-costs),tax=Math.round(profitBeforeTax*.19),profit=revenue-costs-tax;
+   finance.businessLastRevenue=revenue;finance.businessLastCosts=costs;finance.businessLastTax=tax;finance.businessLastProfit=profit;
+   finance.businessRevenueTotal=(finance.businessRevenueTotal||0)+revenue;finance.businessCostsTotal=(finance.businessCostsTotal||0)+costs;finance.businessTaxPaid=(finance.businessTaxPaid||0)+tax;
+   money+=profit;
+   notify(plan.name+': £'+revenue+' sales − £'+costs+' operating costs − £'+tax+' business tax = £'+profit+' net profit');
+  }
+ }
  if(finance.employed){
   const gross=finance.wage;
   const weeklyAllowance=12570/52, basicLimit=50270/52, higherLimit=125140/52;
@@ -602,6 +632,22 @@ function weeklyCycle(){
  if(ownedCount>0){const ved=ownedCount*3;const paid=Math.min(money,ved);money-=paid;finance.vedPaid=(finance.vedPaid||0)+paid;if(paid>0)notify('Vehicle tax (VED) paid: £'+paid+' for '+ownedCount+' owned vehicle(s)');}
  syncFinance();
 }
+const businessPlans={cafe:{name:'Neighbourhood café',price:1200},shop:{name:'Corner shop',price:1800},delivery:{name:'Delivery company',price:2500},garage:{name:'Car repair garage',price:3200}};
+$('buyBusiness').addEventListener('click',()=>{
+ if(finance.business){notify('You already own a business. Sell it before buying another.');return}
+ const id=$('businessChoice').value,plan=businessPlans[id];
+ if(!plan){notify('Choose a valid business');return}
+ if(!spend(plan.price,plan.name+' purchase'))return;
+ finance.business=id;finance.businessLastRevenue=0;finance.businessLastCosts=0;finance.businessLastTax=0;finance.businessLastProfit=0;
+ syncFinance();notify(plan.name+' purchased. First sales and operating costs arrive at the next weekly cycle.');
+});
+$('sellBusiness').addEventListener('click',()=>{
+ if(!finance.business){notify('You do not own a business to sell');return}
+ const plan=businessPlans[finance.business],proceeds=Math.round(plan.price*.7),name=plan.name;
+ finance.business=null;finance.businessLastRevenue=0;finance.businessLastCosts=0;finance.businessLastTax=0;finance.businessLastProfit=0;
+ addCash(proceeds,'Sale of '+name+' (estimated 70% resale value)');
+ syncFinance();
+});
 function gameDayTick(){
  finance.day++;
  if(finance.day%7===1 && finance.day>1)weeklyCycle();
