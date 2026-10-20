@@ -102,7 +102,7 @@
   <div class="finrow"><button id="hireStaff">Hire employee</button><button id="fireStaff">Let employee go</button></div>
   <div class="finrow"><button id="trainStaff">Train staff (£150)</button><button id="promoteStaff">Promote employee</button></div>
   <div class="stat" id="staffStatus">Buy a business before hiring staff. Employees receive wages every week.</div>
-  <div class="stat" id="staffProgressStatus">Training and promotions apply to the selected business.
+  <div class="stat" id="staffProgressStatus">Training and promotions apply to the selected business.</div>
   <h4>📈 Business upgrades</h4>
   <p class="small">Each upgrade costs £500 × the next level (maximum level 3). Upgrades increase sales and add a small weekly maintenance cost.</p>
   <div class="finrow"><button id="upgradeBusiness">Upgrade business</button></div>
@@ -595,12 +595,12 @@ function syncFinance(){
  const businessNames={cafe:'Neighbourhood café',shop:'Corner shop',delivery:'Delivery company',garage:'Car repair garage'};
  const locationNames={city:'City centre',shops:'Shopping street',terraced:'Terraced homes',park:'Park and gardens',oldtown:'Old town / harbour'};
  const portfolio=Array.isArray(finance.businessesOwned)?finance.businessesOwned:[];
- const picker=$('ownedBusinessChoice'),previous=Number(picker.value);
+ const picker=$('ownedBusinessChoice');
  picker.innerHTML='';
  if(!portfolio.length){picker.innerHTML='<option value="-1">No businesses owned yet</option>';finance.activeBusinessIndex=0;finance.business=null;}
  else{
   portfolio.forEach((item,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=(businessNames[item.id]||item.id)+' — '+(locationNames[item.location]||item.location);picker.appendChild(option);});
-  finance.activeBusinessIndex=Math.max(0,Math.min(portfolio.length-1,Number.isFinite(previous)&&previous>=0?previous:(finance.activeBusinessIndex||0)));
+  finance.activeBusinessIndex=Math.max(0,Math.min(portfolio.length-1,Number(finance.activeBusinessIndex)||0));
   picker.value=String(finance.activeBusinessIndex);
  }
  const active=portfolio[finance.activeBusinessIndex]||null;
@@ -616,7 +616,7 @@ function syncFinance(){
  $('staffProgressStatus').textContent=active?'Training level '+(active.training||0)+' / 3. Trained staff add up to '+((active.training||0)*3)+'% sales. Promotions move assistants to supervisors or supervisors to managers.':'Training and promotions apply to the selected business.';
  $('upgradeStatus').textContent=active?'Upgrade level '+(active.upgrade||0)+' / 3. Sales boost: '+((active.upgrade||0)*15)+'%. Next upgrade: '+((active.upgrade||0)>=3?'maximum level reached':'£'+(500*((active.upgrade||0)+1))+'. Weekly maintenance: £'+((active.upgrade||0)*25)):'Buy a business before upgrading it.';
  $('businessRevenue').textContent='£'+br;$('businessCosts').textContent='£'+bc;$('businessTax').textContent='£'+bt;$('businessProfit').textContent='£'+bp;
- $('businessTotals').textContent='Lifetime sales £'+(active?(active.revenueTotal||0):0)+' · costs £'+(active?(active.costsTotal||0):0)+' · business tax paid £'+(finance.businessTaxPaid||0);
+ $('businessTotals').textContent='Lifetime sales £'+(active?(active.revenueTotal||0):0)+' · costs £'+(active?(active.costsTotal||0):0)+' · business tax paid £'+(active?(active.taxTotal||0):0);
  $('shoppingStatus').textContent='Food stock: '+finance.food+' · Essentials stock: '+finance.essentials+'. Buy more before supplies run out.';
  $('careerStatus').textContent=finance.employed
   ? 'Employed as '+finance.employed+'. Weekly gross pay: £'+finance.wage+'. Payday is every 7 in-game days; simulated income tax is deducted.'
@@ -655,7 +655,7 @@ function weeklyCycle(){
   const costs=plan.cost+staffWages+upgrade*25;
   const profitBeforeTax=Math.max(0,revenue-costs),tax=Math.round(profitBeforeTax*.19),profit=revenue-costs-tax;
   business.lastRevenue=revenue;business.lastCosts=costs;business.lastTax=tax;business.lastProfit=profit;
-  business.revenueTotal=(business.revenueTotal||0)+revenue;business.costsTotal=(business.costsTotal||0)+costs;
+  business.revenueTotal=(business.revenueTotal||0)+revenue;business.costsTotal=(business.costsTotal||0)+costs;business.taxTotal=(business.taxTotal||0)+tax;
   finance.businessRevenueTotal=(finance.businessRevenueTotal||0)+revenue;finance.businessCostsTotal=(finance.businessCostsTotal||0)+costs;finance.businessTaxPaid=(finance.businessTaxPaid||0)+tax;
   money+=profit;
   notify(plan.name+' ('+business.location+'): £'+revenue+' sales − £'+costs+' costs including £'+staffWages+' wages − £'+tax+' tax = £'+profit+' net');
@@ -713,6 +713,7 @@ $('fireStaff').addEventListener('click',()=>{
 });
 $('trainStaff').addEventListener('click',()=>{
  const business=selectedBusiness();if(!business){notify('Select a business before training staff');return}
+ if((business.staffAssistant||0)+(business.staffSupervisor||0)+(business.staffManager||0)<=0){notify('Hire at least one employee before training staff');return}
  if((business.training||0)>=3){notify('Staff training is already at level 3');return}
  if(!spend(150,'Staff training'))return;
  business.training=(business.training||0)+1;syncFinance();notify('Staff training improved to level '+business.training+'. Sales efficiency increases by 3%.');
