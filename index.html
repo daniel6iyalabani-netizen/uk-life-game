@@ -35,7 +35,7 @@
 <div style="color:#83e0b0;font-weight:900;letter-spacing:.16em">CITY EXPANSION UPDATE</div>
 <h1>UK LIFE <span style="color:#83e0b0">🏙️</span></h1>
 <p class="muted">A bigger original London-inspired neighbourhood with enterable buildings, wandering pedestrians, delivery jobs, shopping and your drivable cars.</p>
-<div class="row"><label for="carChoice">Starting car</label><select id="carChoice"><option value="hatch">City Hatchback</option><option value="saloon">Executive Saloon</option><option value="suv">Family SUV</option><option value="taxi">London Taxi</option></select><label for="paintChoice">Car colour</label><select id="paintChoice"><option value="#d7443e">Red</option><option value="#287fc4">Blue</option><option value="#25292e">Black</option><option value="#e7c442">Yellow</option><option value="#eeeeea">White</option><option value="#398b5b">Green</option></select></div>
+<div class="row"><label for="regionChoice">Choose your UK location</label><select id="regionChoice"><option value="london">England · London</option><option value="edinburgh">Scotland · Edinburgh</option><option value="cardiff">Wales · Cardiff</option><option value="belfast">Northern Ireland · Belfast</option></select><label for="paintChoice">Preferred car colour (for a future purchase)</label><select id="paintChoice"><option value="#d7443e">Red</option><option value="#287fc4">Blue</option><option value="#25292e">Black</option><option value="#e7c442">Yellow</option><option value="#eeeeea">White</option><option value="#398b5b">Green</option></select></div><p class="muted" style="font-size:12px">You start on foot with £250. Buy your first car from the dealership after earning or saving enough.</p>
 <div class="row"><button class="primary" id="play">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
 <p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/mission · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
 <p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
@@ -46,6 +46,10 @@
 <div id="mission" class="pill"><b id="missionTitle">MISSION 01 · CORNER SHOP RUN</b><div id="missionText">Find the green marker at the corner shop and press F.</div><div style="margin-top:6px">Progress: <b id="progress">0 / 4</b></div></div>
 <div id="prompt"></div><div id="notice"></div><div id="mapPanel" class="pill">CITY GUIDE<br><span id="mapText">Green = mission · Gold = doors</span></div>
 <div id="bottom"><div id="controls" class="pill">WASD move · E enter/exit · F interact<br>Drive: W/S throttle · A/D steer · Space handbrake</div><div id="info" class="pill">ON FOOT<br>Nearby: <b id="nearby">—</b><br>Speed <b id="speed">0</b> km/h</div></div>
+<button id="dealershipBtn" class="pill" style="position:absolute;right:14px;top:58px;pointer-events:auto;cursor:pointer">🚗 CAR DEALERSHIP</button>
+<div id="dealershipPanel" class="pill" style="display:none;position:absolute;right:14px;top:104px;width:min(340px,calc(100vw - 28px));max-height:65vh;overflow:auto;pointer-events:auto;background:#10202aee">
+<b>UK MOTOR MARKET</b><p class="muted" style="margin:5px 0 10px">You don't own a car yet. Choose one to purchase; prices are fictional game prices.</p>
+<div id="dealerList"></div><button id="closeDealership" style="width:100%;margin-top:8px">Close</button></div>
 
 </div>
 <button id="lifeBtn" class="pill" style="pointer-events:auto;cursor:pointer;color:white;font-weight:800">👤 CHARACTER & JOBS</button>
@@ -130,7 +134,15 @@ function blocked(x,z,r){for(const b of obstacles)if(Math.abs(x-b.x)<b.w/2+r&&Mat
 function moveCollision(pos,dx,dz,r){let hit=false;if(!blocked(pos.x+dx,pos.z,r))pos.x+=dx;else hit=true;if(!blocked(pos.x,pos.z+dz,r))pos.z+=dz;else hit=true;pos.x=THREE.MathUtils.clamp(pos.x,-177,177);pos.z=THREE.MathUtils.clamp(pos.z,-177,177);return hit}
 function building(x,z,w,d,h,brick,kind='house',label='HOUSE'){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- box(0,h/2,0,w,h,d,brick,g);box(0,h+.1,0,w+.3,.25,d+.3,mats.roof,g);
+ box(0,h/2,0,w,h,d,brick,g);
+ // More varied UK-style rooflines, chimneys and bay windows.
+ box(0,h+.12,0,w+.45,.28,d+.45,mats.roof,g);
+ box(-w*.27,h+.52,-d*.2,.72,.72,.72,M(0x8a6550),g);
+ box(-w*.27,h+.9,-d*.2,.86,.12,.86,M(0x6c5043),g);
+ box(0,Math.min(h-1,2.4),d/2+.42,w*.56,1.35,.42,kind==='shop'?M(0xeee6d8):M(0xb9c9ce),g);
+ box(0,Math.min(h-1,2.4)+.72,d/2+.66,w*.6,.12,.12,M(0xf0e5d4),g);
+ box(-w*.39,Math.min(h-1,2.4),d/2+.42,.12,1.4,.12,M(0xf0e5d4),g);
+ box(w*.39,Math.min(h-1,2.4),d/2+.42,.12,1.4,.12,M(0xf0e5d4),g);
  for(let xx=-w/2+1.4;xx<w/2-1;xx+=2.5)for(let yy=1.5;yy<h-1;yy+=2.2){box(xx,yy,d/2+.02,.82,1.12,.06,mats.glass,g);box(xx,yy+.61,d/2+.06,.94,.1,.08,mats.white,g)}
  const doorMat=kind==='shop'?M(0x246447):M(0x333a40);
  // Door surround, step and shop awning add depth to the street frontage.
@@ -186,7 +198,16 @@ box(0,-.22,0,.3,.46,.34,outfit,armR);box(0,-.59,.015,.23,.34,.27,playerSkin,armR
 player.position.set(0,0,5);
 
 // cars
-const specs=[{id:'hatch',name:'City Hatchback',w:2.05,l:4,max:29,acc:13,turn:1.75,color:0xd7443e},{id:'saloon',name:'Executive Saloon',w:2.15,l:4.8,max:34,acc:10.5,turn:1.35,color:0x287fc4},{id:'suv',name:'Family SUV',w:2.35,l:4.6,max:27,acc:9.5,turn:1.3,color:0x25292e},{id:'taxi',name:'London Taxi',w:2.15,l:4.3,max:25,acc:10,turn:1.5,color:0xe7c442}];
+const specs=[
+{id:'hatch',name:'City Hatchback',w:2.05,l:4,max:29,acc:13,turn:1.75,color:0xd7443e},
+{id:'saloon',name:'Executive Saloon',w:2.15,l:4.8,max:34,acc:10.5,turn:1.35,color:0x287fc4},
+{id:'suv',name:'Family SUV',w:2.35,l:4.6,max:27,acc:9.5,turn:1.3,color:0x25292e},
+{id:'taxi',name:'London Taxi',w:2.15,l:4.3,max:25,acc:10,turn:1.5,color:0xe7c442},
+{id:'estate',name:'Family Estate',w:2.1,l:4.9,max:31,acc:11,turn:1.4,color:0x398b5b},
+{id:'sports',name:'Performance Coupe',w:2.05,l:4.4,max:48,acc:17,turn:1.9,color:0x8b343b},
+{id:'electric',name:'Electric City Car',w:1.95,l:3.7,max:32,acc:15,turn:1.8,color:0xe6e9e9},
+{id:'van',name:'Delivery Van',w:2.3,l:5.2,max:24,acc:8,turn:1.1,color:0xf1f0e8}
+];
 const cars=[];
 function createCar(s,x,z,heading=0){const g=new THREE.Group(),paint=M(s.color,.38,.2),glass=M(0x8ec6d9,.25,.1),chrome=M(0xb7c1c5,.3,.6),w=s.w,l=s.l;
 box(0,.36,0,w,.72,l,paint,g);box(0,1.0,-.25,w*.78,.62,l*.44,glass,g);box(0,1.33,-.25,w*.69,.07,l*.4,M(0x252d33,.45),g);box(0,.25,l/2+.035,w*.88,.2,.13,chrome,g);box(0,.25,-l/2-.035,w*.88,.2,.13,chrome,g);
@@ -194,7 +215,9 @@ const wheels=[];for(const xx of [-w*.53,w*.53])for(const zz of [-l*.31,l*.31]){c
 for(const xx of [-w*.34,w*.34]){box(xx,.55,l/2+.05,.34,.17,.08,M(0xfff2c0),g);box(xx,.55,-l/2-.05,.34,.17,.08,M(0xff3028),g)}
 if(s.id==='taxi'){box(0,1.72,-.2,.8,.18,.45,M(0xf4f1d7),g);box(0,1.82,-.2,.65,.04,.28,M(0x1e292d),g)}
 g.position.set(x,0,z);g.rotation.y=heading;scene.add(g);const c={spec:s,g,paint,wheels,speed:0,heading,occupied:false};cars.push(c);return c}
-createCar(specs[0],5,9,.1);createCar(specs[1],-7,12,0);createCar(specs[2],13,12,Math.PI);createCar(specs[3],-14,12,0);
+// No player-owned vehicle at spawn. Cars appear only after purchase from the dealership.
+const ownedCars=new Set();
+const carPrices={hatch:1800,saloon:6500,suv:9800,taxi:4200,estate:5200,sports:18500,electric:14500,van:7200};
 
 // pedestrians: simple colourful characters following sidewalk waypoints and avoiding building footprints.
 const npcs=[],npcColors=[0x8b5e3c,0xd34e4e,0x4e9b67,0x8b66bd,0xe0a33c,0x3478b8,0x22252a,0xb1b4ba];
@@ -246,11 +269,16 @@ addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDow
 addEventListener('keyup',e=>keys[e.code]=false);
 renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
-$('play').onclick=()=>{const c=cars.find(c=>c.spec.id===$('carChoice').value);if(c)c.paint.color.set($('paintChoice').value);playing=true;$('start').style.display='none';$('mapPanel').style.display='block';renderer.domElement.requestPointerLock?.();notify('Welcome to the neighbourhood!')};
+let selectedRegion='london';
+const regionNames={london:'England · London',edinburgh:'Scotland · Edinburgh',cardiff:'Wales · Cardiff',belfast:'Northern Ireland · Belfast'};
+$('play').onclick=()=>{selectedRegion=$('regionChoice').value;playing=true;$('start').style.display='none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · Green = mission · Gold = doors';renderer.domElement.requestPointerLock?.();notify('Welcome to '+regionNames[selectedRegion]+'! You start on foot.')};
+function buildDealer(){const root=$('dealerList');root.innerHTML='';for(const spec of specs){const row=document.createElement('div');row.style.cssText='padding:9px 0;border-bottom:1px solid #ffffff22;display:flex;align-items:center;justify-content:space-between;gap:8px';const textNode=document.createElement('div');textNode.innerHTML='<b>'+spec.name+'</b><div class="muted" style="font-size:11px">Top speed '+Math.round(spec.max*3.6)+' km/h · £'+carPrices[spec.id].toLocaleString('en-GB')+'</div>';const btn=document.createElement('button');btn.textContent=ownedCars.has(spec.id)?'Owned':'Buy';btn.disabled=ownedCars.has(spec.id);btn.style.cssText='padding:7px 10px;border-radius:8px;border:0;cursor:pointer';btn.onclick=()=>{const price=carPrices[spec.id];if(money<price){notify('You need £'+(price-money).toLocaleString('en-GB')+' more for this car');return}money-=price;syncFinance();ownedCars.add(spec.id);const c=createCar(spec,5+cars.length*3,10+cars.length*2,0);c.paint.color.set($('paintChoice').value);c.owned=true;notify('Purchased '+spec.name+' for £'+price.toLocaleString('en-GB'));buildDealer();saveUKLife(false)};row.append(textNode,btn);root.appendChild(row)}}
+$('dealershipBtn').addEventListener('click',()=>{buildDealer();$('dealershipPanel').style.display=$('dealershipPanel').style.display==='block'?'none':'block'});
+$('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.display='none');
 $('controlsBtn').onclick=()=>{$('help').style.display=$('help').style.display==='none'?'block':'none'};
 $('paintChoice').onchange=e=>{const c=driving||nearestCar();if(c){c.paint.color.set(e.target.value);notify(c.spec.name+' colour changed')}};
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
-function nearestCar(){let best=null,bd=Infinity;for(const c of cars){if(c===driving)continue;const d=player.position.distanceTo(c.g.position);if(d<bd){best=c;bd=d}}return bd<7?best:null}
+function nearestCar(){let best=null,bd=Infinity;for(const c of cars){if(c===driving||!c.owned)continue;const d=player.position.distanceTo(c.g.position);if(d<bd){best=c;bd=d}}return bd<7?best:null}
 function nearestDoor(){let best=null,bd=Infinity;for(const d of doors){const p=new THREE.Vector3(d.doorX,0,d.doorZ),dist=player.position.distanceTo(p);if(dist<bd){best=d;bd=dist}}return bd<5?best:null}
 function useDoorOrCar(){
  if(inside){inside=false;interior.visible=false;scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);player.position.copy(playerReturn);player.visible=true;activeDoor=null;notify('Back outside');return}
@@ -480,7 +508,7 @@ function saveUKLife(showMessage=false){
    player:{x:player.position.x,y:player.position.y,z:player.position.z},
    finance:{...finance},
    look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short'},
-   cars:cars.map(c=>({x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),
+   cars:cars.filter(c=>c.owned).map(c=>({id:c.spec.id,x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),ownedCars:[...ownedCars],region:selectedRegion,
    xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,
    activeJob:typeof activeJob==='number'?activeJob:null,jobStarted:typeof jobStarted==='boolean'?jobStarted:false
   };
@@ -522,7 +550,7 @@ function loadUKLife(){
    if($('skinColor'))$('skinColor').value='#'+playerSkin.color.getHexString();
    if($('topColor'))$('topColor').value='#'+outfit.color.getHexString();
   }
-  if(Array.isArray(d.cars))d.cars.forEach((v,i)=>{const c=cars[i];if(c&&v&&[v.x,v.y,v.z,v.heading].every(Number.isFinite)){c.g.position.set(v.x,v.y,v.z);c.heading=v.heading;c.g.rotation.y=v.heading;if(Number.isFinite(v.speed))c.speed=v.speed}});
+  if(Array.isArray(d.ownedCars))d.ownedCars.forEach(id=>{const spec=specs.find(x=>x.id===id);if(spec&&!ownedCars.has(id)){const v=Array.isArray(d.cars)?d.cars.find(c=>c.id===id):null;const c=createCar(spec,v&&Number.isFinite(v.x)?v.x:5+cars.length*3,v&&Number.isFinite(v.z)?v.z:10+cars.length*2,v&&Number.isFinite(v.heading)?v.heading:0);c.owned=true;ownedCars.add(id);if(v&&Number.isFinite(v.speed))c.speed=v.speed;if(v&&Number.isFinite(v.x)&&Number.isFinite(v.z))c.g.position.set(v.x,0,v.z)}});if(typeof d.region==='string'&&regionNames[d.region])selectedRegion=d.region;
   if(typeof xp!=='undefined'&&Number.isFinite(d.xp))xp=Math.max(0,d.xp);
   if(typeof jobCount!=='undefined'&&Number.isFinite(d.jobCount))jobCount=Math.max(0,d.jobCount);
   if(typeof activeJob!=='undefined'){activeJob=Number.isFinite(d.activeJob)?d.activeJob:null;jobStarted=!!d.jobStarted}
