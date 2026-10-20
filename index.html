@@ -737,8 +737,27 @@ let sirenEnabled=false,sirenContext=null,sirenOscA=null,sirenOscB=null,sirenGain
 function toggleSiren(){if(!driving||!['police','ambulance','fireengine'].includes(driving.spec.id)){notify('Enter a police car, ambulance or fire engine first');return}sirenEnabled=!sirenEnabled;if(sirenEnabled){try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){sirenContext=sirenContext||new AC();if(sirenContext.state==='suspended')sirenContext.resume();sirenGain=sirenContext.createGain();sirenGain.gain.value=.035;sirenGain.connect(sirenContext.destination);sirenOscA=sirenContext.createOscillator();sirenOscB=sirenContext.createOscillator();sirenOscA.type='sawtooth';sirenOscB.type='sine';sirenOscA.frequency.value=650;sirenOscB.frequency.value=440;sirenOscA.connect(sirenGain);sirenOscB.connect(sirenGain);sirenOscA.start();sirenOscB.start();}notify('Emergency lights and siren ON · H to switch off')}catch(e){notify('Emergency lights ON · audio unavailable')}}else{if(sirenGain)sirenGain.gain.value=0;notify('Emergency lights and siren OFF')}}
 
 updateMission();
-addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE')useDoorOrCar();if(e.code==='KeyQ')switchCar();if(e.code==='KeyC')cameraMode=(cameraMode+1)%2;if(e.code==='KeyF')interact();if(e.code==='KeyH')toggleSiren();if(e.code==='KeyU'&&playing)toggleGameUI()});
-addEventListener('keyup',e=>keys[e.code]=false);
+// Keep keyboard controls reliable across Chromebook/browser keyboard layouts.
+function setGameKey(e,pressed){
+  if(e.code)keys[e.code]=pressed;
+  if(typeof e.key==='string'){
+    const key=e.key.toLowerCase();
+    if(key.length===1)keys[key]=pressed;
+  }
+}
+addEventListener('keydown',e=>{
+  setGameKey(e,true);
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  if(!playing||e.repeat)return;
+  if(e.code==='KeyE'||e.key.toLowerCase()==='e')useDoorOrCar();
+  if(e.code==='KeyQ'||e.key.toLowerCase()==='q')switchCar();
+  if(e.code==='KeyC'||e.key.toLowerCase()==='c')cameraMode=(cameraMode+1)%2;
+  if(e.code==='KeyF'||e.key.toLowerCase()==='f')interact();
+  if(e.code==='KeyH'||e.key.toLowerCase()==='h')toggleSiren();
+  if((e.code==='KeyU'||e.key.toLowerCase()==='u')&&playing)toggleGameUI();
+});
+addEventListener('keyup',e=>setGameKey(e,false));
+addEventListener('blur',()=>{for(const key of Object.keys(keys))keys[key]=false;});
 renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
 let selectedRegion='london';
