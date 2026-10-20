@@ -286,18 +286,18 @@ const weatherKinds=[{name:'CLEAR · DRY',icon:'☀️',fog:330,hemi:1,sky:0x9fd8
 
 function updateDayNight(dt){dayNightElapsed+=dt;worldClockSeconds=(8*3600+dayNightElapsed*3)%86400;const hour=worldClockSeconds/3600;const daylight=THREE.MathUtils.clamp((Math.sin((hour-6)/12*Math.PI)+.12)/1.12,0,1);const dusk=Math.max(0,1-Math.abs(hour-18)/2,1-Math.abs(hour-6)/2);const sky=new THREE.Color().copy(skyNight).lerp(skyDay,daylight);if(dusk>0)sky.lerp(skyDusk,Math.min(.75,dusk*.65));scene.background.copy(sky);scene.fog.color.copy(sky);hemi.intensity=.32+daylight*1.68;sun.intensity=.12+daylight*2.08;sun.color.setRGB(1,.82+daylight*.12,.68+daylight*.32);sun.position.set(Math.cos((hour-12)/12*Math.PI)*75,Math.max(8,Math.sin((hour-6)/12*Math.PI)*95),35);const clock=document.getElementById("gameClock");if(clock){const h=Math.floor(worldClockSeconds/3600),m=Math.floor(worldClockSeconds%3600/60);clock.textContent=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");clock.title=hour<6||hour>=20?"Night-time":hour<9?"Morning":hour<17?"Daytime":"Evening";}}
 const M=(c,r=.85,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:metal});
-const mats={grass:M(0x688d5b),road:M(0x34393e),brick:M(0x9c5d49),brick2:M(0xb67d63),roof:M(0x45464a),glass:M(0x8ec8d9,.3),tree:M(0x347247),trunk:M(0x68472e),white:M(0xe6dfd0),line:M(0xe3d8aa),skin:M(0xd6a17c),pants:M(0x29323b),shoe:M(0xeeeeea),green:M(0x37df8c),lamp:M(0x252b2d)};
+const mats={grass:M(0x688d5b),road:M(0x20262c),brick:M(0x9c5d49),brick2:M(0xb67d63),roof:M(0x45464a),glass:M(0x8ec8d9,.3),tree:M(0x347247),trunk:M(0x68472e),white:M(0xe6dfd0),line:M(0xe3d8aa),skin:M(0xd6a17c),pants:M(0x29323b),shoe:M(0xeeeeea),green:M(0x37df8c),lamp:M(0x252b2d)};
 function mesh(g,m,x,y,z,p=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
 function box(x,y,z,sx,sy,sz,m,p=scene){return mesh(new THREE.BoxGeometry(sx,sy,sz),m,x,y,z,p)}
 box(0,-.35,0,390,.5,390,mats.grass);
-function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);if(w>d){for(let i=-Math.floor(w/8);i<Math.floor(w/8);i++)box(x+i*8,.025,z,.13,.025,2.5,mats.line)}else{for(let i=-Math.floor(d/8);i<Math.floor(d/8);i++)box(x,.025,z+i*8,2.5,.025,.13,mats.line)}}
+function road(x,z,w,d){box(x,-.06,z,w,.16,d,mats.road);if(w>d){for(let i=-Math.floor(w/8);i<Math.floor(w/8);i++)box(x+i*8,.025,z,.16,.035,3.2,mats.line);box(x,.026,z-w/2+.65,w,.035,.12,M(0xe7e8e4));box(x,.026,z+w/2-.65,w,.035,.12,M(0xe7e8e4))}else{for(let i=-Math.floor(d/8);i<Math.floor(d/8);i++)box(x,.025,z+i*8,3.2,.035,.16,mats.line);box(x-w/2+.65,.026,z,.12,.035,d,M(0xe7e8e4));box(x+w/2-.65,.026,z,.12,.035,d,M(0xe7e8e4))}}
 // Build visible asphalt roads beneath the pavements: the previous layout defined road markings but never called road().
 for(const z of [-120,-80,-40,0,40,80,120])road(0,z,360,15);
 for(const x of [-120,-80,-40,0,40,80,120])road(x,0,15,360);
-// Add a pair of wider main roads so the neighbourhood has a clearly visible connected road network.
-road(0,-20,360,22);road(20,0,22,360);
+// Keep every street the same clear width so pavements never overlap the carriageway.
+// Dark asphalt, bright lane dashes and pale raised kerbs make road edges easy to read.
 // UK-style pavements, raised kerbs and road-edge drainage.
-const pavement=M(0xb9b8ae),kerb=M(0xd2d0c6),drainMat=M(0x25292c,.65,.25),slabLine=M(0x92948d);
+const pavement=M(0xd0d0c8),kerb=M(0xf0eee5),drainMat=M(0x25292c,.65,.25),slabLine=M(0x9b9d97);
 const streetRuns=[-120,-80,-40,0,40,80,120];
 for(const z of streetRuns){
   for(const side of [-1,1]){
