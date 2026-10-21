@@ -790,7 +790,7 @@ for(let x=-160;x<=160;x+=20)for(const z of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp
 for(let z=-160;z<=160;z+=20)for(const x of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp);box(x,6,z+.4,.8,.12,.4,M(0xffe8a5))}
 
 // player
-const player=new THREE.Group();scene.add(player);
+const player=new THREE.Group();player.visible=true;player.name='PlayerCharacter';scene.add(player);
 const outfit=M(0x3478b8);box(0,1.35,0,.8,1,.45,outfit,player);
 const uniformBadge=box(-.18,1.52,.238,.16,.17,.025,M(0xf1d15b),player);const uniformCap=mesh(new THREE.SphereGeometry(.34,12,8,0,Math.PI*2,0,Math.PI*.32),M(0x26394d),0,2.3,0,player);uniformCap.visible=false;
 let selectedUniform='custom';
@@ -819,7 +819,7 @@ const armL=new THREE.Group(),armR=new THREE.Group();armL.position.set(-.5,1.72,.
 // Keep the arms slightly in front of the torso and wide enough to remain visible.
 box(0,-.22,0,.3,.46,.34,outfit,armL);box(0,-.59,.015,.23,.34,.27,playerSkin,armL);mesh(new THREE.SphereGeometry(.12,10,8),playerSkin,0,-.79,.015,armL);
 box(0,-.22,0,.3,.46,.34,outfit,armR);box(0,-.59,.015,.23,.34,.27,playerSkin,armR);mesh(new THREE.SphereGeometry(.12,10,8),playerSkin,0,-.79,.015,armR);
-player.position.set(0,0,5);
+player.position.set(0,0,5);player.visible=true;
 
 // cars
 const specs=[
