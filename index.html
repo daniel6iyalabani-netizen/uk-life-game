@@ -71,7 +71,7 @@ body.ui-hidden #updatesBtn{display:none!important}
   <p style="font-size:12px;color:#c8d7dd;line-height:1.5">Your game updates at the same link. Refresh the page if you see an older version.</p>
   <div style="padding:10px;border-radius:10px;background:#ffffff0b;margin:8px 0">
     <b>What's new in this version</b>
-    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li><li>Career-based outfit colour unlocks</li><li>Four new city missions and career car unlocks</li></ul>
+    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li><li>Career-based outfit colour unlocks</li><li>Four new city missions and career car unlocks</li><li>Adoptable dog and cat companions that follow your character</li><li>Home lounge upgrade with extra decorations and saved progress</li></ul>
   </div>
   <b>📅 Daily challenges</b><p class="small" style="font-size:11px;color:#c8d7dd">Challenges refresh by calendar day on this device. Rewards are in-game only.</p>
   <div id="dailyChallengesList" style="font-size:12px;line-height:1.5"></div>
@@ -207,6 +207,13 @@ body.ui-hidden #updatesBtn{display:none!important}
   <div id="achievementsPanel" style="display:none;margin-top:10px;padding:10px;border:1px solid #ffffff30;border-radius:10px;background:#0b171e"><b>🏆 YOUR ACHIEVEMENTS</b><p class="small">Earn XP, complete missions, try jobs and explore the city to unlock milestones.</p><div id="achievementList" class="small" style="line-height:1.8"></div><button id="closeAchievements" type="button">Close achievements</button></div>
   <button id="styleRewardsBtn" type="button">🎨 Style rewards & unlocks</button>
   <div id="styleRewardsPanel" style="display:none;margin-top:10px;padding:10px;border:1px solid #ffffff30;border-radius:10px;background:#0b171e"><b>🎨 CAREER STYLE REWARDS</b><p class="small">Earn XP, complete missions and try jobs to unlock extra outfit colours. Choose an unlocked reward to wear it.</p><div id="styleRewardList" class="small" style="line-height:1.6"></div><button id="closeStyleRewards" type="button">Close style rewards</button></div>
+  <button id="homePetsBtn" type="button">🏡 HOME, UPGRADES & PETS</button>
+  <div id="homePetsPanel" style="display:none;margin-top:10px;padding:10px;border:1px solid #ffffff30;border-radius:10px;background:#0b171e">
+    <b>🏡 Your Home</b><p class="small">Your home has a furnished living room, kitchen, bedroom and bathroom. Use E at the YOUR HOME door to explore inside.</p>
+    <div id="homeUpgradeStatus" class="small">Lounge upgrade: not purchased.</div><button id="homeUpgradeBtn" type="button">Buy cosy lounge & garden pack · £1,200</button>
+    <b>🐾 Adopt a pet</b><p class="small">Adopt a companion who follows you around the city and at home. Adoption is an in-game purchase.</p>
+    <div id="petStatus" class="small">No pet adopted yet.</div><div class="jobrow"><button id="adoptDogBtn" type="button">Adopt dog · £350</button><button id="adoptCatBtn" type="button">Adopt cat · £250</button></div><button id="petHomeBtn" type="button">Call pet to your home</button>
+  </div>
 </div>
 <script>
 // Register diagnostics before the module script is parsed, so startup errors are visible.
@@ -989,6 +996,62 @@ $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.dis
 $('controlsBtn').onclick=()=>{$('help').style.display=$('help').style.display==='none'?'block':'none'};
 $('paintChoice').onchange=e=>{const c=driving||nearestCar();if(c){c.paint.color.set(e.target.value);notify(c.spec.name+' colour changed')}};
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
+let adoptedPet=null,petType=null,homeUpgradeOwned=false;
+const homeUpgradeProps=[];
+function buildPet(type){
+ if(adoptedPet){scene.remove(adoptedPet);adoptedPet=null}
+ petType=type;
+ const g=new THREE.Group(),coat=M(type==='dog'?0xb9824b:0x777b85),dark=M(0x292a2c),innerEar=M(0xd99a9a),white=M(0xf5eee1);
+ mesh(new THREE.SphereGeometry(type==='dog'?.48:.39,14,10),coat,0,.48,0,g);
+ mesh(new THREE.SphereGeometry(.3,14,10),coat,0,.75,-.28,g);
+ mesh(new THREE.SphereGeometry(.045,10,8),dark,-.11,.79,-.535,g);mesh(new THREE.SphereGeometry(.045,10,8),dark,.11,.79,-.535,g);
+ mesh(new THREE.SphereGeometry(.06,10,8),dark,0,.68,-.56,g);
+ if(type==='dog'){
+  mesh(new THREE.ConeGeometry(.16,.42,8),coat,-.22,1.02,-.34,g).rotation.z=-.32;mesh(new THREE.ConeGeometry(.16,.42,8),coat,.22,1.02,-.34,g).rotation.z=.32;
+  for(const x of [-.27,.27])for(const z of [-.2,.22])mesh(new THREE.CylinderGeometry(.085,.09,.34,8),coat,x,.2,z,g);
+  const tail=mesh(new THREE.ConeGeometry(.12,.58,8),coat,0,.62,.48,g);tail.rotation.x=-1.1;
+ }else{
+  mesh(new THREE.ConeGeometry(.17,.48,8),coat,-.22,1.05,-.32,g);mesh(new THREE.ConeGeometry(.17,.48,8),coat,.22,1.05,-.32,g);
+  mesh(new THREE.ConeGeometry(.09,.27,8),innerEar,-.22,1.05,-.275,g);mesh(new THREE.ConeGeometry(.09,.27,8),innerEar,.22,1.05,-.275,g);
+  for(const x of [-.22,.22])for(const z of [-.18,.2])mesh(new THREE.CylinderGeometry(.065,.07,.28,8),coat,x,.16,z,g);
+  const tail=mesh(new THREE.CylinderGeometry(.07,.1,.75,8),coat,.34,.48,.36,g);tail.rotation.x=-.9;tail.rotation.z=-.65;
+ }
+ g.visible=true;scene.add(g);adoptedPet=g;g.position.set(player.position.x-1.4,0,player.position.z+1.4);
+ if($('petStatus'))$('petStatus').textContent='Your '+type+' is adopted and will follow you around.';
+}
+function updatePet(dt){
+ if(!adoptedPet||!player.visible)return;
+ const targetX=player.position.x-(inside?1.5:Math.sin(yaw)*1.5),targetZ=player.position.z+(inside?1.5:Math.cos(yaw)*1.5);
+ const dx=targetX-adoptedPet.position.x,dz=targetZ-adoptedPet.position.z,d=Math.hypot(dx,dz);
+ if(d>1.2){const step=Math.min(d-0.8,dt*(d>8?9:4));adoptedPet.position.x+=dx/d*step;adoptedPet.position.z+=dz/d*step;adoptedPet.rotation.y=Math.atan2(dx,dz)}
+ adoptedPet.position.y=Math.abs(Math.sin(performance.now()*.008))*Math.min(.1,d*.015);
+}
+function renderHomePetState(){
+ if($('petStatus'))$('petStatus').textContent=petType?'Your '+petType+' is adopted and will follow you around.':'No pet adopted yet.';
+ if($('homeUpgradeStatus'))$('homeUpgradeStatus').textContent=homeUpgradeOwned?'Lounge upgrade purchased: extra rug, plant and reading lamp added.':'Lounge upgrade: not purchased.';
+ if($('homeUpgradeBtn'))$('homeUpgradeBtn').textContent=homeUpgradeOwned?'Lounge upgrade owned':'Buy cosy lounge & garden pack · £1,200';
+ if($('adoptDogBtn'))$('adoptDogBtn').disabled=!!petType;
+ if($('adoptCatBtn'))$('adoptCatBtn').disabled=!!petType;
+}
+$('homePetsBtn').addEventListener('click',()=>{$('homePetsPanel').style.display=$('homePetsPanel').style.display==='block'?'none':'block';renderHomePetState()});
+$('adoptDogBtn').addEventListener('click',()=>{if(petType){notify('You already have a pet companion');return}if(money<350){notify('You need £'+(350-money)+' more to adopt a dog');return}money-=350;syncFinance();buildPet('dog');renderHomePetState();notify('Welcome home, dog! Your new companion will follow you.');saveUKLife(false)});
+$('adoptCatBtn').addEventListener('click',()=>{if(petType){notify('You already have a pet companion');return}if(money<250){notify('You need £'+(250-money)+' more to adopt a cat');return}money-=250;syncFinance();buildPet('cat');renderHomePetState();notify('Welcome home, cat! Your new companion will follow you.');saveUKLife(false)});
+$('homeUpgradeBtn').addEventListener('click',()=>{
+ if(homeUpgradeOwned){notify('Your cosy lounge upgrade is already installed');return}
+ if(money<1200){notify('You need £'+(1200-money)+' more for the home upgrade');return}
+ money-=1200;syncFinance();homeUpgradeOwned=true;
+ const rug=prop(homeRoom,-3,.17,2.2,5.2,.08,3.6,0x477d78);const plantPot=prop(homeRoom,8,.38,4,.6,.75,.6,0x9b7656);const plant=mesh(new THREE.SphereGeometry(.65,10,8),M(0x398b5b),8,1.2,4,homeRoom);const lamp=prop(homeRoom,-7,1.1,-4,.25,2.2,.25,0xd7c29a);homeUpgradeProps.push(rug,plantPot,plant,lamp);
+ renderHomePetState();notify('Cosy lounge & garden pack added to your home!');saveUKLife(false);
+});
+$('petHomeBtn').addEventListener('click',()=>{
+ if(!petType){notify('Adopt a pet first');return}
+ if(inside&&activeDoor&&activeDoor.label==='YOUR HOME'){adoptedPet.position.set(-2,0,2);notify('Your pet is home and ready to relax');return}
+ const homeDoor=doors.find(d=>d.label==='YOUR HOME');if(!homeDoor){notify('Find the YOUR HOME door in the neighbourhood');return}
+ if(inside){notify('Leave this building first, then call your pet home');return}
+ if(driving){notify('Exit your vehicle before calling your pet home');return}
+ player.position.set(homeDoor.doorX,0,homeDoor.doorZ+3);yaw=0;adoptedPet.position.set(homeDoor.doorX-1.5,0,homeDoor.doorZ+4);notify('You and your pet are back at YOUR HOME. Press E at the door to go inside.');
+});
+renderHomePetState();
 function nearestCar(){let best=null,bd=Infinity;for(const c of cars){if(c===driving||!c.owned||c.traffic)continue;const d=player.position.distanceTo(c.g.position);if(d<bd){best=c;bd=d}}return bd<7?best:null}
 function nearestDoor(){let best=null,bd=Infinity;for(const d of doors){const p=new THREE.Vector3(d.doorX,0,d.doorZ),dist=player.position.distanceTo(p);if(dist<bd){best=d;bd=dist}}return bd<5?best:null}
 function useDoorOrCar(){
@@ -1047,7 +1110,7 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
- updateDayNight(dt);updateWeather(dt);updateExplorerContract();
+ updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);
  const staminaFill=$('staminaFill'),staminaValue=$('staminaValue'),staminaHint=$('staminaHint');if(staminaFill&&staminaValue){const pct=Math.round(stamina);staminaFill.style.width=pct+'%';staminaFill.style.background=pct<25?'#ff6868':pct<55?'#ffd166':'#83e0b0';staminaValue.textContent=pct;if(staminaHint)staminaHint.textContent=pct<=0?'Exhausted · recover to sprint':pct<25?'Running low · let stamina recover':'Hold Shift to sprint';}
  if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
  updateTraffic(dt);
@@ -1105,7 +1168,7 @@ document.getElementById('phoneText').addEventListener('click',()=>{const n=selec
 document.getElementById('phoneCall').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;n.friendship=Math.min(5,n.friendship+1);n.known=n.meetings>=1||n.friendship>=2;n.lastLine=['I’m free later — see you around!','Nice to hear from you!','I’m out and about in town.','Let’s catch up soon!'][Math.floor(Math.random()*4)];phoneResult('📞 Call connected with '+n.name+'. '+n.name+': “'+n.lastLine+'” · Friendship '+n.friendship+'/5');notify('Call with '+n.name+' finished');refreshPhoneContacts()});
 document.getElementById('phoneInvite').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;const club=doors.find(d=>/NIGHTCLUB|CLUB/i.test(d.label));if(!club){phoneResult('The nightclub could not be found.');return}n.to.set(club.doorX,0,club.doorZ);n.state='walk';n.stateTimer=45;n.shopDoor=club;n.lastLine='I’m heading to the nightclub — meet me there!';n.friendship=Math.min(5,n.friendship+1);phoneResult(n.name+' has been invited to the nightclub and is heading over. Meet them by the club entrance.');notify('🪩 You invited '+n.name+' to the nightclub');refreshPhoneContacts()});
 document.getElementById('busMapBtn').addEventListener('click',()=>{const panel=document.getElementById('busMapPanel');panel.style.display=panel.style.display==='block'?'none':'block'});document.getElementById('closeBusMap').addEventListener('click',()=>document.getElementById('busMapPanel').style.display='none');
-document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}const UK_LIFE_VERSION='2026.10-career-cars';
+document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}const UK_LIFE_VERSION='2026.10-home-pets';
 const UK_LIFE_DAILY_KEY='ukLifeDailyChallengesV1';
 function localDayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function dailyState(){
@@ -1510,7 +1573,7 @@ function saveUKLife(showMessage=false){
    finance:{...finance},
    look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short',uniform:selectedUniform},
    cars:cars.filter(c=>c.owned).map(c=>({id:c.spec.id,x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),ownedCars:[...ownedCars],region:selectedRegion,
-   xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,
+   xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,petType:petType,homeUpgradeOwned:homeUpgradeOwned,
    activeJob:typeof activeJob==='number'?activeJob:null,jobStarted:typeof jobStarted==='boolean'?jobStarted:false,relationships:npcs.map(n=>({id:n.persistentId,name:n.name,friendship:n.friendship,meetings:n.meetings,known:n.known,lastLine:n.lastLine}))
   };
   localStorage.setItem(UK_LIFE_SAVE_KEY,JSON.stringify(save));
@@ -1529,6 +1592,8 @@ function loadUKLife(){
   const raw=localStorage.getItem(UK_LIFE_SAVE_KEY);if(!raw)return;
   const d=JSON.parse(raw);if(!d||typeof d!=='object')return;
   if(Number.isFinite(d.money))money=Math.max(0,d.money);
+  if(d.petType==='dog'||d.petType==='cat')buildPet(d.petType);
+  if(d.homeUpgradeOwned){homeUpgradeOwned=true;const rug=prop(homeRoom,-3,.17,2.2,5.2,.08,3.6,0x477d78);const plantPot=prop(homeRoom,8,.38,4,.6,.75,.6,0x9b7656);const plant=mesh(new THREE.SphereGeometry(.65,10,8),M(0x398b5b),8,1.2,4,homeRoom);const lamp=prop(homeRoom,-7,1.1,-4,.25,2.2,.25,0xd7c29a);homeUpgradeProps.push(rug,plantPot,plant,lamp);}
   if(Number.isFinite(d.missionIndex))missionIndex=Math.max(0,Math.min(missionList.length,d.missionIndex));
   if(Number.isFinite(d.missionStage))missionStage=Math.max(0,Math.min(1,d.missionStage));
   if(Number.isFinite(d.yaw))yaw=d.yaw;
