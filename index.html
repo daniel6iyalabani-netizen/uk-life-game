@@ -258,7 +258,7 @@ body.ui-hidden #updatesBtn{display:none!important}
     <label for="homeFurnitureChoice" class="small">Furniture</label><select id="homeFurnitureChoice"><option value="sofa">Sofa · £180</option><option value="bed">Bed · £250</option><option value="table">Dining table · £100</option><option value="plant">House plant · £35</option><option value="lamp">Standing lamp · £45</option><option value="bookshelf">Bookshelf · £90</option><option value="desk">Gaming / study desk · £140</option><option value="wardrobe">Wardrobe · £110</option><option value="rug">Rug · £40</option></select>
     <label for="homeFurnitureColour" class="small">Furniture colour</label><select id="homeFurnitureColour"><option value="0x477d98">Blue</option><option value="0x477d58">Green</option><option value="0x9b7656">Oak brown</option><option value="0xd8cfc1">Cream</option><option value="0x6c5b91">Purple</option><option value="0x34383e">Charcoal</option><option value="0xb94f52">Red</option></select>
     <div class="jobrow"><button id="homePlaceFurnitureBtn" type="button">Buy & place furniture</button><button id="homeMoveFurnitureBtn" type="button">Move selected item</button></div>
-    <button id="homeColourFurnitureBtn" type="button">Recolour selected item</button><div id="homeCustomStatus" class="small">No custom furniture placed yet.</div>
+    <button id="homeColourFurnitureBtn" type="button">Recolour selected item</button><label for="homePlacedItemChoice" class="small">Select placed furniture to move or recolour</label><select id="homePlacedItemChoice"><option value="">No items yet</option></select><div id="homeCustomStatus" class="small">No custom furniture placed yet.</div>
     <b>🐾 Adopt a pet</b><p class="small">Adopt a companion who follows you around the city and at home. Adoption is an in-game purchase.</p>
     <div id="petStatus" class="small">No pet adopted yet.</div><div class="jobrow"><button id="adoptDogBtn" type="button">Adopt dog · £350</button><button id="adoptCatBtn" type="button">Adopt cat · £250</button></div><button id="petHomeBtn" type="button">Call pet to your home</button>
   </div>
@@ -1144,9 +1144,11 @@ function notify(t){$('notice').textContent=t;$('notice').style.display='block';n
 let adoptedPet=null,petType=null,homeUpgradeOwned=false;
 const homeUpgradeProps=[];
 const homeNeeds={energy:65,hunger:70,hygiene:80};
+let homeNeedsClock=0;
+function updateHomeNeeds(dt){if(!playing)return;homeNeedsClock+=dt;if(homeNeedsClock>=45){homeNeedsClock=0;homeNeeds.energy=Math.max(0,homeNeeds.energy-1);homeNeeds.hunger=Math.max(0,homeNeeds.hunger-1);homeNeeds.hygiene=Math.max(0,homeNeeds.hygiene-1);renderHomeLife();saveUKLife(false)}}
 const homeCustomItems=[];let selectedHomeItem=null;
 const homeFurnitureCatalog={sofa:{name:'sofa',price:180,size:[3.2,1.05,1.25],y:.53},bed:{name:'bed',price:250,size:[2.3,.55,3.1],y:.28},table:{name:'dining table',price:100,size:[1.8,.95,1.25],y:.48},plant:{name:'house plant',price:35,size:[.65,1.3,.65],y:.65},lamp:{name:'standing lamp',price:45,size:[.3,1.8,.3],y:.9},bookshelf:{name:'bookshelf',price:90,size:[1.25,2,.4],y:1},desk:{name:'gaming / study desk',price:140,size:[1.8,.9,.8],y:.45},wardrobe:{name:'wardrobe',price:110,size:[1.3,2.1,.7],y:1.05},rug:{name:'rug',price:40,size:[2.4,.06,1.8],y:.03}};
-function renderHomeLife(){const el=$('homeLifeStatus');if(el)el.textContent='Energy '+Math.round(homeNeeds.energy)+' · Hunger '+Math.round(homeNeeds.hunger)+' · Hygiene '+Math.round(homeNeeds.hygiene)+' · Groceries '+finance.food;const status=$('homeCustomStatus');if(status)status.textContent=homeCustomItems.length+' custom item(s) placed. '+(selectedHomeItem?'Selected: '+homeFurnitureCatalog[selectedHomeItem.type].name+'.':'Choose an item to place first.')}
+function renderHomeLife(){const el=$('homeLifeStatus');if(el)el.textContent='Energy '+Math.round(homeNeeds.energy)+' · Hunger '+Math.round(homeNeeds.hunger)+' · Hygiene '+Math.round(homeNeeds.hygiene)+' · Groceries '+finance.food;const pick=$('homePlacedItemChoice');if(pick){const previous=selectedHomeItem?String(homeCustomItems.indexOf(selectedHomeItem)):pick.value;pick.innerHTML='';if(!homeCustomItems.length){const opt=document.createElement('option');opt.value='';opt.textContent='No items yet';pick.appendChild(opt)}else{homeCustomItems.forEach((item,i)=>{const opt=document.createElement('option');opt.value=String(i);opt.textContent=(i+1)+'. '+homeFurnitureCatalog[item.type].name;pick.appendChild(opt)});const idx=homeCustomItems.findIndex(item=>item===selectedHomeItem);pick.value=idx>=0?String(idx):(previous||'0')}}const status=$('homeCustomStatus');if(status)status.textContent=homeCustomItems.length+' custom item(s) placed. '+(selectedHomeItem?'Selected: '+homeFurnitureCatalog[selectedHomeItem.type].name+'.':'Choose an item to place first.')}
 function requireOwnHome(){if(!inside||!activeDoor||activeDoor.label!=='YOUR HOME'){notify('Go inside YOUR HOME first to use home life and customisation.');return false}return true}
 function makeHomeFurniture(type,x,y,z,color){const spec=homeFurnitureCatalog[type];if(!spec)return null;const object=prop(homeRoom,x,y,z,spec.size[0],spec.size[1],spec.size[2],Number(color)||0x477d98);object.userData.homeFurniture=true;object.userData.furnitureType=type;const item={type,object,color:Number(color)||0x477d98};homeCustomItems.push(item);selectedHomeItem=item;return item}
 function saveHomeNeedsAndLayout(){renderHomeLife();saveUKLife(false)}
@@ -1157,6 +1159,7 @@ function homeSleep(){if(!requireOwnHome())return;homeNeeds.energy=100;homeNeeds.
 function homeEat(){if(!requireOwnHome())return;if(money<12){notify('You need £12 for a meal. Earn money or buy groceries first.');return}money-=12;finance.food=Math.max(0,finance.food-1);homeNeeds.hunger=100;syncFinance();renderHomeLife();saveUKLife(false);notify('You ate a meal at home. Hunger restored for £12.')}
 function homeBath(){if(!requireOwnHome())return;homeNeeds.hygiene=100;homeNeeds.energy=Math.max(0,homeNeeds.energy-3);renderHomeLife();saveUKLife(false);notify('You used the bath / shower. Hygiene restored.')}
 $('homeSleepBtn').addEventListener('click',homeSleep);$('homeEatBtn').addEventListener('click',homeEat);$('homeBathBtn').addEventListener('click',homeBath);$('homePlaceFurnitureBtn').addEventListener('click',homePlaceFurniture);$('homeMoveFurnitureBtn').addEventListener('click',homeMoveFurniture);$('homeColourFurnitureBtn').addEventListener('click',homeRecolourFurniture);
+$('homePlacedItemChoice').addEventListener('change',()=>{const i=Number($('homePlacedItemChoice').value);selectedHomeItem=Number.isInteger(i)?homeCustomItems[i]||null:null;renderHomeLife()});
 function buildPet(type){
  if(adoptedPet){scene.remove(adoptedPet);adoptedPet=null}
  petType=type;
@@ -1269,7 +1272,7 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
- updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);
+ updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);updateHomeNeeds(dt);
  const staminaFill=$('staminaFill'),staminaValue=$('staminaValue'),staminaHint=$('staminaHint');if(staminaFill&&staminaValue){const pct=Math.round(stamina);staminaFill.style.width=pct+'%';staminaFill.style.background=pct<25?'#ff6868':pct<55?'#ffd166':'#83e0b0';staminaValue.textContent=pct;if(staminaHint)staminaHint.textContent=pct<=0?'Exhausted · recover to sprint':pct<25?'Running low · let stamina recover':'Hold Shift to sprint';}
  if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
  updateTraffic(dt);
