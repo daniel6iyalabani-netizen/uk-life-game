@@ -1997,4 +1997,19 @@ try{let c=JSON.parse(localStorage.getItem('ukLifeMarketConfigV1')||'null');if(c?
 })();
 </script>
 
+
+<script>
+/* Marketplace click feedback: show that the button was received, even if the main connection script failed to initialise. */
+(function(){
+  const btn=document.getElementById('marketConnect');
+  const msg=document.getElementById('marketConnectionStatus');
+  if(!btn||!msg)return;
+  btn.addEventListener('click',function(){
+    if(msg.textContent.trim()==='Connect Supabase to enable player accounts and shared listings.'){
+      msg.textContent='Connect button pressed. Checking marketplace setup…';
+      msg.style.color='#647384';
+    }
+  },true);
+})();
+</script>
 </body></html>
