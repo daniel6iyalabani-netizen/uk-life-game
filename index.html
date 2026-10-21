@@ -1994,7 +1994,26 @@ function loadUKLife(){
 loadUKLife();
 setInterval(()=>saveUKLife(false),5000);
 addEventListener('beforeunload',()=>saveUKLife(false));
-function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)update(dt);if(typeof player!=='undefined'&&!driving&&!trainJourney&&!(typeof playerOnBus!=='undefined'&&playerOnBus)){player.visible=true;player.scale.set(1,1,1);player.position.y=0;player.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false}});if(!inside){camera.position.lerp(new THREE.Vector3(player.position.x,5.2,player.position.z+10),.08);camera.lookAt(player.position.x,1.1,player.position.z)}}renderer.render(scene,camera);requestAnimationFrame(loop)}
+let ukLifeRenderErrorShown=false;
+function showUKLifeRenderError(message){
+ if(ukLifeRenderErrorShown)return;ukLifeRenderErrorShown=true;playing=false;
+ let panel=document.getElementById('ukLifeRenderError');
+ if(!panel){panel=document.createElement('div');panel.id='ukLifeRenderError';panel.style.cssText='position:fixed;z-index:20000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,520px);padding:20px;border-radius:16px;background:#111e26;color:white;border:2px solid #ffcf5b;font:16px/1.5 system-ui,Arial;box-shadow:0 12px 50px #0009';document.body.appendChild(panel);}
+ panel.textContent='UK Life Game graphics stopped: '+message+' — Please refresh the page. If this message returns, send this exact error to the game developer.';
+}
+function loop(now){
+ const dt=Math.min(.04,(now-last)/1000);last=now;
+ if(playing){try{update(dt)}catch(err){console.error('UK Life update crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}}
+ try{
+  if(typeof player!=='undefined'&&!driving&&!trainJourney&&!(typeof playerOnBus!=='undefined'&&playerOnBus)){
+   player.visible=true;player.scale.set(1,1,1);player.position.y=0;
+   player.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false}});
+   if(!inside){camera.position.lerp(new THREE.Vector3(player.position.x,5.2,player.position.z+10),.08);camera.lookAt(player.position.x,1.1,player.position.z)}
+  }
+  renderer.render(scene,camera);
+ }catch(err){console.error('UK Life renderer crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}
+ requestAnimationFrame(loop)
+}
 camera.position.set(player.position.x,5,player.position.z+10);camera.lookAt(player.position.x,1,player.position.z);requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
