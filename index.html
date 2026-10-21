@@ -1421,6 +1421,8 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
+ // Keep the on-foot avatar visible; only hide it while actually aboard a vehicle or train.
+ if(!driving&&!trainJourney&&typeof playerOnBus!=='undefined'&&!playerOnBus)player.visible=true;
  updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);updateHomeNeeds(dt);updateCityFires(dt);updateResponderMission(dt);
  const staminaFill=$('staminaFill'),staminaValue=$('staminaValue'),staminaHint=$('staminaHint');if(staminaFill&&staminaValue){const pct=Math.round(stamina);staminaFill.style.width=pct+'%';staminaFill.style.background=pct<25?'#ff6868':pct<55?'#ffd166':'#83e0b0';staminaValue.textContent=pct;if(staminaHint)staminaHint.textContent=pct<=0?'Exhausted · recover to sprint':pct<25?'Running low · let stamina recover':'Hold Shift to sprint';}
  if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
@@ -1988,7 +1990,7 @@ loadUKLife();
 setInterval(()=>saveUKLife(false),5000);
 addEventListener('beforeunload',()=>saveUKLife(false));
 function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)}
-camera.position.set(0,5,14);camera.lookAt(0,1,0);requestAnimationFrame(loop);
+camera.position.set(player.position.x,5,player.position.z+10);camera.lookAt(player.position.x,1,player.position.z);requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
 })().catch(function(error){
