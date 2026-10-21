@@ -1180,6 +1180,55 @@ $('streetRob').onclick=()=>{const n=streetCrimeCheck();if(!n)return;const succes
 $('streetAttack').onclick=()=>{const n=streetCrimeCheck();if(!n)return;n.friendship=Math.max(0,n.friendship-2);n.known=false;const dx=n.g.position.x-player.position.x,dz=n.g.position.z-player.position.z,dist=Math.hypot(dx,dz)||1;n.g.position.x+=dx/dist*2.2;n.g.position.z+=dz/dist*2.2;streetCrimeWanted=Math.min(5,streetCrimeWanted+2);notify(n.name+' backs away from the confrontation. Wanted level '+streetCrimeWanted+'/5.');saveUKLife(false);streetTarget()};
 $('streetScam').onclick=()=>{const n=streetCrimeCheck();if(!n)return;const success=Math.random()<.48;n.friendship=Math.max(0,n.friendship-(success?1:2));n.known=false;if(success){const gain=40+Math.floor(Math.random()*161);money+=gain;streetCrimeWanted=Math.min(5,streetCrimeWanted+1);notify('The fictional trick worked: £'+gain+' gained. Your reputation is at risk.')}else{const loss=Math.min(money,50+Math.floor(Math.random()*101));money-=loss;streetCrimeWanted=Math.min(5,streetCrimeWanted+1);notify('The resident spotted the trick. You lost £'+loss+'.')}syncFinance();saveUKLife(false);streetTarget()};
 
+
+const cityFires=[];
+let emergencyWantedClock=0,emergencyJailClock=0,fireServiceCooldown=0;
+function emergencyStatus(t){$('emergencyStatus').textContent=t}
+function createCityFire(){
+ const x=(Math.random()-.5)*230,z=(Math.random()-.5)*230;
+ const root=new THREE.Group();root.position.set(x,0,z);scene.add(root);
+ const base=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.3,.12,12),M(0x24201d));base.position.y=.08;root.add(base);
+ const flames=[];
+ for(let i=0;i<7;i++){const m=new THREE.Mesh(new THREE.ConeGeometry(.22+Math.random()*.28,.8+Math.random()*.9,7),new THREE.MeshBasicMaterial({color:[0xff3d16,0xff8c21,0xffcf4b][i%3],transparent:true,opacity:.9}));m.position.set((Math.random()-.5)*1.1,.55+Math.random()*.35,(Math.random()-.5)*1.1);root.add(m);flames.push(m)}
+ const smoke=new THREE.Mesh(new THREE.SphereGeometry(.6,8,8),new THREE.MeshBasicMaterial({color:0x555b62,transparent:true,opacity:.45}));smoke.position.y=1.8;root.add(smoke);
+ const f={root,flames,smoke,x,z,age:0,alive:true};cityFires.push(f);return f
+}
+function updateCityFires(dt){
+ for(const f of cityFires){if(!f.alive)continue;f.age+=dt;for(let i=0;i<f.flames.length;i++){const m=f.flames[i];m.scale.y=.7+Math.sin(f.age*8+i*1.8)*.4;m.rotation.y+=dt*(i%2?1:-1);m.position.y=.6+Math.sin(f.age*6+i)*.12}f.smoke.position.y=1.8+Math.min(2,f.age*.1);f.smoke.scale.setScalar(.8+Math.sin(f.age*2)*.15)}
+ if(fireServiceCooldown>0)fireServiceCooldown=Math.max(0,fireServiceCooldown-dt);
+ if(emergencyJailClock>0){emergencyJailClock=Math.max(0,emergencyJailClock-dt);if(emergencyJailClock===0){if(typeof player!=='undefined'){player.position.set(0,0,12);if(driving){driving.occupied=false;driving=null;player.visible=true}}emergencyStatus('Sentence served. You are back in the city.');notify('You have been released.');}}
+}
+function activeCityFires(){return cityFires.filter(f=>f.alive)}
+function createFireCrew(f){
+ const truckSpec=specs.find(v=>v.id==='fireengine');
+ if(truckSpec){const c=createCar(truckSpec,f.x+5,f.z+4,Math.PI/2);c.traffic=true;c.emergencyService=true;c.speed=0}
+ const crew=new THREE.Group();crew.position.set(f.x+2,0,f.z+1);scene.add(crew);
+ const uniform=M(0xf06a24),skin=M(0xc99470),dark=M(0x20252a);
+ for(let i=0;i<3;i++){const x=(i-1)*.65;box(x,1.05,0,.4,.65,.28,uniform,crew);mesh(new THREE.SphereGeometry(.18,10,8),skin,x,1.55,0,crew);box(x,1.76,0,.42,.12,.32,M(0xf0bd35),crew);box(x,.55,0,.16,.45,.18,dark,crew)}
+ const hose=box(-.2,.7,-1.05,.08,.08,2.2,M(0x30383c),crew);hose.rotation.x=.2;
+ const water=new THREE.Mesh(new THREE.ConeGeometry(.28,2.4,8),new THREE.MeshBasicMaterial({color:0x9be6ff,transparent:true,opacity:.55}));water.position.set(0,1.25,-2.15);water.rotation.x=-Math.PI/2;crew.add(water);
+ return crew
+}
+function dispatchFirefighters(){
+ const fires=activeCityFires();if(!fires.length){emergencyStatus('No active fires. Crews are standing by.');notify('Fire control reports no active fires.');return}
+ if(fireServiceCooldown>0){notify('Fire crews are already responding.');return}
+ fireServiceCooldown=12;emergencyStatus('Firefighters dispatched — tackling '+fires.length+' fire'+(fires.length===1?'':'s')+'.');
+ fires.forEach((f,i)=>{const crew=createFireCrew(f);setTimeout(()=>{f.alive=false;scene.remove(f.root);scene.remove(crew);emergencyStatus(activeCityFires().length?'Crews are moving to the next fire.':'All fires extinguished. The city is safe.');notify('Firefighters extinguished a city fire!')},3500+i*1600)});
+}
+$('emergencyServicesBtn').onclick=()=>{$('emergencyServicesPanel').style.display=$('emergencyServicesPanel').style.display==='block'?'none':'block'};
+$('emergencyClose').onclick=()=>$('emergencyServicesPanel').style.display='none';
+$('emergencyPolice').onclick=()=>{
+ if(typeof streetCrimeWanted==='undefined'||streetCrimeWanted<=0){emergencyStatus('Police are available. Your wanted level is clear.');notify('No outstanding wanted level.');return}
+ const fine=Math.min(money,streetCrimeWanted*125);money-=fine;streetCrimeWanted=0;syncFinance();saveUKLife(false);emergencyStatus('Police resolved the incident. Fine paid: £'+fine+'.');notify('Police warning resolved. Fine: £'+fine);
+};
+$('emergencyJail').onclick=()=>{
+ if(typeof streetCrimeWanted==='undefined'||streetCrimeWanted<=0){emergencyStatus('No sentence to serve.');notify('You have no outstanding wanted level.');return}
+ if(driving){driving.occupied=false;driving=null;player.visible=true}
+ emergencyJailClock=8+streetCrimeWanted*4;emergencyStatus('Serving a short fictional sentence: '+Math.ceil(emergencyJailClock)+' seconds.');notify('Police arrested you. Sentence started.');
+};
+$('emergencyStartFire').onclick=()=>{if(activeCityFires().length>=3){emergencyStatus('There are already several active fires. Dispatch crews first.');return}const f=createCityFire();emergencyStatus('Fire reported near map coordinates '+Math.round(f.x)+', '+Math.round(f.z)+'. Dispatch firefighters to put it out.');notify('Emergency call: a fire has started in the city!')};
+$('emergencyFirefighters').onclick=dispatchFirefighters;
+
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
 let adoptedPet=null,petType=null,homeUpgradeOwned=false;
 const homeUpgradeProps=[];
@@ -1323,7 +1372,7 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
- updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);updateHomeNeeds(dt);
+ updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);updateHomeNeeds(dt);updateCityFires(dt);
  const staminaFill=$('staminaFill'),staminaValue=$('staminaValue'),staminaHint=$('staminaHint');if(staminaFill&&staminaValue){const pct=Math.round(stamina);staminaFill.style.width=pct+'%';staminaFill.style.background=pct<25?'#ff6868':pct<55?'#ffd166':'#83e0b0';staminaValue.textContent=pct;if(staminaHint)staminaHint.textContent=pct<=0?'Exhausted · recover to sprint':pct<25?'Running low · let stamina recover':'Hold Shift to sprint';}
  if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
  updateTraffic(dt);
@@ -2143,4 +2192,24 @@ body.ui-hidden #streetCrimeBtn,body.ui-hidden #streetCrimePanel{display:none!imp
 <button id="streetScam">🎭 Try a fictional confidence trick</button>
 <button id="streetCrimeClose">Close</button>
 <p class="crimeWarn">Crime can backfire: residents may refuse to talk, you can lose money, and your wanted level can rise.</p>
+</section>
+<style>
+#emergencyServicesBtn{position:fixed;z-index:4;right:14px;top:248px;pointer-events:auto;background:#73352b;border:1px solid #ffb39c;font-weight:900}
+#emergencyServicesPanel{position:fixed;z-index:11;right:14px;top:292px;width:min(350px,calc(100vw - 28px));max-height:65vh;overflow:auto;background:#101a21f5;border:1px solid #ffb39c88;border-radius:14px;padding:13px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto;color:white}
+#emergencyServicesPanel h2{font-size:17px;margin:0 0 6px}#emergencyServicesPanel h3{font-size:13px;color:#ffb39c;margin:12px 0 5px}#emergencyServicesPanel p{font-size:11px;color:#d0dce1;line-height:1.45;margin:6px 0}#emergencyServicesPanel button{width:100%;padding:8px;margin:4px 0;border:1px solid #ffffff30;border-radius:8px;background:#263a45;color:white;font-weight:750;cursor:pointer}#emergencyServicesPanel .emergencyStatus{background:#ffffff0d;border-radius:8px;padding:8px;color:#c9e8d7}
+body.ui-hidden #emergencyServicesBtn,body.ui-hidden #emergencyServicesPanel{display:none!important}
+@media(max-width:650px){#emergencyServicesBtn{top:245px;right:8px;font-size:11px;padding:8px}#emergencyServicesPanel{top:289px;right:8px}}
+</style>
+<button id="emergencyServicesBtn" type="button">🚨 Emergency Services</button>
+<section id="emergencyServicesPanel" aria-label="Police and fire services">
+<h2>🚨 Emergency Services</h2>
+<p>Call for help in the fictional city. Police can respond to your wanted level; firefighters can put out world fires.</p>
+<div class="emergencyStatus" id="emergencyStatus">Police available · Fire crews on standby</div>
+<h3>🚓 Police</h3>
+<button id="emergencyPolice">Call police / resolve wanted level</button>
+<button id="emergencyJail">Serve sentence and clear wanted level</button>
+<h3>🔥 Fire & rescue</h3>
+<button id="emergencyStartFire">🔥 Start a random city fire (game event)</button>
+<button id="emergencyFirefighters">🚒 Dispatch firefighters</button>
+<button id="emergencyClose">Close</button>
 </section></body></html>
