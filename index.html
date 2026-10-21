@@ -1238,6 +1238,29 @@ const responderJobs={
  firefighter:{name:'Firefighter',missions:['Attend a reported building fire','Check a smoke alarm and help a resident','Support a road rescue exercise','Complete fire-station safety checks'],wage:195,gear:['Fire service trainee kit','Firefighter protective uniform','Crew leader uniform'],vehicles:['Fire engine','Rescue support vehicle']},
  paramedic:{name:'Paramedic',missions:['Attend a patient needing urgent help','Complete a first-aid response call','Transport a patient to hospital','Restock and check ambulance equipment'],wage:190,gear:['Paramedic trainee uniform','Ambulance uniform','Senior paramedic uniform'],vehicles:['Ambulance','Rapid response car']}
 };
+let responderWaypoint=null,responderWaypointPulse=0,responderMissionReached=false;
+function responderClearWaypoint(){if(responderWaypoint){scene.remove(responderWaypoint);responderWaypoint.geometry.dispose();responderWaypoint.material.dispose();responderWaypoint=null}}
+function responderMakeWaypoint(){
+ responderClearWaypoint();responderMissionReached=false;
+ const angle=Math.random()*Math.PI*2,dist=24+Math.random()*18;
+ const x=Math.max(-90,Math.min(90,player.position.x+Math.cos(angle)*dist));
+ const z=Math.max(-90,Math.min(90,player.position.z+Math.sin(angle)*dist));
+ const group=new THREE.Group();group.position.set(x,0,z);
+ const colour=responderCareer.career==='police'?0x5da9ff:responderCareer.career==='firefighter'?0xff754a:0x7dffcf;
+ const beam=new THREE.Mesh(new THREE.CylinderGeometry(.22,.65,3.2,12,1,true),new THREE.MeshBasicMaterial({color:colour,transparent:true,opacity:.22,side:THREE.DoubleSide}));
+ beam.position.y=1.6;group.add(beam);
+ const orb=new THREE.Mesh(new THREE.OctahedronGeometry(.8),new THREE.MeshStandardMaterial({color:colour,emissive:colour,emissiveIntensity:.8}));orb.position.y=3.5;group.add(orb);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(1.25,.09,8,24),new THREE.MeshBasicMaterial({color:colour}));ring.rotation.x=Math.PI/2;ring.position.y=.12;group.add(ring);
+ group.userData={orb,ring};scene.add(group);responderWaypoint=group;
+ $('responderMissionText').textContent='Dispatch waypoint marked nearby. Follow the glowing '+responderJobs[responderCareer.career].name+' beacon and get within 4 metres to report in.';
+}
+function updateResponderMission(dt){
+ if(!responderCareer.active||!responderWaypoint||!playing)return;
+ responderWaypointPulse+=dt;responderWaypoint.userData.orb.rotation.y+=dt*1.8;responderWaypoint.userData.orb.position.y=3.5+Math.sin(responderWaypointPulse*2.5)*.35;responderWaypoint.userData.ring.rotation.z+=dt*.8;
+ const dx=player.position.x-responderWaypoint.position.x,dz=player.position.z-responderWaypoint.position.z,d=Math.hypot(dx,dz);
+ if(d<4&&!responderMissionReached){responderMissionReached=true;notify('You reached the incident. Return to Emergency Careers and complete your shift.');$('responderMissionText').textContent='Incident reached! You are on scene. Open this panel and complete the shift to collect your wages.'}
+ else if(!responderMissionReached){$('responderMissionText').textContent='Active call-out: '+responderJobs[responderCareer.career].missions[responderCareer.mission%responderJobs[responderCareer.career].missions.length]+'. Waypoint '+Math.round(d)+' m away.'}
+}
 function responderSave(){try{localStorage.setItem(responderKey,JSON.stringify(responderCareer))}catch(e){}responderRender()}
 function responderRender(){
  const j=responderJobs[responderCareer.career]||responderJobs.police;
@@ -1251,8 +1274,8 @@ function responderRender(){
 $('responderCareerBtn').onclick=()=>{$('responderCareerPanel').style.display=$('responderCareerPanel').style.display==='block'?'none':'block';responderRender()};
 $('responderCareerClose').onclick=()=>$('responderCareerPanel').style.display='none';
 $('responderJoinCareer').onclick=()=>{if(responderCareer.active){notify('Finish your current shift before changing careers.');return}responderCareer.career=$('responderCareerChoice').value;responderCareer.shifts=0;responderCareer.rank=0;responderCareer.mission=0;responderSave();notify('Joined the '+responderJobs[responderCareer.career].name+' service!')};
-$('responderStartShift').onclick=()=>{if(responderCareer.active){notify('You already have a shift in progress.');return}responderCareer.active=true;responderCareer.mission=responderCareer.shifts;responderSave();notify('Shift started: '+responderJobs[responderCareer.career].missions[responderCareer.mission%responderJobs[responderCareer.career].missions.length])};
-$('responderCompleteShift').onclick=()=>{if(!responderCareer.active){notify('Start a shift first.');return}const j=responderJobs[responderCareer.career],pay=j.wage+responderCareer.rank*45;responderCareer.active=false;responderCareer.shifts++;const newRank=Math.min(2,Math.floor(responderCareer.shifts/3));const promoted=newRank>responderCareer.rank;responderCareer.rank=newRank;money+=pay;syncFinance();saveUKLife(false);responderSave();notify('Shift completed! Earned £'+pay+'.'+(promoted?' Promotion unlocked!':' Good work, responder.'))};
+$('responderStartShift').onclick=()=>{if(responderCareer.active){notify('You already have a shift in progress.');return}responderCareer.active=true;responderCareer.mission=responderCareer.shifts;responderMakeWaypoint();responderSave();notify('Shift started: follow the glowing waypoint to the incident.')};
+$('responderCompleteShift').onclick=()=>{if(!responderCareer.active){notify('Start a shift first.');return}if(!responderMissionReached){notify('Reach the glowing waypoint before completing this shift.');return}const j=responderJobs[responderCareer.career],pay=j.wage+responderCareer.rank*45;responderCareer.active=false;responderClearWaypoint();responderCareer.shifts++;const newRank=Math.min(2,Math.floor(responderCareer.shifts/3));const promoted=newRank>responderCareer.rank;responderCareer.rank=newRank;money+=pay;syncFinance();saveUKLife(false);responderSave();notify('Shift completed! Earned £'+pay+'.'+(promoted?' Promotion unlocked!':' Good work, responder.'))};
 responderRender();
 
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
@@ -1398,7 +1421,7 @@ function updateTraffic(dt){
  }
 }
 function update(dt){
- updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);updateHomeNeeds(dt);updateCityFires(dt);
+ updateDayNight(dt);updateWeather(dt);updateExplorerContract();updatePet(dt);updateHomeNeeds(dt);updateCityFires(dt);updateResponderMission(dt);
  const staminaFill=$('staminaFill'),staminaValue=$('staminaValue'),staminaHint=$('staminaHint');if(staminaFill&&staminaValue){const pct=Math.round(stamina);staminaFill.style.width=pct+'%';staminaFill.style.background=pct<25?'#ff6868':pct<55?'#ffd166':'#83e0b0';staminaValue.textContent=pct;if(staminaHint)staminaHint.textContent=pct<=0?'Exhausted · recover to sprint':pct<25?'Running low · let stamina recover':'Hold Shift to sprint';}
  if(sirenEnabled&&sirenContext&&sirenOscA&&sirenOscB){sirenClock+=dt;const freq=520+Math.sin(sirenClock*5.5)*260;sirenOscA.frequency.setTargetAtTime(freq,sirenContext.currentTime,.04);sirenOscB.frequency.setTargetAtTime(900-freq*.45,sirenContext.currentTime,.04);}
  updateTraffic(dt);
