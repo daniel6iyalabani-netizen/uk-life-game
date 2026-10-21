@@ -1263,10 +1263,9 @@ $('closeAchievements').addEventListener('click',()=>$('achievementsPanel').style
 $('shareGameBtn').addEventListener('click',async()=>{
  const url='https://daniel6iyalabani-netizen.github.io/uk-life-game/';
  const status=$('shareStatus');
- try{if(navigator.share){await navigator.share({title:'UK Life Game',text:'Explore a UK-inspired 3D city, take jobs and build your life!',url});if(status)status.textContent='Thanks for sharing UK Life!';}
- else if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(url);if(status)status.textContent='Game link copied! Share it with friends.';}
- else{window.prompt('Copy this game link and share it with friends:',url);if(status)status.textContent='Here is your game link to share.';}}
- catch(e){if(e&&e.name!=='AbortError'&&status)status.textContent='You can share this link: '+url;}
+ const showLink=(message)=>{if(status)status.innerHTML=message+' <a href="'+url+'" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;overflow-wrap:anywhere">Open UK Life Game</a> · <button type="button" id="copyShareLink" style="padding:3px 7px;font-size:11px">COPY LINK</button>';const copyBtn=$('copyShareLink');if(copyBtn)copyBtn.addEventListener('click',async()=>{try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(url);}else{const box=document.createElement('textarea');box.value=url;box.style.position='fixed';box.style.opacity='0';document.body.appendChild(box);box.select();const copied=document.execCommand('copy');box.remove();if(!copied)throw new Error('Copy unavailable');}if(status)status.textContent='Game link copied! Paste it into a message to share.';}catch(e){window.prompt('Copy this game link:',url);}});};
+ if(navigator.share){try{await navigator.share({title:'UK Life Game',text:'Explore a UK-inspired 3D city, take jobs and build your life!',url});if(status)status.textContent='Share menu opened. Choose an app or person to send the game link.';return;}catch(e){if(e&&e.name!=='AbortError'){showLink('Sharing was unavailable. You can copy the link below:');return;}showLink('Sharing cancelled. You can still copy the link below:');return;}}
+ showLink('Share UK Life Game using this link:');
 });
 $('feedbackGameBtn').addEventListener('click',()=>{
  const feedback=window.prompt('What should I improve in UK Life Game? Please do not include private information.');
