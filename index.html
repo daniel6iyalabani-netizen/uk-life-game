@@ -1989,7 +1989,7 @@ function loadUKLife(){
 loadUKLife();
 setInterval(()=>saveUKLife(false),5000);
 addEventListener('beforeunload',()=>saveUKLife(false));
-function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing)update(dt);if(typeof player!=='undefined'&&!driving&&!trainJourney&&!(typeof playerOnBus!=='undefined'&&playerOnBus)){player.visible=true;if(!inside){camera.position.lerp(new THREE.Vector3(player.position.x,5.2,player.position.z+10),.08);camera.lookAt(player.position.x,1.1,player.position.z)}}renderer.render(scene,camera);requestAnimationFrame(loop)}
 camera.position.set(player.position.x,5,player.position.z+10);camera.lookAt(player.position.x,1,player.position.z);requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
