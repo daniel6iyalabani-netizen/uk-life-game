@@ -1156,7 +1156,7 @@ function buildDealer(){const root=$('dealerList');root.innerHTML='';for(const sp
 let customCarSequence=0;
 function customCarBuildPrice(){const p=+$('customCarPower').value,h=+$('customCarHandling').value,style=$('customCarStyle').value;return Math.round((1200+(p-20)*105+(h-8)*65+({compact:0,saloon:450,sport:950,suv:800}[style]||0))/50)*50}
 function updateCustomCarQuote(){$('customCarPowerLabel').textContent='Top speed: '+$('customCarPower').value+' m/s ('+Math.round(+$('customCarPower').value*3.6)+' km/h)';$('customCarPrice').textContent='£'+customCarBuildPrice().toLocaleString('en-GB')}
-$('customCarBtn').addEventListener('click',()=>{$('customCarPanel').style.display='block';updateCustomCarQuote()});
+const customCarOpenButton=$('customCarBtn');if(customCarOpenButton)customCarOpenButton.addEventListener('click',()=>{$('customCarPanel').style.display='block';updateCustomCarQuote()});
 $('customCarCancel').onclick=()=>$('customCarPanel').style.display='none';
 ['customCarPower','customCarHandling','customCarStyle'].forEach(id=>$(id).addEventListener('input',updateCustomCarQuote));
 $('customCarBuild').onclick=()=>{
