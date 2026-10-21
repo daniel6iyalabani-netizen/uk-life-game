@@ -441,11 +441,16 @@ window.addEventListener('error', event => {
 });
 window.addEventListener('unhandledrejection', event => {
   console.error('UK Life async error', event.reason);
+  const help=document.getElementById('help');
+  if(help){help.style.display='block';help.textContent='Game startup error: '+(event.reason&&event.reason.message?event.reason.message:String(event.reason))+'. Refresh the page; if it repeats, try Chrome and allow the 3D engine to load.';}
 });
+window.addEventListener('webglcontextlost', function(event){
+  const help=document.getElementById('help');if(help){help.style.display='block';help.textContent='The 3D graphics context was lost. Reload the page and close other graphics-heavy tabs.';}
+}, true);
 // Start clicks are handled by the early classic script above, including clicks made while the module loads.
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,800);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;';document.body.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xe1f6ff,0x52634b,2));const sun=new THREE.DirectionalLight(0xfff0d9,2.2);sun.position.set(-50,85,35);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 // Continuous day/night cycle: one full in-game day lasts eight real minutes.
 const hemi=scene.children.find(o=>o.isHemisphereLight);const skyDay=new THREE.Color(0x9fd8f0),skyDusk=new THREE.Color(0xe79b70),skyNight=new THREE.Color(0x101b36);let worldClockSeconds=8*3600;let dayNightElapsed=0;
