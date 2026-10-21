@@ -881,9 +881,10 @@ function updateTrafficSignals(dt){
  if(trafficSignalClock>=8){trafficSignalClock=0;trafficSignalPhase=(trafficSignalPhase+1)%2}
  for(const signal of trafficSignals){
   const green=(signal.axis==='x')===(trafficSignalPhase===0);
-  signal.lamps[0].material.color.setHex(green?0x3b302f:0xe74a42);
-  signal.lamps[1].material.color.setHex(0x6a5b2b);
-  signal.lamps[2].material.color.setHex(green?0x42c46a:0x2b4836);
+  // Guard missing lamp materials so a partially created traffic light cannot stop the entire game update.
+  if(signal.lamps[0]?.material?.color)signal.lamps[0].material.color.setHex(green?0x3b302f:0xe74a42);
+  if(signal.lamps[1]?.material?.color)signal.lamps[1].material.color.setHex(0x6a5b2b);
+  if(signal.lamps[2]?.material?.color)signal.lamps[2].material.color.setHex(green?0x42c46a:0x2b4836);
  }
 }
 function trafficHasRedLight(c){
