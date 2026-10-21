@@ -1306,7 +1306,8 @@ document.getElementById('phoneText').addEventListener('click',()=>{const n=selec
 document.getElementById('phoneCall').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;n.friendship=Math.min(5,n.friendship+1);n.known=n.meetings>=1||n.friendship>=2;n.lastLine=['I’m free later — see you around!','Nice to hear from you!','I’m out and about in town.','Let’s catch up soon!'][Math.floor(Math.random()*4)];phoneResult('Call ended · '+n.name+': “'+n.lastLine+'” · Friendship '+n.friendship+'/5');notify('Call with '+n.name+' finished');refreshPhoneContacts();saveUKLife(false)});
 document.getElementById('phoneInvite').addEventListener('click',()=>{const n=selectedPhoneContact();if(!n)return;const club=doors.find(d=>/NIGHTCLUB|CLUB/i.test(d.label));if(!club){phoneResult('The nightclub could not be found.');return}n.to.set(club.doorX,0,club.doorZ);n.state='walk';n.stateTimer=45;n.shopDoor=club;n.lastLine='I’m heading to the nightclub — meet me there!';n.friendship=Math.min(5,n.friendship+1);phoneResult(n.name+' has been invited to the nightclub and is heading over. Meet them by the club entrance.');notify('🪩 You invited '+n.name+' to the nightclub');refreshPhoneContacts();saveUKLife(false)});
 document.getElementById('busMapBtn').addEventListener('click',()=>{const panel=document.getElementById('busMapPanel');panel.style.display=panel.style.display==='block'?'none':'block'});document.getElementById('closeBusMap').addEventListener('click',()=>document.getElementById('busMapPanel').style.display='none');
-document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}const UK_LIFE_VERSION='2026.10-home-pets';
+document.getElementById('loadSaveBtn').addEventListener('click',()=>{if(!localStorage.getItem(UK_LIFE_SAVE_KEY)){document.getElementById('saveMenuStatus').textContent='No saved game found in this browser yet.';return}loadUKLife();updateProgressionUI();document.getElementById('saveMenuStatus').textContent='Saved game loaded.';notify('Saved game loaded')});
+const UK_LIFE_VERSION='2026.10-phone-levels';
 const UK_LIFE_DAILY_KEY='ukLifeDailyChallengesV1';
 function localDayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function dailyState(){
@@ -1426,7 +1427,7 @@ function renderAchievements(){
 }
 $('achievementsBtn').addEventListener('click',()=>{const p=$('achievementsPanel');p.style.display=p.style.display==='block'?'none':'block';renderAchievements()});
 $('closeAchievements').addEventListener('click',()=>$('achievementsPanel').style.display='none');
-loadUKLife();updateProgressionUI();document.getElementById('saveMenuStatus').textContent='Saved game loaded.';notify('Saved game loaded')});
+loadUKLife();updateProgressionUI();
 document.getElementById('closeSaveMenu').addEventListener('click',()=>document.getElementById('saveMenu').style.display='none');
 document.getElementById('closeLife').addEventListener('click',()=>document.getElementById('lifePanel').style.display='none');
 document.getElementById('startJob').addEventListener('click',()=>{activeJob=Number(jobChoice.value||0);jobStarted=true;showJobDetails();notify('Job started: '+jobNames[activeJob]+' — follow the task shown in Character & Jobs');});
