@@ -249,6 +249,16 @@ body.ui-hidden #updatesBtn{display:none!important}
   <div id="homePetsPanel" style="display:none;margin-top:10px;padding:10px;border:1px solid #ffffff30;border-radius:10px;background:#0b171e">
     <b>🏡 Your Home</b><p class="small">Your home has a furnished living room, kitchen, bedroom and bathroom. Use E at the YOUR HOME door to explore inside.</p>
     <div id="homeUpgradeStatus" class="small">Lounge upgrade: not purchased.</div><button id="homeUpgradeBtn" type="button">Buy cosy lounge & garden pack · £1,200</button>
+
+    <hr style="border-color:#ffffff25;margin:10px 0"><b>🛏️ Home life & customisation</b>
+    <div id="homeLifeStatus" class="small">Energy 65 · Hunger 70 · Hygiene 80</div>
+    <div class="jobrow"><button id="homeSleepBtn" type="button">Sleep in bed</button><button id="homeEatBtn" type="button">Eat a meal · £12</button></div>
+    <button id="homeBathBtn" type="button">Use bath / shower</button>
+    <p class="small">Customise while inside YOUR HOME. Choose furniture, then place or move it near your character. Your layout is saved.</p>
+    <label for="homeFurnitureChoice" class="small">Furniture</label><select id="homeFurnitureChoice"><option value="sofa">Sofa · £180</option><option value="bed">Bed · £250</option><option value="table">Dining table · £100</option><option value="plant">House plant · £35</option><option value="lamp">Standing lamp · £45</option><option value="bookshelf">Bookshelf · £90</option><option value="desk">Gaming / study desk · £140</option><option value="wardrobe">Wardrobe · £110</option><option value="rug">Rug · £40</option></select>
+    <label for="homeFurnitureColour" class="small">Furniture colour</label><select id="homeFurnitureColour"><option value="0x477d98">Blue</option><option value="0x477d58">Green</option><option value="0x9b7656">Oak brown</option><option value="0xd8cfc1">Cream</option><option value="0x6c5b91">Purple</option><option value="0x34383e">Charcoal</option><option value="0xb94f52">Red</option></select>
+    <div class="jobrow"><button id="homePlaceFurnitureBtn" type="button">Buy & place furniture</button><button id="homeMoveFurnitureBtn" type="button">Move selected item</button></div>
+    <button id="homeColourFurnitureBtn" type="button">Recolour selected item</button><div id="homeCustomStatus" class="small">No custom furniture placed yet.</div>
     <b>🐾 Adopt a pet</b><p class="small">Adopt a companion who follows you around the city and at home. Adoption is an in-game purchase.</p>
     <div id="petStatus" class="small">No pet adopted yet.</div><div class="jobrow"><button id="adoptDogBtn" type="button">Adopt dog · £350</button><button id="adoptCatBtn" type="button">Adopt cat · £250</button></div><button id="petHomeBtn" type="button">Call pet to your home</button>
   </div>
@@ -1133,6 +1143,20 @@ $('paintChoice').onchange=e=>{const c=driving||nearestCar();if(c){c.paint.color.
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
 let adoptedPet=null,petType=null,homeUpgradeOwned=false;
 const homeUpgradeProps=[];
+const homeNeeds={energy:65,hunger:70,hygiene:80};
+const homeCustomItems=[];let selectedHomeItem=null;
+const homeFurnitureCatalog={sofa:{name:'sofa',price:180,size:[3.2,1.05,1.25],y:.53},bed:{name:'bed',price:250,size:[2.3,.55,3.1],y:.28},table:{name:'dining table',price:100,size:[1.8,.95,1.25],y:.48},plant:{name:'house plant',price:35,size:[.65,1.3,.65],y:.65},lamp:{name:'standing lamp',price:45,size:[.3,1.8,.3],y:.9},bookshelf:{name:'bookshelf',price:90,size:[1.25,2,.4],y:1},desk:{name:'gaming / study desk',price:140,size:[1.8,.9,.8],y:.45},wardrobe:{name:'wardrobe',price:110,size:[1.3,2.1,.7],y:1.05},rug:{name:'rug',price:40,size:[2.4,.06,1.8],y:.03}};
+function renderHomeLife(){const el=$('homeLifeStatus');if(el)el.textContent='Energy '+Math.round(homeNeeds.energy)+' · Hunger '+Math.round(homeNeeds.hunger)+' · Hygiene '+Math.round(homeNeeds.hygiene)+' · Groceries '+finance.food;const status=$('homeCustomStatus');if(status)status.textContent=homeCustomItems.length+' custom item(s) placed. '+(selectedHomeItem?'Selected: '+homeFurnitureCatalog[selectedHomeItem.type].name+'.':'Choose an item to place first.')}
+function requireOwnHome(){if(!inside||!activeDoor||activeDoor.label!=='YOUR HOME'){notify('Go inside YOUR HOME first to use home life and customisation.');return false}return true}
+function makeHomeFurniture(type,x,y,z,color){const spec=homeFurnitureCatalog[type];if(!spec)return null;const object=prop(homeRoom,x,y,z,spec.size[0],spec.size[1],spec.size[2],Number(color)||0x477d98);object.userData.homeFurniture=true;object.userData.furnitureType=type;const item={type,object,color:Number(color)||0x477d98};homeCustomItems.push(item);selectedHomeItem=item;return item}
+function saveHomeNeedsAndLayout(){renderHomeLife();saveUKLife(false)}
+function homePlaceFurniture(){if(!requireOwnHome())return;const type=$('homeFurnitureChoice').value,spec=homeFurnitureCatalog[type];if(!spec)return;if(money<spec.price){notify('You need £'+(spec.price-money)+' more for '+spec.name);return}money-=spec.price;syncFinance();const item=makeHomeFurniture(type,THREE.MathUtils.clamp(player.position.x,-9,9),spec.y,THREE.MathUtils.clamp(player.position.z,-9,9),Number($('homeFurnitureColour').value));if(item){notify(spec.name+' bought and placed for £'+spec.price);saveHomeNeedsAndLayout()}}
+function homeMoveFurniture(){if(!requireOwnHome())return;if(!selectedHomeItem){notify('Buy and place a furniture item first');return}selectedHomeItem.object.position.set(THREE.MathUtils.clamp(player.position.x,-9,9),selectedHomeItem.object.position.y,THREE.MathUtils.clamp(player.position.z,-9,9));saveHomeNeedsAndLayout();notify('Furniture moved to your current position.')}
+function homeRecolourFurniture(){if(!requireOwnHome())return;if(!selectedHomeItem){notify('Buy and place a furniture item first');return}selectedHomeItem.color=Number($('homeFurnitureColour').value);selectedHomeItem.object.material.color.setHex(selectedHomeItem.color);saveHomeNeedsAndLayout();notify('Furniture colour changed')}
+function homeSleep(){if(!requireOwnHome())return;homeNeeds.energy=100;homeNeeds.hunger=Math.max(0,homeNeeds.hunger-12);homeNeeds.hygiene=Math.max(0,homeNeeds.hygiene-8);dayNightElapsed+=8*3600/180;stamina=MAX_STAMINA;renderHomeLife();saveUKLife(false);notify('You slept in your bed. Energy restored and the in-game clock advanced 8 hours.')}
+function homeEat(){if(!requireOwnHome())return;if(money<12){notify('You need £12 for a meal. Earn money or buy groceries first.');return}money-=12;finance.food=Math.max(0,finance.food-1);homeNeeds.hunger=100;syncFinance();renderHomeLife();saveUKLife(false);notify('You ate a meal at home. Hunger restored for £12.')}
+function homeBath(){if(!requireOwnHome())return;homeNeeds.hygiene=100;homeNeeds.energy=Math.max(0,homeNeeds.energy-3);renderHomeLife();saveUKLife(false);notify('You used the bath / shower. Hygiene restored.')}
+$('homeSleepBtn').addEventListener('click',homeSleep);$('homeEatBtn').addEventListener('click',homeEat);$('homeBathBtn').addEventListener('click',homeBath);$('homePlaceFurnitureBtn').addEventListener('click',homePlaceFurniture);$('homeMoveFurnitureBtn').addEventListener('click',homeMoveFurniture);$('homeColourFurnitureBtn').addEventListener('click',homeRecolourFurniture);
 function buildPet(type){
  if(adoptedPet){scene.remove(adoptedPet);adoptedPet=null}
  petType=type;
@@ -1735,6 +1759,7 @@ $('applyCareer').addEventListener('click',()=>{
  syncFinance();notify('Application accepted: '+finance.employed+'. Weekly gross pay £'+finance.wage+'.');
 });
 syncFinance();
+renderHomeLife();
 
 // UK_LIFE_SAVE_V1: autosave progress locally on this device/browser.
 const UK_LIFE_SAVE_KEY='ukLifeSaveV1';
@@ -1747,6 +1772,7 @@ function saveUKLife(showMessage=false){
    look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short',uniform:selectedUniform},
    cars:cars.filter(c=>c.owned).map(c=>({id:c.spec.id,x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),ownedCars:[...ownedCars],region:selectedRegion,
    xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,petType:petType,homeUpgradeOwned:homeUpgradeOwned,
+   homeNeeds:{energy:homeNeeds.energy,hunger:homeNeeds.hunger,hygiene:homeNeeds.hygiene},homeCustomItems:homeCustomItems.map(o=>({type:o.type,x:o.object.position.x,y:o.object.position.y,z:o.object.position.z,color:o.color})),
    activeJob:typeof activeJob==='number'?activeJob:null,jobStarted:typeof jobStarted==='boolean'?jobStarted:false,relationships:npcs.map(n=>({id:n.persistentId,name:n.name,friendship:n.friendship,meetings:n.meetings,known:n.known,lastLine:n.lastLine}))
   };
   localStorage.setItem(UK_LIFE_SAVE_KEY,JSON.stringify(save));
@@ -1766,7 +1792,8 @@ function loadUKLife(){
   const d=JSON.parse(raw);if(!d||typeof d!=='object')return;
   if(Number.isFinite(d.money))money=Math.max(0,d.money);
   if(d.petType==='dog'||d.petType==='cat')buildPet(d.petType);
-  if(d.homeUpgradeOwned){homeUpgradeOwned=true;const rug=prop(homeRoom,-3,.17,2.2,5.2,.08,3.6,0x477d78);const plantPot=prop(homeRoom,8,.38,4,.6,.75,.6,0x9b7656);const plant=mesh(new THREE.SphereGeometry(.65,10,8),M(0x398b5b),8,1.2,4,homeRoom);const lamp=prop(homeRoom,-7,1.1,-4,.25,2.2,.25,0xd7c29a);homeUpgradeProps.push(rug,plantPot,plant,lamp);}
+  if(d.homeNeeds&&typeof d.homeNeeds==='object'){for(const k of ['energy','hunger','hygiene'])if(Number.isFinite(d.homeNeeds[k]))homeNeeds[k]=THREE.MathUtils.clamp(d.homeNeeds[k],0,100)}if(Array.isArray(d.homeCustomItems)){for(const item of d.homeCustomItems){if(!item||!homeFurnitureCatalog[item.type]||![item.x,item.y,item.z,item.color].every(Number.isFinite))continue;makeHomeFurniture(item.type,THREE.MathUtils.clamp(item.x,-9,9),item.y,THREE.MathUtils.clamp(item.z,-9,9),item.color)}}if(d.homeUpgradeOwned){homeUpgradeOwned=true;const rug=prop(homeRoom,-3,.17,2.2,5.2,.08,3.6,0x477d78);const plantPot=prop(homeRoom,8,.38,4,.6,.75,.6,0x9b7656);const plant=mesh(new THREE.SphereGeometry(.65,10,8),M(0x398b5b),8,1.2,4,homeRoom);const lamp=prop(homeRoom,-7,1.1,-4,.25,2.2,.25,0xd7c29a);homeUpgradeProps.push(rug,plantPot,plant,lamp);}
+  renderHomeLife();
   if(Number.isFinite(d.missionIndex))missionIndex=Math.max(0,Math.min(missionList.length,d.missionIndex));
   if(Number.isFinite(d.missionStage))missionStage=Math.max(0,Math.min(1,d.missionStage));
   if(Number.isFinite(d.yaw))yaw=d.yaw;
