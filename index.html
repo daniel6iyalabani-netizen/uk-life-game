@@ -1861,4 +1861,43 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
  if(button){button.disabled=false;button.textContent="RETRY GAME START";}
  window.__ukLifeBootFailed=true;
 });
-</script></body></html>
+</script>
+<style>
+#newPlayerTutorial{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px;background:#06111bd9;backdrop-filter:blur(5px);font-family:Arial,Helvetica,sans-serif}
+#newPlayerTutorial .tutorial-card{width:min(440px,100%);background:linear-gradient(150deg,#1b3448,#10202e);color:#f5fbff;border:1px solid #83e0b0;border-radius:20px;padding:22px;box-shadow:0 24px 80px #0009}
+#newPlayerTutorial .tutorial-step{font-size:11px;letter-spacing:2px;color:#83e0b0;font-weight:900}
+#newPlayerTutorial h2{margin:9px 0;font-size:24px}
+#newPlayerTutorial p{font-size:14px;line-height:1.55;color:#d3e2eb}
+#newPlayerTutorial .tutorial-actions{display:flex;gap:8px;margin-top:18px}
+#newPlayerTutorial button{flex:1;padding:11px 12px;border-radius:10px;border:1px solid #ffffff30;background:#253d4c;color:white;font-weight:800;cursor:pointer}
+#newPlayerTutorial #tutorialNext{background:#83e0b0;color:#102019;border-color:#83e0b0}
+</style>
+<div id="newPlayerTutorial" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+ <div class="tutorial-card">
+  <div class="tutorial-step" id="tutorialStep">WELCOME · 1 OF 5</div>
+  <h2 id="tutorialTitle">Welcome to UK Life!</h2>
+  <p id="tutorialText">Explore the city at your own pace. This quick guide shows you the basics.</p>
+  <div class="tutorial-actions"><button type="button" id="tutorialSkip">Skip tutorial</button><button type="button" id="tutorialNext">Next →</button></div>
+ </div>
+</div>
+<script>
+(function(){
+ const steps=[
+  {title:'Welcome to UK Life!',text:'Explore a UK-inspired city, meet people, find work, earn money and build your life. There is no rush — try things at your own pace.'},
+  {title:'Learn the controls',text:'On a computer, use W A S D to move, your mouse to look around, and Shift to sprint. Press E near a door or car to enter or exit. Press F when an interaction prompt appears. On a phone or tablet, use the on-screen touch controls.'},
+  {title:'Follow your first mission',text:'Look at the mission panel for your current task and progress. Follow the green destination marker, get close to the target, then press F when prompted. Missions help you learn the city and earn rewards.'},
+  {title:'Use your phone and city menus',text:'Tap PHONE to open your in-game smartphone for contacts, messages, calls and social plans. Explore the other city panels too — you can find jobs, transport, shops, vehicles and housing there.'},
+  {title:'Earn, save and find a home',text:'You start with £250 and no car. Try a job or complete missions to earn more, then visit the housing and finance options to rent or buy a home. Use Save if available before leaving the game. Have fun!'}
+ ];
+ let current=0;
+ const overlay=document.getElementById('newPlayerTutorial');
+ function render(){const step=steps[current];document.getElementById('tutorialStep').textContent='WELCOME · '+(current+1)+' OF '+steps.length;document.getElementById('tutorialTitle').textContent=step.title;document.getElementById('tutorialText').textContent=step.text;document.getElementById('tutorialNext').textContent=current===steps.length-1?'Start playing ✓':'Next →';}
+ function close(){overlay.style.display='none';try{localStorage.setItem('ukLifeTutorialSeenV1','1')}catch(e){}}
+ document.getElementById('tutorialNext').addEventListener('click',function(){if(current<steps.length-1){current++;render()}else close()});
+ document.getElementById('tutorialSkip').addEventListener('click',close);
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay.style.display==='flex')close()});
+ document.getElementById('play').addEventListener('click',function(){let seen=false;try{seen=localStorage.getItem('ukLifeTutorialSeenV1')==='1'}catch(e){}if(!seen){current=0;render();overlay.style.display='flex'}});
+})();
+</script>
+
+</body></html>
