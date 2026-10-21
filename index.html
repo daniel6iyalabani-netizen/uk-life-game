@@ -451,7 +451,7 @@ window.addEventListener('webglcontextlost', function(event){
 // Start clicks are handled by the early classic script above, including clicks made while the module loads.
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fd8f0);scene.fog=new THREE.Fog(0x9fd8f0,115,330);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,800);
-const renderer=new THREE.WebGLRenderer({antialias:false,alpha:false,powerPreference:'low-power',failIfMajorPerformanceCaveat:false});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));renderer.shadowMap.enabled=false;renderer.setClearColor(0x9fd8f0,1);renderer.domElement.id='ukLife3DCanvas';renderer.domElement.style.cssText='position:fixed!important;left:0!important;top:0!important;width:100vw!important;height:100dvh!important;z-index:0!important;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none;';document.body.insertBefore(renderer.domElement,document.body.firstChild);
+const renderer=new THREE.WebGLRenderer({antialias:false,alpha:false,powerPreference:'low-power',failIfMajorPerformanceCaveat:false});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,0.85));renderer.shadowMap.enabled=false;renderer.setClearColor(0x9fd8f0,1);renderer.domElement.id='ukLife3DCanvas';renderer.domElement.style.cssText='position:fixed!important;left:0!important;top:0!important;width:100vw!important;height:100dvh!important;z-index:0!important;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none;';document.body.insertBefore(renderer.domElement,document.body.firstChild);
 scene.add(new THREE.HemisphereLight(0xe1f6ff,0x52634b,2));const sun=new THREE.DirectionalLight(0xfff0d9,2.2);sun.position.set(-50,85,35);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 // Continuous day/night cycle: one full in-game day lasts eight real minutes.
 const hemi=scene.children.find(o=>o.isHemisphereLight);const skyDay=new THREE.Color(0x9fd8f0),skyDusk=new THREE.Color(0xe79b70),skyNight=new THREE.Color(0x101b36);let worldClockSeconds=8*3600;let dayNightElapsed=0;
@@ -2020,8 +2020,8 @@ function loop(now){
    player.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false}});
    camera.position.set(player.position.x,5.2,player.position.z+10);camera.lookAt(player.position.x,1.1,player.position.z);
   }
-  scene.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){m.visible=true;m.side=THREE.DoubleSide;}}}});
-  // Keep scene fog intact: weather and day/night updates use its colour.
+  // Keep rendering lightweight on Chromebook hardware; avoid walking every
+  // object and rewriting every material on every animation frame.
   renderer.render(scene,camera);
  }catch(err){console.error('UK Life renderer crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}
  if(playing){try{update(dt)}catch(err){console.error('UK Life update crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}}
