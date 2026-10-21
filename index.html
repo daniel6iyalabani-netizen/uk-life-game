@@ -49,6 +49,9 @@ body.ui-hidden #updatesBtn{display:none!important}
 #financePanel button{cursor:pointer;font-weight:750}#financePanel .finrow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 #financePanel .stat{background:#ffffff0d;padding:8px;border-radius:8px;margin:5px 0;font-size:12px}
 @media(max-width:650px){#stats{top:58px;left:14px;right:14px;justify-content:flex-start}#mission{top:112px}#controls{font-size:10px;max-width:68%}#info{font-size:10px;min-width:110px}#mapPanel{width:125px;bottom:120px}}
+#touchControls button{min-width:0;padding:8px 5px;background:#101a21ed;border:1px solid #ffffff66;color:#fff;font-size:12px;font-weight:900;border-radius:12px;box-shadow:0 3px 12px #0005;touch-action:none;user-select:none;-webkit-user-select:none}
+#touchControls button:active{background:#83e0b0;color:#102019}
+@media(hover:none) and (pointer:coarse){#touchControls{display:flex!important}#miniMapPanel{bottom:150px!important;left:8px!important;width:132px!important;padding:5px!important}#miniMapCanvas{width:118px!important;height:118px!important}#bottom{bottom:150px!important}#mission{max-width:calc(100vw - 28px);font-size:11px}#staminaPanel{top:112px!important;right:8px!important;width:135px!important}#phoneBtn{top:260px!important}#busMapBtn{top:170px!important}#trainBtn{top:210px!important}#lifeBtn{top:72px!important;right:8px!important}#financeBtn{top:116px!important;right:8px!important}}
 </style></head>
 <body>
 <div id="start"><div class="card">
@@ -76,6 +79,16 @@ body.ui-hidden #updatesBtn{display:none!important}
   <b>📅 Daily challenges</b><p class="small" style="font-size:11px;color:#c8d7dd">Challenges refresh by calendar day on this device. Rewards are in-game only.</p>
   <div id="dailyChallengesList" style="font-size:12px;line-height:1.5"></div>
   <button id="closeUpdatesBottom" type="button" style="width:100%;margin-top:8px">Back to game</button>
+</div>
+<div id="touchControls" aria-label="Touch controls" style="display:none;position:fixed;z-index:30;left:10px;right:10px;bottom:12px;align-items:end;justify-content:space-between;gap:10px;pointer-events:none">
+ <div style="display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,46px);gap:5px;pointer-events:auto">
+  <span></span><button type="button" data-move="w" aria-label="Move forward">▲</button><span></span>
+  <button type="button" data-move="a" aria-label="Move left">◀</button><button type="button" data-move="s" aria-label="Move backward">▼</button><button type="button" data-move="d" aria-label="Move right">▶</button>
+ </div>
+ <div style="display:grid;grid-template-columns:repeat(2,58px);gap:6px;pointer-events:auto">
+  <button type="button" data-action="E">ENTER</button><button type="button" data-action="F">ACT</button>
+  <button type="button" data-move="Shift" style="grid-column:span 2">SPRINT</button>
+ </div>
 </div>
 <div id="hud">
 <div id="brand" class="pill">🇬🇧 UK LIFE <span style="color:#83e0b0">CITY UPDATE</span></div>
@@ -776,7 +789,11 @@ const specs=[
 {id:'bus',name:'Double-Decker City Bus',w:2.5,l:9.2,max:18,acc:6,turn:.85,color:0xc83236},
 {id:'police',name:'Police Patrol Car',w:2.1,l:4.5,max:38,acc:14,turn:1.7,color:0x253b59},
 {id:'ambulance',name:'Ambulance',w:2.35,l:5.4,max:27,acc:9,turn:1.15,color:0xf2f0e8},
-{id:'fireengine',name:'Fire Engine',w:2.5,l:6.2,max:25,acc:8.5,turn:1.0,color:0xc92f26}
+{id:'fireengine',name:'Fire Engine',w:2.5,l:6.2,max:25,acc:8.5,turn:1.0,color:0xc92f26},
+{id:'classicmini',name:'Classic City Mini',w:1.8,l:3.4,max:27,acc:12,turn:2.0,color:0x2f8f65},
+{id:'electricSUV',name:'Electric Family SUV',w:2.3,l:4.7,max:36,acc:16,turn:1.45,color:0x8065b7},
+{id:'sportssaloon',name:'Sport Saloon',w:2.1,l:4.7,max:43,acc:15,turn:1.7,color:0x3b5968},
+{id:'camper',name:'Weekend Camper',w:2.4,l:5.8,max:23,acc:7.5,turn:1.0,color:0xd7c6a0}
 ];
 // Give rental flats their own compact bedroom and practical essentials.
 const cars=[];
@@ -977,13 +994,23 @@ const missionList=[
  {title:'MISSION 19 · HIGH STREET HERO',text:'Return to the Corner Shop and help with the evening parcel rush.',target:'CORNER SHOP',reward:550},
  {title:'MISSION 20 · COMMUNITY COFFEE RUN',text:'Pick up a community coffee order from the Cafe.',target:'CAFE',reward:575},
  {title:'MISSION 21 · MARKET DAY DELIVERY',text:'Collect a fresh supplies order from the Supermarket.',target:'SUPERMARKET',reward:600},
- {title:'MISSION 22 · CITY CENTRE COURIER',text:'Report to the Delivery Depot for a priority city delivery.',target:'DELIVERY DEPOT',reward:650}
+ {title:'MISSION 22 · CITY CENTRE COURIER',text:'Report to the Delivery Depot for a priority city delivery.',target:'DELIVERY DEPOT',reward:650},
+ {title:'MISSION 23 · PARKS & PATHS',text:'Visit the Corner Shop to collect supplies for a community park clean-up.',target:'CORNER SHOP',reward:450},
+ {title:'MISSION 24 · A LITTLE KINDNESS',text:'Head to the Cafe and collect a warm drink for a neighbour.',target:'CAFE',reward:475},
+ {title:'MISSION 25 · MARKET MAKERS',text:'Visit the Market Hall area and report to the Supermarket for a local delivery.',target:'SUPERMARKET',reward:500},
+ {title:'MISSION 26 · STYLE ON THE HIGH STREET',text:'Visit the Clothing shop to help prepare a community event outfit.',target:'CLOTHING',reward:525},
+ {title:'MISSION 27 · PET SUPPLIES',text:'Visit the Supermarket to pick up supplies for your pet or a neighbour’s pet.',target:'SUPERMARKET',reward:550},
+ {title:'MISSION 28 · CITY HELPER',text:'Return to the Delivery Depot and take on a priority community errand.',target:'DELIVERY DEPOT',reward:600}
 ];let missionIndex=0,missionStage=0,money=250;
 const explorerPlaces=[
  {name:'Riverside Museum',x:80,z:136,reward:220},
  {name:'Community Stadium',x:-80,z:133,reward:260},
  {name:'Market Hall',x:80,z:-137,reward:200},
- {name:'Harbour Pier',x:-80,z:-130,reward:240}
+ {name:'Harbour Pier',x:-80,z:-130,reward:240},
+ {name:'Canal Walk',x:118,z:72,reward:250},
+ {name:'Botanical Gardens',x:-118,z:76,reward:275},
+ {name:'Old Market Square',x:18,z:-142,reward:225},
+ {name:'Hilltop Viewpoint',x:-22,z:145,reward:300}
 ];
 let activeExplorerContract=null,explorerContractIndex=0;
 function offerExplorerContract(){
@@ -1022,6 +1049,19 @@ function updateMission(){const m=currentMission();$('missionTitle').textContent=
 const d=doors.find(d=>d.label===m.target);if(!activeDispatch){if(m.targetPos)marker.position.set(m.targetPos.x,0,m.targetPos.z);else if(d)marker.position.set(d.x,0,d.doorZ)}}
 
 const keys={};let yaw=0,playing=false,driving=null,last=performance.now(),noticeTimer=0,cameraMode=0,playerReturn=new THREE.Vector3(0,0,5);
+// Touchscreen controls share the same movement/action paths as the keyboard.
+const touchControls=$('touchControls');
+if(touchControls){
+ const movementCodes={w:['w','KeyW','ArrowUp'],a:['a','KeyA','ArrowLeft'],s:['s','KeyS','ArrowDown'],d:['d','KeyD','ArrowRight'],Shift:['Shift','ShiftLeft']};
+ function setTouchKey(name,down){(movementCodes[name]||[name]).forEach(k=>keys[k]=down)}
+ touchControls.querySelectorAll('[data-move]').forEach(btn=>{
+  const name=btn.getAttribute('data-move');
+  btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture?.(e.pointerId);setTouchKey(name,true)});
+  const release=e=>{e.preventDefault();setTouchKey(name,false)};
+  btn.addEventListener('pointerup',release);btn.addEventListener('pointercancel',release);btn.addEventListener('lostpointercapture',()=>setTouchKey(name,false));
+ });
+ touchControls.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();if(!playing)return;const action=btn.getAttribute('data-action');if(action==='E')useDoorOrCar();if(action==='F')interact()}));
+}
 let stamina=100;const MAX_STAMINA=100;
 function toggleGameUI(){document.body.classList.toggle('ui-hidden');const hidden=document.body.classList.contains('ui-hidden');$('uiToggle').textContent=hidden?'Show UI · U':'Hide UI · U';if(hidden){$('lifePanel').style.display='none';$('financePanel').style.display='none';$('dealershipPanel').style.display='none'}}
 $('uiToggle').addEventListener('click',toggleGameUI);
@@ -1055,7 +1095,7 @@ addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domEl
 let selectedRegion='london';
 const regionNames={london:'England · London',edinburgh:'Scotland · Edinburgh',cardiff:'Wales · Cardiff',belfast:'Northern Ireland · Belfast'};
 const startPoints={centre:{x:0,z:5,label:'City centre'},homes:{x:-34,z:-34,label:'Terraced homes'},shops:{x:33,z:-35,label:'Shopping street'},park:{x:4,z:92,label:'Park and gardens'},oldtown:{x:150,z:0,label:'Old town / harbour'}};
-function startGame(){try{try{const startPing=document.createElement('img');startPing.alt='';startPing.width=1;startPing.height=1;startPing.style.cssText='position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';startPing.src='https://hits.sh/uk-life-game-starts.svg?label=game%20starts&view=total&cb='+Date.now();document.body.appendChild(startPing);}catch(trackErr){}selectedRegion=$('regionChoice').value||'london';applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);yaw=0;playing=true;$('start').style.display='none';$('uiToggle').style.display='block';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';try{renderer.domElement.requestPointerLock?.()}catch(e){}notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')}catch(err){console.error('Start failed',err);const help=$('help');if(help){help.style.display='block';help.textContent='The game could not start: '+err.message+' Please refresh and try again.'}}}
+function startGame(){try{try{const startPing=document.createElement('img');startPing.alt='';startPing.width=1;startPing.height=1;startPing.style.cssText='position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';startPing.src='https://hits.sh/uk-life-game-starts.svg?label=game%20starts&view=total&cb='+Date.now();document.body.appendChild(startPing);}catch(trackErr){}selectedRegion=$('regionChoice').value||'london';applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);yaw=0;playing=true;$('start').style.display='none';$('uiToggle').style.display='block';if($('touchControls'))$('touchControls').style.display='flex';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';try{renderer.domElement.requestPointerLock?.()}catch(e){}notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')}catch(err){console.error('Start failed',err);const help=$('help');if(help){help.style.display='block';help.textContent='The game could not start: '+err.message+' Please refresh and try again.'}}}
 window.__startUKLifeGame=startGame;
 if(window.__ukLifeStartClickPending){window.__ukLifeStartClickPending=false;startGame();}
 const careerCarUnlocks={van:{missionIndex:5,label:'Complete 5 missions'},electric:{xp:150,label:'Earn 150 XP'},sports:{xp:300,label:'Earn 300 XP'},minibus:{jobCount:5,label:'Complete 5 jobs'},bus:{missionIndex:10,label:'Complete 10 missions'}};
@@ -1202,7 +1242,7 @@ function update(dt){
  const pos=driving?driving.g.position:player.position;if(!inside&&missionIndex<missionList.length){const d=pos.distanceTo(marker.position);if(d<7&&missionStage===0)$('prompt').textContent='Press F to start '+currentMission().target+' job';else if(door)$('prompt').textContent='Press E to enter '+door.label;else if(near&&!driving)$('prompt').textContent='Press E to enter '+near.spec.name;else if(driving)$('prompt').textContent='Press E to exit car';else $('prompt').textContent=''}else if(inside)$('prompt').textContent='Inside '+(activeDoor?.label||'building')+' · E to exit · F to do job';else $('prompt').textContent=driving?'Press E to exit car':door?'Press E to enter '+door.label:near?'Press E to enter '+near.spec.name:''
 }
 
-const jobNames=['Shop Assistant','Supermarket Worker','Barista','Chef','Kitchen Porter','Waiter','Restaurant Host','Bakery Assistant','Delivery Rider','Courier Driver','Taxi Driver','Bus Driver','Mechanic','Car Wash Attendant','Petrol Station Assistant','Bike Repairer','Builder','Painter & Decorator','Plumber','Electrician','Gardener','Landscaper','Window Cleaner','Cleaner','Housekeeper','Hotel Receptionist','Hotel Porter','Lifeguard','Swimming Teacher','Personal Trainer','Football Coach','Sports Shop Assistant','Library Assistant','Teaching Assistant','Tutor','Nursery Assistant','Dog Walker','Pet Sitter','Veterinary Assistant','Pet Groomer','Farm Worker','Florist','Market Stall Seller','Clothing Shop Assistant','Shoe Shop Assistant','Phone Shop Assistant','Electronics Assistant','Furniture Mover','Warehouse Picker','Forklift Operator','Factory Worker','Parcel Sorter','Security Guard','Event Steward','Cinema Usher','Theatre Assistant','Museum Guide','Tour Guide','Photographer','Video Editor','Graphic Designer','Web Designer','Game Tester','IT Support Assistant','Computer Repairer','Social Media Assistant','Content Creator','Newspaper Deliverer','Radio Assistant','Journalist','Estate Agent','Lettings Assistant','Office Assistant','Receptionist','Data Entry Clerk','Account Assistant','Bank Clerk','Insurance Assistant','Call Centre Worker','Customer Support Agent','Hairdresser','Barber','Nail Technician','Make-up Artist','Tailor','Laundry Assistant','Dry Cleaner','Street Food Seller','Ice Cream Seller','Coffee Cart Worker','Recycling Collector','Street Cleaner','Park Ranger','Train Station Assistant','Airport Ground Crew','Post Office Assistant','Community Helper','Charity Shop Assistant','Apprentice Carpenter','Town Event Planner'];
+const jobNames=['Shop Assistant','Supermarket Worker','Barista','Chef','Kitchen Porter','Waiter','Restaurant Host','Bakery Assistant','Delivery Rider','Courier Driver','Taxi Driver','Bus Driver','Mechanic','Car Wash Attendant','Petrol Station Assistant','Bike Repairer','Builder','Painter & Decorator','Plumber','Electrician','Gardener','Landscaper','Window Cleaner','Cleaner','Housekeeper','Hotel Receptionist','Hotel Porter','Lifeguard','Swimming Teacher','Personal Trainer','Football Coach','Sports Shop Assistant','Library Assistant','Teaching Assistant','Tutor','Nursery Assistant','Dog Walker','Pet Sitter','Veterinary Assistant','Pet Groomer','Farm Worker','Florist','Market Stall Seller','Clothing Shop Assistant','Shoe Shop Assistant','Phone Shop Assistant','Electronics Assistant','Furniture Mover','Warehouse Picker','Forklift Operator','Factory Worker','Parcel Sorter','Security Guard','Event Steward','Cinema Usher','Theatre Assistant','Museum Guide','Tour Guide','Photographer','Video Editor','Graphic Designer','Web Designer','Game Tester','IT Support Assistant','Computer Repairer','Social Media Assistant','Content Creator','Newspaper Deliverer','Radio Assistant','Journalist','Estate Agent','Lettings Assistant','Office Assistant','Receptionist','Data Entry Clerk','Account Assistant','Bank Clerk','Insurance Assistant','Call Centre Worker','Customer Support Agent','Hairdresser','Barber','Nail Technician','Make-up Artist','Tailor','Laundry Assistant','Dry Cleaner','Street Food Seller','Ice Cream Seller','Coffee Cart Worker','Recycling Collector','Street Cleaner','Park Ranger','Train Station Assistant','Airport Ground Crew','Post Office Assistant','Community Helper','Charity Shop Assistant','Apprentice Carpenter','Town Event Planner','Community Garden Helper','Museum Events Assistant','Junior App Developer','Electric Vehicle Technician','Wildlife Centre Assistant','Independent Shop Owner'];
 let activeJob=null,jobStarted=false,xp=0,jobCount=0;
 const jobTasks=[
   'Visit a shop or workplace and press F to clock in.',
