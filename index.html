@@ -78,7 +78,7 @@ body.ui-hidden #updatesBtn{display:none!important}
   <p style="font-size:12px;color:#c8d7dd;line-height:1.5">Your game updates at the same link. Refresh the page if you see an older version.</p>
   <div style="padding:10px;border-radius:10px;background:#ffffff0b;margin:8px 0">
     <b>What's new in this version</b>
-    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li><li>Career-based outfit colour unlocks</li><li>Six extra city missions and four new vehicles</li><li>Four new explorer-contract destinations</li><li>Six additional career choices</li><li>Touchscreen movement, enter and interact controls</li><li>Improved mobile HUD spacing</li><li>Realistic in-game smartphone with contacts, messages, calls and social invites</li><li>XP progress bar, level milestones and claimable one-time cash rewards</li><li>Mission completions now award XP</li><li>Phone conversations and friendships save with your game</li><li>Adoptable dog and cat companions that follow your character</li><li>Home lounge upgrade with extra decorations and saved progress</li></ul>
+    <ul style="font-size:12px;line-height:1.6;padding-left:20px;margin-bottom:0"><li>10 achievement milestones</li><li>Share-game button on the start screen</li><li>Player feedback prompt</li><li>Improved small-screen layout</li><li>Daily challenges with in-game rewards</li><li>Career-based outfit colour unlocks</li><li>Six extra city missions and four new vehicles</li><li>Four new explorer-contract destinations</li><li>Six additional career choices</li><li>Touchscreen movement, enter and interact controls</li><li>Improved mobile HUD spacing</li><li>Realistic in-game smartphone with contacts, messages, calls and social invites</li><li>XP progress bar, level milestones and claimable one-time cash rewards</li><li>Mission completions now award XP</li><li>Phone conversations and friendships save with your game</li><li>Adoptable dog and cat companions that follow your character</li><li>Expanded housing market: 10 property types from shared rooms to city penthouses</li><li>Renting and buying now use distinct prices, bills and property values</li><li>Your chosen home type selects a matching enterable interior style</li><li>Home ownership and rent connect to weekly bills, job income and savings</li><li>Home lounge upgrade with extra decorations and saved progress</li></ul>
   </div>
   <b>📅 Daily challenges</b><p class="small" style="font-size:11px;color:#c8d7dd">Challenges refresh by calendar day on this device. Rewards are in-game only.</p>
   <div id="dailyChallengesList" style="font-size:12px;line-height:1.5"></div>
@@ -148,7 +148,7 @@ body.ui-hidden #updatesBtn{display:none!important}
   <div class="stat">Cash: <b>£<span id="finCash">250</span></b> · Bank: <b>£<span id="finBank">0</span></b><br>Day <b id="finDay">1</b> · Next weekly cycle in <b id="finDue">7</b> days<br>Credit score: <b id="finCredit">600</b></div>
   <h3>🏠 Housing and property</h3>
   <label for="propertyChoice">Choose a place</label>
-  <select id="propertyChoice"><option value="room">Shared room — £65/week</option><option value="flat">Small flat — £130/week</option><option value="house">Family house — £220/week</option></select>
+  <select id="propertyChoice"><option value="room">Shared room · Rent £65/wk · Buy £500</option><option value="studio">Studio flat · Rent £95/wk · Buy £1,800</option><option value="flat">One-bedroom flat · Rent £130/wk · Buy £2,500</option><option value="maisonette">Maisonette · Rent £155/wk · Buy £4,500</option><option value="terraced">Terraced house · Rent £175/wk · Buy £6,500</option><option value="semi">Semi-detached house · Rent £220/wk · Buy £12,000</option><option value="house">Family house · Rent £260/wk · Buy £18,000</option><option value="cottage">Country cottage · Rent £240/wk · Buy £22,000</option><option value="townhouse">Townhouse · Rent £310/wk · Buy £35,000</option><option value="penthouse">City penthouse · Rent £450/wk · Buy £65,000</option></select>
   <div class="finrow"><button id="rentHome">Rent this place</button><button id="buyHome">Buy property</button></div>
   <div class="finrow"><button id="moveOutHome">Move out / end tenancy</button><button id="sellHome">Sell owned property</button></div>
   <p id="housingStatus" class="small">Currently staying with family. No rent due.</p>
@@ -994,7 +994,7 @@ function showBusinessWorkers(door){
   worker.position.set(-4.2+(i%3)*4.2,0,-2.8+Math.floor(i/3)*3.1);worker.userData.workPhase=i*1.7;businessWorkers.add(worker);
  }
 }
-function showRoomFor(door){homeRoom.visible=false;shopRoom.visible=false;cafeRoom.visible=false;clothesRoom.visible=false;flatRoom.visible=false;if(!door){showBusinessWorkers(null);return}const label=door.label.toUpperCase();if(door.businessType==='cafe'||(door.kind==='shop'&&/CAFE|COFFEE|TAKEAWAY|CHIPPY/.test(label)))cafeRoom.visible=true;else if(door.businessType==='garage')flatRoom.visible=true;else if(door.businessType==='delivery')shopRoom.visible=true;else if(/CLOTHING|BARBER/.test(label))clothesRoom.visible=true;else if(/NIGHTCLUB|CLUB/.test(label))cafeRoom.visible=true;else if(door.kind==='shop')shopRoom.visible=true;else if(door.kind==='flat'||/FLAT|APARTMENT|TOWER/.test(label))flatRoom.visible=true;else homeRoom.visible=true;showBusinessWorkers(door)}
+function showRoomFor(door){homeRoom.visible=false;shopRoom.visible=false;cafeRoom.visible=false;clothesRoom.visible=false;flatRoom.visible=false;if(!door){showBusinessWorkers(null);return}const label=door.label.toUpperCase();if(label==='YOUR HOME'&&typeof finance!=='undefined'){const chosen=typeof housingCatalog!=='undefined'?housingCatalog[finance.housing]:null;const roomKind=chosen?chosen.kind:(finance.housing==='flat'?'flat':'house');(roomKind==='flat'?flatRoom:homeRoom).visible=true;}else if(door.businessType==='cafe'||(door.kind==='shop'&&/CAFE|COFFEE|TAKEAWAY|CHIPPY/.test(label)))cafeRoom.visible=true;else if(door.businessType==='garage')flatRoom.visible=true;else if(door.businessType==='delivery')shopRoom.visible=true;else if(/CLOTHING|BARBER/.test(label))clothesRoom.visible=true;else if(/NIGHTCLUB|CLUB/.test(label))cafeRoom.visible=true;else if(door.kind==='shop')shopRoom.visible=true;else if(door.kind==='flat'||/FLAT|APARTMENT|TOWER/.test(label))flatRoom.visible=true;else homeRoom.visible=true;showBusinessWorkers(door)}
 showRoomFor(null);
 let activeDoor=null,inside=false;
 const missionList=[
@@ -1475,9 +1475,11 @@ function syncFinance(){
  $('finCash').textContent=cash();$('finBank').textContent=Math.floor(finance.bank);
  $('finDay').textContent=finance.day;$('finDue').textContent=7-((finance.day-1)%7);
  $('finCredit').textContent=finance.credit;
+ const homeInfo=typeof housingCatalog!=='undefined'?housingCatalog[finance.housing]:null;
  $('housingStatus').textContent=finance.propertyOwned
-  ? 'You own your property (estimated value £'+finance.propertyValue+'). Weekly household bills still apply.'
-  : finance.housing==='none'?'Currently staying with family. No rent due.':'Renting a '+finance.housing+' for £'+finance.rent+'/week. Rent is due on day '+(finance.day+(7-((finance.day-1)%7)))+'.';
+  ? 'Owned: '+(homeInfo?homeInfo.name:finance.housing)+' · estimated value £'+finance.propertyValue+'. Weekly council tax and utilities still apply.'
+  : finance.housing==='none'?'Currently staying with family. No rent due.'
+  :'Renting: '+(homeInfo?homeInfo.name:finance.housing)+' for £'+finance.rent+'/week. Rent is due on day '+(finance.day+(7-((finance.day-1)%7)))+'.';
  $('billStatus').textContent='Rent £'+finance.rent+' · Council tax £'+finance.council+'/week · Utilities £'+finance.utilities+'/week · Arrears £'+finance.arrears+'.';
  $('carStatus').textContent='Fuel: '+finance.fuel+'% · Condition: '+finance.condition+'% · Insurance: '+(finance.insured?'active (£15/week)':'not insured');
  $('contractStatus').textContent='Phone: '+(finance.phone?'active (£8/week)':'none')+' · Internet: '+(finance.internet?'active (£10/week)':'none');
@@ -1634,14 +1636,28 @@ function gameDayTick(){
 setInterval(gameDayTick,30000);
 $('financeBtn').addEventListener('click',()=>{const p=$('financePanel');p.style.display=p.style.display==='block'?'none':'block';syncFinance()});
 $('closeFinance').addEventListener('click',()=>$('financePanel').style.display='none');
+const housingCatalog={
+ room:{name:'shared room',rent:65,price:500,value:1200,council:15,utilities:20,kind:'room'},
+ studio:{name:'studio flat',rent:95,price:1800,value:4200,council:20,utilities:25,kind:'flat'},
+ flat:{name:'one-bedroom flat',rent:130,price:2500,value:6500,council:25,utilities:30,kind:'flat'},
+ maisonette:{name:'maisonette',rent:155,price:4500,value:9500,council:30,utilities:32,kind:'flat'},
+ terraced:{name:'terraced house',rent:175,price:6500,value:14000,council:32,utilities:38,kind:'house'},
+ semi:{name:'semi-detached house',rent:220,price:12000,value:24000,council:40,utilities:45,kind:'house'},
+ house:{name:'family house',rent:260,price:18000,value:36000,council:45,utilities:50,kind:'house'},
+ cottage:{name:'country cottage',rent:240,price:22000,value:42000,council:38,utilities:42,kind:'house'},
+ townhouse:{name:'townhouse',rent:310,price:35000,value:65000,council:55,utilities:55,kind:'house'},
+ penthouse:{name:'city penthouse',rent:450,price:65000,value:115000,council:75,utilities:70,kind:'flat'}
+};
 $('rentHome').addEventListener('click',()=>{
- if(finance.propertyOwned){notify('You already own a property');return}
+ if(finance.propertyOwned){notify('You already own a property. Sell it before renting.');return}
  if(finance.housing!=='none'){notify('Move out of your current home before signing a new tenancy');return}
- const v=$('propertyChoice').value,opts={room:['room',65,15,20],flat:['flat',130,25,30],house:['house',220,40,45]};
- const deposit={room:65,flat:130,house:220}[v];
- if(!spend(deposit,'Tenancy deposit (one week rent)'))return;
- [finance.housing,finance.rent,finance.council,finance.utilities]=opts[v];
- finance.credit=Math.max(300,finance.credit-2);syncFinance();notify('Tenancy started: '+finance.housing+'. Paid a one-week refundable-style deposit; weekly rent and bills start at the next cycle.');
+ const v=$('propertyChoice').value,home=housingCatalog[v];
+ if(!home){notify('Choose a valid home');return}
+ if(!spend(home.rent,'Tenancy deposit (one week rent)'))return;
+ finance.housing=v;finance.rent=home.rent;finance.council=home.council;finance.utilities=home.utilities;
+ finance.propertyValue=0;finance.credit=Math.max(300,finance.credit-2);syncFinance();
+ notify('Tenancy started: '+home.name+'. Deposit paid £'+home.rent+'. Weekly rent and bills start at the next cycle.');
+ saveUKLife(false);
 });
 $('moveOutHome').addEventListener('click',()=>{
  if(finance.propertyOwned){notify('Sell your owned property first if you want to move out');return}
@@ -1650,11 +1666,13 @@ $('moveOutHome').addEventListener('click',()=>{
 });
 $('buyHome').addEventListener('click',()=>{
  if(finance.propertyOwned){notify('You already own a property');return}
- const v=$('propertyChoice').value,opts={room:[500,1200],flat:[2500,6500],house:[8000,18000]},[price,value]=opts[v];
- if(!spend(price,'Property purchase'))return;
- finance.propertyOwned=true;finance.propertyValue=value;finance.housing=v;finance.rent=0;
- finance.council=v==='room'?15:v==='flat'?25:40;finance.utilities=v==='room'?20:v==='flat'?30:45;
- syncFinance();notify('Property purchased for £'+price+'. Weekly council tax and utilities still apply.');
+ const v=$('propertyChoice').value,home=housingCatalog[v];
+ if(!home){notify('Choose a valid home');return}
+ if(!spend(home.price,'Property purchase'))return;
+ finance.propertyOwned=true;finance.propertyValue=home.value;finance.housing=v;finance.rent=0;
+ finance.council=home.council;finance.utilities=home.utilities;
+ syncFinance();notify('You bought a '+home.name+' for £'+home.price+'. Your home is now part of your progression; weekly household bills still apply.');
+ saveUKLife(false);
 });
 $('sellHome').addEventListener('click',()=>{
  if(!finance.propertyOwned){notify('You do not own a property to sell');return}
