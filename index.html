@@ -796,6 +796,13 @@ for(let x=-160;x<=160;x+=20)for(const z of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp
 for(let z=-160;z<=160;z+=20)for(const x of [-7,7]){box(x,3,z,.12,6,.12,mats.lamp);box(x,6,z+.4,.8,.12,.4,M(0xffe8a5))}
 
 // player
+// Chromebook-safe visual fallback: guarantee a clearly visible ground and road beneath the player.
+const emergencyGround=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshLambertMaterial({color:0x527c48,side:THREE.DoubleSide}));
+emergencyGround.rotation.x=-Math.PI/2;emergencyGround.position.y=-0.12;emergencyGround.name='VisibleGroundFallback';emergencyGround.frustumCulled=false;scene.add(emergencyGround);
+const emergencyRoad=new THREE.Mesh(new THREE.PlaneGeometry(12,500),new THREE.MeshLambertMaterial({color:0x343b43,side:THREE.DoubleSide}));
+emergencyRoad.rotation.x=-Math.PI/2;emergencyRoad.position.set(0,-0.08,0);emergencyRoad.name='VisibleRoadFallback';emergencyRoad.frustumCulled=false;scene.add(emergencyRoad);
+const emergencyLine=new THREE.Mesh(new THREE.PlaneGeometry(.18,500),new THREE.MeshBasicMaterial({color:0xf5df84,side:THREE.DoubleSide}));
+emergencyLine.rotation.x=-Math.PI/2;emergencyLine.position.set(0,-0.055,0);emergencyLine.name='VisibleRoadMarkingFallback';emergencyLine.frustumCulled=false;scene.add(emergencyLine);
 const player=new THREE.Group();player.visible=true;player.name='PlayerCharacter';scene.add(player);
 const outfit=M(0x3478b8);box(0,1.35,0,.8,1,.45,outfit,player);
 const uniformBadge=box(-.18,1.52,.238,.16,.17,.025,M(0xf1d15b),player);const uniformCap=mesh(new THREE.SphereGeometry(.34,12,8,0,Math.PI*2,0,Math.PI*.32),M(0x26394d),0,2.3,0,player);uniformCap.visible=false;
