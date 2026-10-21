@@ -1460,6 +1460,18 @@ document.getElementById('applyLook').addEventListener('click',()=>{
 document.getElementById('hairStyle').addEventListener('change',applyHairStyle);
 
 // LIFE ECONOMY: recurring game calendar, rent, taxes, utilities, insurance, banking and jobs.
+const housingCatalog={
+ room:{name:'shared room',rent:65,price:500,value:1200,council:15,utilities:20,kind:'room'},
+ studio:{name:'studio flat',rent:95,price:1800,value:4200,council:20,utilities:25,kind:'flat'},
+ flat:{name:'one-bedroom flat',rent:130,price:2500,value:6500,council:25,utilities:30,kind:'flat'},
+ maisonette:{name:'maisonette',rent:155,price:4500,value:9500,council:30,utilities:32,kind:'flat'},
+ terraced:{name:'terraced house',rent:175,price:6500,value:14000,council:32,utilities:38,kind:'house'},
+ semi:{name:'semi-detached house',rent:220,price:12000,value:24000,council:40,utilities:45,kind:'house'},
+ house:{name:'family house',rent:260,price:18000,value:36000,council:45,utilities:50,kind:'house'},
+ cottage:{name:'country cottage',rent:240,price:22000,value:42000,council:38,utilities:42,kind:'house'},
+ townhouse:{name:'townhouse',rent:310,price:35000,value:65000,council:55,utilities:55,kind:'house'},
+ penthouse:{name:'city penthouse',rent:450,price:65000,value:115000,council:75,utilities:70,kind:'flat'}
+};
 const finance = {
  day:1, bank:0, credit:600, housing:'none', propertyOwned:false, propertyValue:0,
  rent:0, council:0, utilities:0, phone:false, internet:false, insured:false,
@@ -1636,18 +1648,7 @@ function gameDayTick(){
 setInterval(gameDayTick,30000);
 $('financeBtn').addEventListener('click',()=>{const p=$('financePanel');p.style.display=p.style.display==='block'?'none':'block';syncFinance()});
 $('closeFinance').addEventListener('click',()=>$('financePanel').style.display='none');
-const housingCatalog={
- room:{name:'shared room',rent:65,price:500,value:1200,council:15,utilities:20,kind:'room'},
- studio:{name:'studio flat',rent:95,price:1800,value:4200,council:20,utilities:25,kind:'flat'},
- flat:{name:'one-bedroom flat',rent:130,price:2500,value:6500,council:25,utilities:30,kind:'flat'},
- maisonette:{name:'maisonette',rent:155,price:4500,value:9500,council:30,utilities:32,kind:'flat'},
- terraced:{name:'terraced house',rent:175,price:6500,value:14000,council:32,utilities:38,kind:'house'},
- semi:{name:'semi-detached house',rent:220,price:12000,value:24000,council:40,utilities:45,kind:'house'},
- house:{name:'family house',rent:260,price:18000,value:36000,council:45,utilities:50,kind:'house'},
- cottage:{name:'country cottage',rent:240,price:22000,value:42000,council:38,utilities:42,kind:'house'},
- townhouse:{name:'townhouse',rent:310,price:35000,value:65000,council:55,utilities:55,kind:'house'},
- penthouse:{name:'city penthouse',rent:450,price:65000,value:115000,council:75,utilities:70,kind:'flat'}
-};
+
 $('rentHome').addEventListener('click',()=>{
  if(finance.propertyOwned){notify('You already own a property. Sell it before renting.');return}
  if(finance.housing!=='none'){notify('Move out of your current home before signing a new tenancy');return}
