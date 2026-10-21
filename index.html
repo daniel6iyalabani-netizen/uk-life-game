@@ -2018,4 +2018,70 @@ try{let c=JSON.parse(localStorage.getItem('ukLifeMarketConfigV1')||'null');if(c?
   },true);
 })();
 </script>
+
+<style>
+#cityLifeBtn{position:fixed;z-index:4;right:14px;top:160px;pointer-events:auto;background:#245e50;border:1px solid #a8f0d2;font-weight:900}
+#cityLifePanel{position:fixed;z-index:9;right:14px;top:207px;width:min(370px,calc(100vw - 28px));max-height:65vh;overflow:auto;background:#101a21f5;border:1px solid #ffffff40;border-radius:16px;padding:14px;display:none;box-shadow:0 18px 50px #0009;pointer-events:auto;color:white}
+#cityLifePanel h2{font-size:18px;margin:0 0 5px}#cityLifePanel h3{font-size:14px;color:#a9e6cb;margin:13px 0 5px}#cityLifePanel p{font-size:11px;color:#d0dce1;line-height:1.4;margin:5px 0 9px}#cityLifePanel button,#cityLifePanel select,#cityLifePanel input{width:100%;padding:8px;margin:3px 0 6px;border:1px solid #ffffff30;border-radius:8px;background:#263a45;color:white;font:inherit}#cityLifePanel button{cursor:pointer;font-weight:750}#cityLifePanel .cityrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}#cityLifePanel .citystat{background:#ffffff0d;padding:8px;border-radius:8px;font-size:12px;margin:5px 0}#cityLifePanel .citynote{color:#a9e6cb;font-size:11px}
+body.ui-hidden #cityLifeBtn,body.ui-hidden #cityLifePanel{display:none!important}
+@media(max-width:650px){#cityLifeBtn{top:158px;right:8px;padding:8px;font-size:11px}#cityLifePanel{top:202px;right:8px}}
+</style>
+<button id="cityLifeBtn" type="button">🌆 City Life+</button>
+<section id="cityLifePanel" aria-label="City Life features">
+ <h2>🌆 City Life+</h2><p>Six new life systems. Your progress is saved in this browser.</p>
+ <div class="citystat" id="cityLifeStats"></div>
+ <h3>🚔 Police & wanted level</h3><p id="cityWantedText">Keep the peace around town.</p>
+ <div class="cityrow"><button id="cityGoodDeed">🤝 Community service</button><button id="cityClearWanted">🚓 Pay fine</button></div>
+ <h3>🏪 Own a business</h3><select id="cityBusiness"><option value="kiosk">Corner shop — £600</option><option value="cafe">Café — £1,500</option><option value="garage">Garage — £2,800</option></select>
+ <div class="cityrow"><button id="cityBuyBusiness">Buy business</button><button id="cityWorkBusiness">Run business</button></div><p id="cityBusinessText"></p>
+ <h3>🐕 Pets & animals</h3><select id="cityPet"><option value="dog">Dog — £120</option><option value="cat">Cat — £90</option><option value="rabbit">Rabbit — £45</option></select>
+ <div class="cityrow"><button id="cityAdoptPet">Adopt pet</button><button id="cityCarePet">Feed & play</button></div><p id="cityPetText"></p>
+ <h3>🚗 Garage & vehicle upgrades</h3><select id="cityUpgrade"><option value="paint">Custom paint — £180</option><option value="engine">Engine tune — £450</option><option value="wheels">Alloy wheels — £220</option><option value="detail">Premium detailing — £90</option></select>
+ <button id="cityBuyUpgrade">Install upgrade</button><p id="cityUpgradeText"></p>
+ <h3>🎡 City events</h3><p id="cityEventText">Check the town board for today's happenings.</p><button id="cityEventBtn">🎟️ Visit / join event</button>
+ <h3>🌍 Online city</h3><p id="cityOnlineText">Online presence depends on the game's separate online service. This board can show local activity, but it does not pretend to connect real players.</p><button id="cityOnlineBtn">Refresh city activity</button>
+ <p class="citynote">Note: this local City Life+ wallet is separate from your main game cash and the online property marketplace. Real-time multiplayer needs a working shared server connection.</p>
+ <button id="cityLifeClose">Close</button>
+</section>
+<script>
+(function(){
+ const $=id=>document.getElementById(id), key='ukLifeCityPlusV1';
+ const fresh=()=>({cash:2500,wanted:0,business:null,businessIncome:0,pet:null,petHappiness:70,upgrades:[],eventCount:0,activity:'The city is waking up.'});
+ let state;try{state={...fresh(),...(JSON.parse(localStorage.getItem(key)||'{}'))}}catch(e){state=fresh()}
+ const events=[
+  {name:'Riverside street market',desc:'Browse local stalls and meet small traders.',reward:45},
+  {name:'Community football match',desc:'Join the crowd and cheer on the local team.',reward:35},
+  {name:'City music festival',desc:'Enjoy live music in the town square.',reward:25},
+  {name:'Charity fun run',desc:'Take part and support a local cause.',reward:40},
+  {name:'Night food market',desc:'Try street food and help local vendors.',reward:30},
+  {name:'Classic car meet',desc:'Show off your upgrades and admire other cars.',reward:20}
+ ];
+ const prices={kiosk:600,cafe:1500,garage:2800}, names={kiosk:'Corner shop',cafe:'Café',garage:'Garage'};
+ const petPrices={dog:120,cat:90,rabbit:45}, petNames={dog:'Dog',cat:'Cat',rabbit:'Rabbit'};
+ const upgradePrices={paint:180,engine:450,wheels:220,detail:90}, upgradeNames={paint:'Custom paint',engine:'Engine tune',wheels:'Alloy wheels',detail:'Premium detailing'};
+ function save(){try{localStorage.setItem(key,JSON.stringify(state))}catch(e){} render()}
+ function say(id,msg){$(id).textContent=msg}
+ function spend(n,why){if(state.cash<n){say('cityOnlineText','Not enough City Life+ funds for '+why+'. Earn money from events or your business first.');return false}state.cash-=n;return true}
+ function render(){
+  $('cityLifeStats').textContent='City wallet: £'+state.cash.toLocaleString('en-GB')+' · Wanted: '+state.wanted+'/5 · Business: '+(state.business?names[state.business]:'None')+' · Pet: '+(state.pet?petNames[state.pet]:'None');
+  say('cityWantedText',state.wanted?('Wanted level '+state.wanted+'/5. Stay out of trouble or pay a fine to clear it.'):'You are not wanted. Help the community to keep it that way.');
+  say('cityBusinessText',state.business?'You own a '+names[state.business]+'. Running it costs £25 and brings in £'+({kiosk:90,cafe:180,garage:260}[state.business])+'. Total business income: £'+state.businessIncome+'.':'Buy a business to unlock repeatable work and income.');
+  say('cityPetText',state.pet?'Your '+petNames[state.pet]+' happiness is '+state.petHappiness+'/100. Give it care regularly.':'Adopt an animal companion and look after it.');
+  say('cityUpgradeText',state.upgrades.length?'Installed: '+state.upgrades.map(x=>upgradeNames[x]).join(', '):'No upgrades installed yet.');
+ }
+ $('cityLifeBtn').addEventListener('click',()=>{$('cityLifePanel').style.display=$('cityLifePanel').style.display==='block'?'none':'block';render()});
+ $('cityLifeClose').onclick=()=>$('cityLifePanel').style.display='none';
+ $('cityGoodDeed').onclick=()=>{if(state.wanted>0)state.wanted--;state.cash+=25;state.activity='You completed community service and earned £25.';say('cityOnlineText',state.activity);save()};
+ $('cityClearWanted').onclick=()=>{if(!state.wanted){say('cityOnlineText','You have no wanted level to clear.');return}const fine=state.wanted*100;if(!spend(fine,'the police fine'))return;state.wanted=0;say('cityOnlineText','Fine paid: £'+fine+'. Your wanted level is cleared.');save()};
+ $('cityBuyBusiness').onclick=()=>{const id=$('cityBusiness').value;if(state.business){say('cityBusinessText','You already own a business. Run it to earn money.');return}if(!spend(prices[id],'business purchase'))return;state.business=id;state.activity='Opened your '+names[id]+'.';save()};
+ $('cityWorkBusiness').onclick=()=>{if(!state.business){say('cityBusinessText','Buy a business first.');return}if(!spend(25,'business running costs'))return;const gain={kiosk:90,cafe:180,garage:260}[state.business];state.cash+=gain;state.businessIncome+=gain;state.activity='Your '+names[state.business]+' made £'+gain+' after a £25 running cost.';say('cityOnlineText',state.activity);save()};
+ $('cityAdoptPet').onclick=()=>{const id=$('cityPet').value;if(state.pet){say('cityPetText','You already have a pet. Care for your current companion first.');return}if(!spend(petPrices[id],'pet adoption'))return;state.pet=id;state.petHappiness=75;say('cityPetText','You adopted a '+petNames[id]+'! Remember to feed and play with it.');save()};
+ $('cityCarePet').onclick=()=>{if(!state.pet){say('cityPetText','Adopt a pet first.');return}if(!spend(8,'pet food'))return;state.petHappiness=Math.min(100,state.petHappiness+20);say('cityPetText','You fed and played with your '+petNames[state.pet]+'. Happiness: '+state.petHappiness+'/100.');save()};
+ $('cityBuyUpgrade').onclick=()=>{const id=$('cityUpgrade').value;if(state.upgrades.includes(id)){say('cityUpgradeText','That upgrade is already installed.');return}if(!spend(upgradePrices[id],'vehicle upgrade'))return;state.upgrades.push(id);say('cityUpgradeText','Installed '+upgradeNames[id]+'!');save()};
+ $('cityEventBtn').onclick=()=>{const e=events[Math.floor(Math.random()*events.length)];state.cash+=e.reward;state.eventCount++;state.activity='Event: '+e.name; say('cityEventText',e.name+' — '+e.desc+' You earned £'+e.reward+' for participating. Events joined: '+state.eventCount+'.');save()};
+ $('cityOnlineBtn').onclick=()=>{const local=['A street musician is entertaining the square.','A delivery van is parked near the shops.','The market is busy with local shoppers.','A busker has gathered a small crowd.','A few cars are cruising through the city.'];state.activity=local[Math.floor(Math.random()*local.length)];say('cityOnlineText',state.activity+' (Local activity flavour text; no real players connected.)');save()};
+ render();
+})();
+</script>
+
 </body></html>
