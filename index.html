@@ -2004,20 +2004,20 @@ function showUKLifeRenderError(message){
  panel.textContent='UK Life Game graphics stopped: '+message+' — Please refresh the page. If this message returns, send this exact error to the game developer.';
 }
 function loop(now){
- const dt=Math.min(.04,(now-last)/1000);last=now;
- if(playing){try{update(dt)}catch(err){console.error('UK Life update crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}}
+ const dt=Math.min(.04,Math.max(0,(now-last)/1000));last=now;
+ // Always draw the scene first: a gameplay-update exception must never leave
+ // the Chromebook showing only the renderer's blue clear colour.
  try{
   if(typeof player!=='undefined'&&!driving&&!trainJourney&&!(typeof playerOnBus!=='undefined'&&playerOnBus)){
    player.visible=true;player.scale.set(1,1,1);player.position.y=0;
    player.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false}});
-   camera.position.lerp(new THREE.Vector3(player.position.x,5.2,player.position.z+10),.12);camera.lookAt(player.position.x,1.1,player.position.z);
+   camera.position.set(player.position.x,5.2,player.position.z+10);camera.lookAt(player.position.x,1.1,player.position.z);
   }
-  // Chromebook/WebGL fallback: ensure world meshes are drawable and avoid
-  // fog blending distant geometry into the sky colour on limited drivers.
   scene.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){m.visible=true;m.side=THREE.DoubleSide;}}}});
   scene.fog=null;
   renderer.render(scene,camera);
  }catch(err){console.error('UK Life renderer crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}
+ if(playing){try{update(dt)}catch(err){console.error('UK Life update crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}}
  requestAnimationFrame(loop)
 }
 camera.position.set(player.position.x,5,player.position.z+10);camera.lookAt(player.position.x,1,player.position.z);requestAnimationFrame(loop);
