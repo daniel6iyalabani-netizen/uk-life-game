@@ -59,7 +59,7 @@ body.ui-hidden #updatesBtn{display:none!important}
 <div class="row"><button class="primary" id="play" type="button" onclick="window.ukLifeStartClick()">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
 <p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/board bus · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
 <p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
-<div class="row"><button id="shareGameBtn" type="button">🔗 SHARE GAME</button><button id="feedbackGameBtn" type="button">💬 SEND FEEDBACK</button></div>
+<div class="row"><button id="shareGameBtn" type="button" onclick="return window.ukLifeShareGame(event)">🔗 SHARE GAME</button><button id="feedbackGameBtn" type="button" onclick="return window.ukLifeSendFeedback(event)">💬 SEND FEEDBACK</button></div>
 <p id="shareStatus" class="muted" style="font-size:11px;min-height:1em"></p>
 <p style="font-size:12px;margin:12px 0 0"><a href="https://librecounter.org/daniel6iyalabani-netizen.github.io/show" target="_blank" rel="noopener noreferrer" style="color:#83e0b0;font-weight:800">📊 Visitor statistics</a> <span class="muted">·</span> <a href="https://hits.sh/uk-life-game-starts/" target="_blank" rel="noopener noreferrer" style="color:#83e0b0;font-weight:800">🎮 Game-start count</a></p>
 </div></div>
@@ -226,6 +226,45 @@ window.addEventListener('error', function(event){
     if(button) button.textContent='STARTUP ERROR — RELOAD';
   }
 });
+window.ukLifeShareGame = async function(event){
+  if(event){event.preventDefault();event.stopPropagation();}
+  var url='https://daniel6iyalabani-netizen.github.io/uk-life-game/';
+  var status=document.getElementById('shareStatus');
+  function showLink(message){
+    if(!status)return;
+    status.innerHTML='';
+    var label=document.createElement('div');label.textContent=message;status.appendChild(label);
+    var input=document.createElement('input');input.type='text';input.readOnly=true;input.value=url;input.setAttribute('aria-label','Game link');input.style.cssText='width:100%;box-sizing:border-box;margin:6px 0;padding:8px;border-radius:6px;border:1px solid #ffffff55;background:#101a21;color:white;font-size:12px';status.appendChild(input);
+    var copy=document.createElement('button');copy.type='button';copy.textContent='COPY GAME LINK';copy.style.cssText='padding:7px 10px;font-size:11px';copy.onclick=async function(){
+      input.focus();input.select();input.setSelectionRange(0,input.value.length);
+      try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(url);}else if(!document.execCommand('copy')){throw new Error('Copy unavailable');}copy.textContent='COPIED!';}
+      catch(err){window.prompt('Copy this game link:',url);}
+    };status.appendChild(copy);
+  }
+  if(navigator.share){
+    try{await navigator.share({title:'UK Life Game',text:'Explore a UK-inspired 3D city, take jobs and build your life!',url:url});if(status)status.textContent='Share menu opened. Choose an app or person to send the link.';return false;}
+    catch(err){showLink('Sharing did not complete. Copy the link below to share it.');return false;}
+  }
+  showLink('Copy this link and send it to a friend:');
+  return false;
+};
+window.ukLifeSendFeedback = function(event){
+  if(event){event.preventDefault();event.stopPropagation();}
+  var status=document.getElementById('shareStatus');
+  var feedback=window.prompt('What should be improved in UK Life Game? Please do not include private information.');
+  if(!feedback||!feedback.trim()){if(status)status.textContent='Feedback cancelled. You can try SEND FEEDBACK again.';return false;}
+  var title='Feedback for UK Life Game';
+  var body=feedback.trim()+'\n\nSent from the UK Life Game feedback button.';
+  var issueUrl='https://github.com/daniel6iyalabani-netizen/uk-life-game/issues/new?title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body);
+  if(status){
+    status.innerHTML='';
+    var msg=document.createElement('div');msg.textContent='Your feedback is ready. Open GitHub to submit it (you may need to sign in):';status.appendChild(msg);
+    var link=document.createElement('a');link.href=issueUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='OPEN FEEDBACK FORM';link.style.cssText='display:inline-block;margin:6px 0;color:#83e0b0;font-weight:800';status.appendChild(link);
+    var copy=document.createElement('button');copy.type='button';copy.textContent='COPY FEEDBACK';copy.style.cssText='display:block;padding:7px 10px;font-size:11px';copy.onclick=async function(){try{if(navigator.clipboard&&navigator.clipboard.writeText)await navigator.clipboard.writeText(body);else{var area=document.createElement('textarea');area.value=body;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();if(!document.execCommand('copy'))throw new Error('Copy unavailable');area.remove();}copy.textContent='COPIED!';}catch(err){window.prompt('Copy your feedback:',body);}};status.appendChild(copy);
+  }
+  try{window.open(issueUrl,'_blank','noopener,noreferrer');}catch(err){}
+  return false;
+};
 window.ukLifeStartClick = function(){
   var button = document.getElementById('play');
   var help = document.getElementById('help');
@@ -1260,17 +1299,6 @@ function renderAchievements(){
 }
 $('achievementsBtn').addEventListener('click',()=>{const p=$('achievementsPanel');p.style.display=p.style.display==='block'?'none':'block';renderAchievements()});
 $('closeAchievements').addEventListener('click',()=>$('achievementsPanel').style.display='none');
-$('shareGameBtn').addEventListener('click',async()=>{
- const url='https://daniel6iyalabani-netizen.github.io/uk-life-game/';
- const status=$('shareStatus');
- const showLink=(message)=>{if(status)status.innerHTML=message+' <a href="'+url+'" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;overflow-wrap:anywhere">Open UK Life Game</a> · <button type="button" id="copyShareLink" style="padding:3px 7px;font-size:11px">COPY LINK</button>';const copyBtn=$('copyShareLink');if(copyBtn)copyBtn.addEventListener('click',async()=>{try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(url);}else{const box=document.createElement('textarea');box.value=url;box.style.position='fixed';box.style.opacity='0';document.body.appendChild(box);box.select();const copied=document.execCommand('copy');box.remove();if(!copied)throw new Error('Copy unavailable');}if(status)status.textContent='Game link copied! Paste it into a message to share.';}catch(e){window.prompt('Copy this game link:',url);}});};
- if(navigator.share){try{await navigator.share({title:'UK Life Game',text:'Explore a UK-inspired 3D city, take jobs and build your life!',url});if(status)status.textContent='Share menu opened. Choose an app or person to send the game link.';return;}catch(e){if(e&&e.name!=='AbortError'){showLink('Sharing was unavailable. You can copy the link below:');return;}showLink('Sharing cancelled. You can still copy the link below:');return;}}
- showLink('Share UK Life Game using this link:');
-});
-$('feedbackGameBtn').addEventListener('click',()=>{
- const feedback=window.prompt('What should I improve in UK Life Game? Please do not include private information.');
- if(feedback&&feedback.trim()){try{localStorage.setItem('ukLifeFeedbackDraft',feedback.trim());}catch(e){}window.prompt('Thanks! Copy this feedback and send it to the game creator:',feedback.trim());}
-});
 loadUKLife();document.getElementById('saveMenuStatus').textContent='Saved game loaded.';notify('Saved game loaded')});
 document.getElementById('closeSaveMenu').addEventListener('click',()=>document.getElementById('saveMenu').style.display='none');
 document.getElementById('closeLife').addEventListener('click',()=>document.getElementById('lifePanel').style.display='none');
