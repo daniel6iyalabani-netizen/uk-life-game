@@ -1170,6 +1170,16 @@ $('dealershipBtn').addEventListener('click',()=>{buildDealer();$('dealershipPane
 $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.display='none');
 $('controlsBtn').onclick=()=>{$('help').style.display=$('help').style.display==='none'?'block':'none'};
 $('paintChoice').onchange=e=>{const c=driving||nearestCar();if(c){c.paint.color.set(e.target.value);notify(c.spec.name+' colour changed')}};
+
+let streetCrimeWanted=0,streetCrimeCooldown=0;
+function streetTarget(){const n=nearestNPC(5);if(!n){$('streetTarget').textContent='No resident nearby. Walk close to one and try again.';return null} $('streetTarget').textContent='Nearby resident: '+n.name+' · Friendship '+n.friendship+'/5 · Wanted level '+streetCrimeWanted+'/5';return n}
+$('streetCrimeBtn').onclick=()=>{$('streetCrimePanel').style.display=$('streetCrimePanel').style.display==='block'?'none':'block';streetTarget()};
+$('streetCrimeClose').onclick=()=>$('streetCrimePanel').style.display='none';
+function streetCrimeCheck(){if(streetCrimeCooldown>0){notify('Give it a moment before another street interaction.');return null}const n=streetTarget();if(!n)return null;streetCrimeCooldown=4;return n}
+$('streetRob').onclick=()=>{const n=streetCrimeCheck();if(!n)return;const success=Math.random()<.62; n.friendship=Math.max(0,n.friendship-1);n.known=false;if(success){const gain=25+Math.floor(Math.random()*126);money+=gain;streetCrimeWanted=Math.min(5,streetCrimeWanted+1);notify('You got away with £'+gain+' in this fictional scenario. Wanted level '+streetCrimeWanted+'/5.')}else{const fine=Math.min(money,35+Math.floor(Math.random()*66));money-=fine;streetCrimeWanted=Math.min(5,streetCrimeWanted+2);notify('The attempt failed. You lost £'+fine+' and your wanted level rose.')}syncFinance();saveUKLife(false);streetTarget()};
+$('streetAttack').onclick=()=>{const n=streetCrimeCheck();if(!n)return;n.friendship=Math.max(0,n.friendship-2);n.known=false;const dx=n.g.position.x-player.position.x,dz=n.g.position.z-player.position.z,dist=Math.hypot(dx,dz)||1;n.g.position.x+=dx/dist*2.2;n.g.position.z+=dz/dist*2.2;streetCrimeWanted=Math.min(5,streetCrimeWanted+2);notify(n.name+' backs away from the confrontation. Wanted level '+streetCrimeWanted+'/5.');saveUKLife(false);streetTarget()};
+$('streetScam').onclick=()=>{const n=streetCrimeCheck();if(!n)return;const success=Math.random()<.48;n.friendship=Math.max(0,n.friendship-(success?1:2));n.known=false;if(success){const gain=40+Math.floor(Math.random()*161);money+=gain;streetCrimeWanted=Math.min(5,streetCrimeWanted+1);notify('The fictional trick worked: £'+gain+' gained. Your reputation is at risk.')}else{const loss=Math.min(money,50+Math.floor(Math.random()*101));money-=loss;streetCrimeWanted=Math.min(5,streetCrimeWanted+1);notify('The resident spotted the trick. You lost £'+loss+'.')}syncFinance();saveUKLife(false);streetTarget()};
+
 function notify(t){$('notice').textContent=t;$('notice').style.display='block';noticeTimer=2.2}
 let adoptedPet=null,petType=null,homeUpgradeOwned=false;
 const homeUpgradeProps=[];
@@ -2115,4 +2125,22 @@ body.ui-hidden #cityLifeBtn,body.ui-hidden #cityLifePanel{display:none!important
 <label style="display:block;font-size:12px;margin:8px 0 4px">Budget / build cost</label><div id="customCarPrice" style="font-size:18px;font-weight:900;color:#83e0b0">£3,200</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button id="customCarBuild" style="padding:10px;border:0;border-radius:9px;background:#83e0b0;color:#102019;font-weight:900">Build & buy</button><button id="customCarCancel" style="padding:10px;border-radius:9px">Cancel</button></div>
 <p id="customCarStatus" style="font-size:11px;color:#c8d7dd"></p>
-</div></body></html>
+</div>
+<style>
+#streetCrimeBtn{position:fixed;z-index:4;right:14px;top:205px;pointer-events:auto;background:#49334f;border:1px solid #f2c879;font-weight:900}
+#streetCrimePanel{position:fixed;z-index:10;right:14px;top:250px;width:min(330px,calc(100vw - 28px));max-height:65vh;overflow:auto;background:#101a21f5;border:1px solid #f2c87988;border-radius:14px;padding:13px;display:none;box-shadow:0 18px 50px #0008;pointer-events:auto;color:white}
+#streetCrimePanel h2{font-size:17px;margin:0 0 6px}#streetCrimePanel p{font-size:11px;color:#d0dce1;line-height:1.45;margin:6px 0}#streetCrimePanel button{width:100%;padding:8px;margin:4px 0;border:1px solid #ffffff30;border-radius:8px;background:#263a45;color:white;font-weight:750;cursor:pointer}#streetCrimePanel .crimeWarn{color:#f2c879}
+body.ui-hidden #streetCrimeBtn,body.ui-hidden #streetCrimePanel{display:none!important}
+@media(max-width:650px){#streetCrimeBtn{top:202px;right:8px;font-size:11px;padding:8px}#streetCrimePanel{top:246px;right:8px}}
+</style>
+<button id="streetCrimeBtn" type="button">🕵️ Street Choices</button>
+<section id="streetCrimePanel" aria-label="Fictional street choices">
+<h2>🕵️ Street Choices</h2>
+<p>Fictional open-world roleplay. These choices can affect your game cash, NPC friendships and wanted level.</p>
+<p id="streetTarget">Walk close to a town resident to choose an interaction.</p>
+<button id="streetRob">💰 Attempt a robbery</button>
+<button id="streetAttack">👊 Start a fight (non-graphic)</button>
+<button id="streetScam">🎭 Try a fictional confidence trick</button>
+<button id="streetCrimeClose">Close</button>
+<p class="crimeWarn">Crime can backfire: residents may refuse to talk, you can lose money, and your wanted level can rise.</p>
+</section></body></html>
