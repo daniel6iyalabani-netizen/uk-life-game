@@ -59,7 +59,7 @@ body.ui-hidden #updatesBtn{display:none!important}
 <div class="row"><button class="primary" id="play" type="button" onclick="window.ukLifeStartClick()">START EXPLORING</button><button id="controlsBtn">CONTROLS</button></div>
 <p id="help" class="muted" style="display:none;font-size:13px">WASD move/drive · E enter/exit car or building · F interact/board bus · Q choose nearby car · C camera · Space handbrake · Shift sprint · Mouse look. Walk to a door and press E to enter.</p>
 <p class="muted" style="font-size:12px;margin-bottom:0">Prototype for Chrome. The 3D engine loads from the internet. Building interiors are compact explorable rooms, and NPCs use simple walking routes.</p>
-<div class="row"><button id="shareGameBtn" type="button" style="position:relative;z-index:20;pointer-events:auto" onclick="(async function(){var u='https://daniel6iyalabani-netizen.github.io/uk-life-game/';var s=document.getElementById('shareStatus');s.innerHTML='';var p=document.createElement('p');p.textContent='Share UK Life Game:';s.appendChild(p);var a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener noreferrer';a.textContent=u;a.style='display:block;color:#83e0b0;overflow-wrap:anywhere';s.appendChild(a);var b=document.createElement('button');b.type='button';b.textContent='COPY GAME LINK';b.style='margin-top:6px';b.onclick=async function(){var t=document.createElement('textarea');t.value=u;t.style='position:fixed;opacity:0';document.body.appendChild(t);t.select();try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(u)}else if(!document.execCommand('copy'))throw new Error('copy');b.textContent='COPIED!'}catch(e){window.prompt('Copy this game link:',u)}finally{t.remove()}};s.appendChild(b);if(navigator.share){var q=document.createElement('button');q.type='button';q.textContent='OPEN SHARE MENU';q.style='margin:6px 0 0 6px';q.onclick=async function(){try{await navigator.share({title:'UK Life Game',text:'Explore a UK-inspired 3D city, take jobs and build your life!',url:u})}catch(e){}};s.appendChild(q)}})();return false">🔗 SHARE GAME</button><button id="feedbackGameBtn" type="button" style="position:relative;z-index:20;pointer-events:auto" onclick="(function(){var s=document.getElementById('shareStatus');var f=window.prompt('What should be improved in UK Life Game? Please do not include private information.');if(!f||!f.trim()){if(s)s.textContent='Feedback cancelled.';return false}var body=f.trim()+'\\n\\nSent from the UK Life Game feedback button.';var u='https://github.com/daniel6iyalabani-netizen/uk-life-game/issues/new?title='+encodeURIComponent('Feedback for UK Life Game')+'&body='+encodeURIComponent(body);if(s){s.innerHTML='';var p=document.createElement('p');p.textContent='Your feedback is ready. Open GitHub to submit it (sign-in may be required):';s.appendChild(p);var a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener noreferrer';a.textContent='OPEN FEEDBACK FORM';a.style='color:#83e0b0;font-weight:800';s.appendChild(a);var b=document.createElement('button');b.type='button';b.textContent='COPY FEEDBACK';b.style='display:block;margin-top:6px';b.onclick=function(){window.prompt('Copy your feedback:',body)};s.appendChild(b)}window.open(u,'_blank','noopener,noreferrer');return false})()">💬 SEND FEEDBACK</button></div>
+<div class="row"><button id="shareGameBtn" type="button" style="position:relative;z-index:20;pointer-events:auto">🔗 SHARE GAME</button><button id="feedbackGameBtn" type="button" style="position:relative;z-index:20;pointer-events:auto">💬 SEND FEEDBACK</button></div>
 <p id="shareStatus" class="muted" style="font-size:11px;min-height:1em"></p>
 <p style="font-size:12px;margin:12px 0 0"><a href="https://librecounter.org/daniel6iyalabani-netizen.github.io/show" target="_blank" rel="noopener noreferrer" style="color:#83e0b0;font-weight:800">📊 Visitor statistics</a> <span class="muted">·</span> <a href="https://hits.sh/uk-life-game-starts/" target="_blank" rel="noopener noreferrer" style="color:#83e0b0;font-weight:800">🎮 Game-start count</a></p>
 </div></div>
@@ -265,6 +265,37 @@ window.ukLifeSendFeedback = function(event){
   try{window.open(issueUrl,'_blank','noopener,noreferrer');}catch(err){}
   return false;
 };
+// Capture these buttons before the 3D game boot script runs, so they work even if game startup fails.
+document.addEventListener('click', function(event){
+  var target=event.target && event.target.closest ? event.target.closest('#shareGameBtn, #feedbackGameBtn, #copyGameLinkBtn, #openNativeShareBtn, #openFeedbackFormBtn, #copyFeedbackBtn') : null;
+  if(!target)return;
+  event.preventDefault();
+  event.stopPropagation();
+  var status=document.getElementById('shareStatus');
+  var gameUrl='https://daniel6iyalabani-netizen.github.io/uk-life-game/';
+  function addButton(id,label,action){var b=document.createElement('button');b.type='button';b.id=id;b.textContent=label;b.style.cssText='display:inline-block;margin:6px 6px 0 0;padding:8px 10px;position:relative;z-index:30;pointer-events:auto';b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();action()});status.appendChild(b);}
+  async function copyText(value,label,button){try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value)}else{var area=document.createElement('textarea');area.value=value;area.style.cssText='position:fixed;top:0;left:0;opacity:1;z-index:99999';document.body.appendChild(area);area.focus();area.select();var ok=document.execCommand('copy');area.remove();if(!ok)throw new Error('Copy unavailable')}if(button)button.textContent=label+' COPIED';}catch(err){window.prompt('Copy this text:',value)}}
+  if(!status)return;
+  if(target.id==='shareGameBtn'){
+    status.innerHTML='';var p=document.createElement('p');p.textContent='Share UK Life Game — copy this link:';status.appendChild(p);
+    var input=document.createElement('input');input.type='text';input.readOnly=true;input.value=gameUrl;input.setAttribute('aria-label','Game link');input.style.cssText='display:block;width:100%;box-sizing:border-box;padding:9px;background:#101a21;color:white;border:1px solid #ffffff55;border-radius:6px';status.appendChild(input);
+    addButton('copyGameLinkBtn','COPY GAME LINK',function(){copyText(gameUrl,'LINK',document.getElementById('copyGameLinkBtn'))});
+    var a=document.createElement('a');a.href=gameUrl;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open the game';a.style.cssText='display:inline-block;margin:8px;color:#83e0b0';status.appendChild(a);
+    if(navigator.share)addButton('openNativeShareBtn','OPEN SHARE MENU',async function(){try{await navigator.share({title:'UK Life Game',text:'Explore a UK-inspired 3D city, take jobs and build your life!',url:gameUrl})}catch(err){p.textContent='You can still copy the link above.'}});
+  }else if(target.id==='feedbackGameBtn'){
+    var feedback=window.prompt('What should be improved in UK Life Game? Please do not include private information.');
+    if(!feedback||!feedback.trim()){status.textContent='Feedback cancelled.';return}
+    var body=feedback.trim()+'\n\nSent from the UK Life Game feedback button.';
+    var issueUrl='https://github.com/daniel6iyalabani-netizen/uk-life-game/issues/new?title='+encodeURIComponent('Feedback for UK Life Game')+'&body='+encodeURIComponent(body);
+    status.innerHTML='';var p2=document.createElement('p');p2.textContent='Your feedback is ready. Open GitHub to submit it (sign-in may be required):';status.appendChild(p2);
+    addButton('openFeedbackFormBtn','OPEN FEEDBACK FORM',function(){window.open(issueUrl,'_blank','noopener,noreferrer')});
+    addButton('copyFeedbackBtn','COPY FEEDBACK',function(){copyText(body,'FEEDBACK',document.getElementById('copyFeedbackBtn'))});
+    var a2=document.createElement('a');a2.href=issueUrl;a2.target='_blank';a2.rel='noopener noreferrer';a2.textContent='Open feedback form';a2.style.cssText='display:block;margin:8px;color:#83e0b0';status.appendChild(a2);
+  }else if(target.id==='copyGameLinkBtn'){copyText(gameUrl,'LINK',target)}
+  else if(target.id==='openNativeShareBtn'){if(navigator.share)navigator.share({title:'UK Life Game',url:gameUrl}).catch(function(){})}
+  else if(target.id==='openFeedbackFormBtn'){var f=window.prompt('Please enter your feedback first in SEND FEEDBACK.');if(f)window.open('https://github.com/daniel6iyalabani-netizen/uk-life-game/issues/new','_blank','noopener,noreferrer')}
+  else if(target.id==='copyFeedbackBtn'){window.prompt('Copy feedback from the text you entered previously.')}
+}, true);
 window.ukLifeStartClick = function(){
   var button = document.getElementById('play');
   var help = document.getElementById('help');
