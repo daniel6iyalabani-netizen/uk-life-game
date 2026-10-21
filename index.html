@@ -105,14 +105,22 @@ body.ui-hidden #updatesBtn{display:none!important}
   <div style="height:31px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:11px;font-weight:800;background:#0c1524;color:white"><span id="phoneClock">9:41</span><span style="letter-spacing:2px">▮▮▮  Wi-Fi  ▰</span></div>
   <div style="position:absolute;top:5px;left:50%;transform:translateX(-50%);width:94px;height:20px;border-radius:14px;background:#050608;z-index:2;border:1px solid #34383d"></div>
   <div style="padding:12px 15px 8px;display:flex;align-items:center;justify-content:space-between;background:#111e2eea;border-bottom:1px solid #ffffff22"><div><div style="font-size:10px;letter-spacing:2px;color:#9edcc8;font-weight:800">UK LIFE MOBILE</div><b id="phoneHeaderTitle" style="font-size:20px">Your Phone</b></div><button id="closePhone" type="button" aria-label="Close phone" style="width:34px;height:34px;border-radius:50%;border:1px solid #ffffff35;background:#ffffff16;color:white;font-size:18px">×</button></div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:13px 11px 9px;background:#111e2eea">
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:13px 7px 9px;background:#111e2eea">
    <button type="button" data-phone-view="contacts" style="background:none;border:0;color:white;font-size:10px"><span style="display:block;margin:auto auto 4px;width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#60c7a5,#23856f);font-size:24px;line-height:42px">👥</span>Contacts</button>
    <button type="button" data-phone-view="messages" style="background:none;border:0;color:white;font-size:10px"><span style="display:block;margin:auto auto 4px;width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#6bdc83,#239c50);font-size:24px;line-height:42px">💬</span>Messages</button>
    <button type="button" data-phone-view="calls" style="background:none;border:0;color:white;font-size:10px"><span style="display:block;margin:auto auto 4px;width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#7dd8aa,#16734e);font-size:24px;line-height:42px">📞</span>Phone</button>
    <button type="button" data-phone-view="social" style="background:none;border:0;color:white;font-size:10px"><span style="display:block;margin:auto auto 4px;width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#ffb66d,#dc7445);font-size:24px;line-height:42px">🪩</span>Social</button>
+   <button type="button" data-phone-view="property" style="background:none;border:0;color:white;font-size:10px"><span style="display:block;margin:auto auto 4px;width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#f4d77d,#d58a37);font-size:22px;line-height:38px">🏠</span>Homes</button>
   </div>
   <div style="margin:0 10px 8px;padding:9px 11px;border-radius:14px;background:#ffffff12;border:1px solid #ffffff20;display:flex;align-items:center;gap:8px;font-size:11px"><span style="font-size:20px">🌤️</span><div><b>City life</b><div style="opacity:.78">Stay in touch while you explore</div></div><span style="margin-left:auto;color:#a8e7ce">● Online</span></div>
   <div style="margin:0 10px 8px;padding:12px;border-radius:16px;background:#f4f6fa;color:#17212c;flex:1;min-height:0;overflow:auto">
+   <section data-phone-page="property" style="display:none">
+    <b style="font-size:17px">🏠 Property finder</b>
+    <p style="font-size:11px;color:#647384;margin:4px 0 10px">Browse homes and contact the NPC landlord or letting agent directly from your phone.</p>
+    <div id="phonePropertyStatus" style="padding:9px;border-radius:10px;background:#e5f3eb;color:#24563d;font-size:11px;margin-bottom:9px">Looking for a home? Choose a listing below.</div>
+    <div id="phonePropertyListings" style="display:grid;gap:9px"></div>
+    <div style="font-size:10px;color:#647384;padding:10px 2px;line-height:1.45">NPC listings are available now. Real-player listings will need online accounts and a shared server, so they are not live yet.</div>
+   </section>
    <section data-phone-page="contacts"><b style="font-size:17px">Contacts</b><p style="font-size:11px;color:#647384;margin:4px 0 10px">People you have met around town.</p><label for="phoneContact" style="display:block;margin:8px 0 5px;font-size:12px;font-weight:700">Choose a contact</label><select id="phoneContact" style="width:100%;padding:10px;border-radius:10px;background:white;color:#17212c;border:1px solid #ccd4df"></select><div style="margin-top:10px;padding:10px;border-radius:12px;background:#e7edf4;font-size:12px;color:#253649">👤 <span id="phoneContactCard">Select someone to see their details.</span></div></section>
    <section data-phone-page="messages" style="display:none"><b style="font-size:17px">Messages</b><p style="font-size:11px;color:#647384;margin:4px 0 10px">Send a friendly in-game text.</p><div style="padding:11px;border-radius:14px 14px 14px 4px;background:#e2eaf2;font-size:12px;color:#26394a;margin-bottom:10px">💬 <span id="phoneLastMessage">Your conversations will appear here.</span></div><label for="phoneMessage" style="display:block;margin:8px 0 5px;font-size:12px;font-weight:700">New message</label><textarea id="phoneMessage" maxlength="120" rows="3" placeholder="Write a message..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:12px;background:white;color:#17212c;border:1px solid #ccd4df;resize:vertical"></textarea><button id="phoneText" type="button" style="width:100%;padding:11px;margin-top:8px;border:0;border-radius:12px;background:#279a63;color:white;font-weight:800">Send message ↑</button></section>
    <section data-phone-page="calls" style="display:none"><b style="font-size:17px">Phone</b><p style="font-size:11px;color:#647384;margin:4px 0 14px">Make a pretend in-game call to a contact.</p><div style="text-align:center;padding:20px 8px;background:#e8eef5;border-radius:16px"><div style="font-size:42px">📞</div><b id="phoneCallName">Ready to call</b><p style="font-size:11px;color:#647384">Calls are simulated in the game.</p><button id="phoneCall" type="button" style="padding:12px 22px;border:0;border-radius:22px;background:#279a63;color:white;font-weight:800">Call contact</button></div></section>
@@ -1897,6 +1905,66 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
  document.getElementById('tutorialSkip').addEventListener('click',close);
  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay.style.display==='flex')close()});
  document.getElementById('play').addEventListener('click',function(){let seen=false;try{seen=localStorage.getItem('ukLifeTutorialSeenV1')==='1'}catch(e){}if(!seen){current=0;render();overlay.style.display='flex'}});
+})();
+</script>
+
+<script>
+(function(){
+ const agentNames=['Amelia Brooks','Oliver Price','Priya Shah','Jack Thompson','Sofia Williams','Noah Clarke','Aisha Patel','Harry Wilson','Maya Davies','Ethan Cooper'];
+ const agentRoles=['Lettings Agent','Property Manager','Estate Agent','Local Landlord','Housing Adviser'];
+ const homeEmojis={room:'🛏️',studio:'🏢',flat:'🏙️',maisonette:'🏘️',terraced:'🏡',semi:'🏠',house:'🏡',cottage:'🌳',townhouse:'🏘️',penthouse:'🌆'};
+ function renderPhoneProperties(){
+  const root=document.getElementById('phonePropertyListings');if(!root||typeof housingCatalog==='undefined')return;
+  root.innerHTML='';
+  Object.entries(housingCatalog).forEach(([id,home],i)=>{
+   const agent=agentNames[i%agentNames.length],role=agentRoles[i%agentRoles.length];
+   const card=document.createElement('div');
+   card.style.cssText='padding:10px;border:1px solid #d7e0e8;border-radius:13px;background:white;color:#182737';
+   const top=document.createElement('div');top.style.cssText='display:flex;gap:9px;align-items:center';
+   const emoji=document.createElement('div');emoji.textContent=homeEmojis[id]||'🏠';emoji.style.cssText='font-size:27px;width:43px;height:43px;display:grid;place-items:center;border-radius:11px;background:#edf3f7;flex-shrink:0';
+   const info=document.createElement('div');info.style.flex='1';
+   const name=document.createElement('b');name.textContent=home.name.replace(/^./,c=>c.toUpperCase());name.style.cssText='font-size:13px;display:block';
+   const price=document.createElement('div');price.textContent='£'+home.rent+'/week rent';price.style.cssText='font-size:12px;font-weight:800;color:#18734c;margin-top:3px';
+   const buy=document.createElement('div');buy.textContent='Buy price £'+home.price;buy.style.cssText='font-size:10px;color:#657487;margin-top:2px';
+   info.append(name,price,buy);top.append(emoji,info);card.append(top);
+   const agentLine=document.createElement('div');agentLine.textContent='👤 '+agent+' · '+role;agentLine.style.cssText='font-size:10px;color:#536477;margin:9px 0';
+   const actions=document.createElement('div');actions.style.cssText='display:flex;gap:6px';
+   const rent=document.createElement('button');rent.type='button';rent.textContent='Rent';rent.style.cssText='flex:1;padding:8px;border:0;border-radius:8px;background:#208657;color:white;font-weight:800;font-size:11px';
+   rent.addEventListener('click',()=>{
+    if(finance.propertyOwned){notify('You already own a property. Sell it before renting.');return}
+    if(finance.housing!=='none'){notify('Move out of your current home before signing a new tenancy.');return}
+    if(!spend(home.rent,'Tenancy deposit'))return;
+    finance.housing=id;finance.rent=home.rent;finance.council=home.council;finance.utilities=home.utilities;finance.propertyValue=0;finance.credit=Math.max(300,finance.credit-2);
+    syncFinance();notify('You rented the '+home.name+' through '+agent+'. Deposit paid: £'+home.rent+'.');saveUKLife(false);
+    const status=document.getElementById('phonePropertyStatus');if(status)status.textContent='Tenancy agreed with '+agent+'. Weekly rent: £'+home.rent+'.';
+    renderPhoneProperties();
+   });
+   const buyBtn=document.createElement('button');buyBtn.type='button';buyBtn.textContent='Buy';buyBtn.style.cssText='flex:1;padding:8px;border:0;border-radius:8px;background:#263f55;color:white;font-weight:800;font-size:11px';
+   buyBtn.addEventListener('click',()=>{
+    if(finance.propertyOwned){notify('You already own a property.');return}
+    if(!spend(home.price,'Property purchase'))return;
+    finance.propertyOwned=true;finance.propertyValue=home.value;finance.housing=id;finance.rent=0;finance.council=home.council;finance.utilities=home.utilities;
+    syncFinance();notify('You bought the '+home.name+' through '+agent+' for £'+home.price+'.');saveUKLife(false);
+    const status=document.getElementById('phonePropertyStatus');if(status)status.textContent='Purchase complete with '+agent+'. You own this property.';
+    renderPhoneProperties();
+   });
+   actions.append(rent,buyBtn);card.append(agentLine,actions);root.append(card);
+  });
+  const status=document.getElementById('phonePropertyStatus');
+  if(status&&typeof finance!=='undefined'){
+   if(finance.propertyOwned)status.textContent='You own '+(housingCatalog[finance.housing]?.name||'a property')+'. Browse other listings below.';
+   else if(finance.housing!=='none')status.textContent='Current tenancy: '+(housingCatalog[finance.housing]?.name||finance.housing)+'. Move out in Finance before renting another home.';
+   else status.textContent='You are staying with family. Choose a home and pay a one-week deposit to rent.';
+  }
+ }
+ document.querySelectorAll('[data-phone-view]').forEach(btn=>btn.addEventListener('click',function(){
+  if(this.getAttribute('data-phone-view')!=='property')return;
+  const titles={contacts:'Contacts',messages:'Messages',calls:'Phone',social:'Social plans',property:'Property finder'};
+  const title=document.getElementById('phoneHeaderTitle');if(title)title.textContent=titles.property;
+  renderPhoneProperties();
+ }));
+ const oldRefresh=window.refreshPhoneProperties;
+ document.getElementById('phoneBtn')?.addEventListener('click',()=>{if(document.getElementById('phonePanel')?.style.display==='block')renderPhoneProperties()});
 })();
 </script>
 
