@@ -1147,6 +1147,25 @@ if(window.__ukLifeStartClickPending){window.__ukLifeStartClickPending=false;star
 const careerCarUnlocks={van:{missionIndex:5,label:'Complete 5 missions'},electric:{xp:150,label:'Earn 150 XP'},sports:{xp:300,label:'Earn 300 XP'},minibus:{jobCount:5,label:'Complete 5 jobs'},bus:{missionIndex:10,label:'Complete 10 missions'}};
 function carUnlockStatus(id){const req=careerCarUnlocks[id];if(!req)return {unlocked:true,label:'Available now'};const ok=(req.missionIndex===undefined||missionIndex>=req.missionIndex)&&(req.xp===undefined||xp>=req.xp)&&(req.jobCount===undefined||jobCount>=req.jobCount);return {unlocked:ok,label:ok?'Career reward unlocked':req.label}};
 function buildDealer(){const root=$('dealerList');root.innerHTML='';for(const spec of specs){const row=document.createElement('div');row.style.cssText='padding:9px 0;border-bottom:1px solid #ffffff22;display:flex;align-items:center;justify-content:space-between;gap:8px';const status=carUnlockStatus(spec.id);const textNode=document.createElement('div');textNode.innerHTML='<b>'+spec.name+'</b><div class="muted" style="font-size:11px">Top speed '+Math.round(spec.max*3.6)+' km/h · £'+carPrices[spec.id].toLocaleString('en-GB')+'</div><div class="muted" style="font-size:10px;color:'+(status.unlocked?'#83e0b0':'#f2c879')+'">'+status.label+'</div>';const btn=document.createElement('button');btn.textContent=ownedCars.has(spec.id)?'Owned':(status.unlocked?'Buy':'Locked');btn.disabled=ownedCars.has(spec.id)||!status.unlocked;btn.style.cssText='padding:7px 10px;border-radius:8px;border:0;cursor:pointer';btn.onclick=()=>{const latest=carUnlockStatus(spec.id);if(!latest.unlocked){notify('Unlock requirement: '+latest.label);return}const price=carPrices[spec.id];if(money<price){notify('You need £'+(price-money).toLocaleString('en-GB')+' more for this car');return}money-=price;syncFinance();ownedCars.add(spec.id);const c=createCar(spec,5+cars.length*3,10+cars.length*2,0);c.paint.color.set($('paintChoice').value);c.owned=true;notify('Purchased '+spec.name+' for £'+price.toLocaleString('en-GB'));buildDealer();saveUKLife(false)};row.append(textNode,btn);root.appendChild(row)}}
+
+let customCarSequence=0;
+function customCarBuildPrice(){const p=+$('customCarPower').value,h=+$('customCarHandling').value,style=$('customCarStyle').value;return Math.round((1200+(p-20)*105+(h-8)*65+({compact:0,saloon:450,sport:950,suv:800}[style]||0))/50)*50}
+function updateCustomCarQuote(){$('customCarPowerLabel').textContent='Top speed: '+$('customCarPower').value+' m/s ('+Math.round(+$('customCarPower').value*3.6)+' km/h)';$('customCarPrice').textContent='£'+customCarBuildPrice().toLocaleString('en-GB')}
+$('customCarBtn').addEventListener('click',()=>{$('customCarPanel').style.display='block';updateCustomCarQuote()});
+$('customCarCancel').onclick=()=>$('customCarPanel').style.display='none';
+['customCarPower','customCarHandling','customCarStyle'].forEach(id=>$(id).addEventListener('input',updateCustomCarQuote));
+$('customCarBuild').onclick=()=>{
+ const name=$('customCarName').value.trim().slice(0,24)||'My Custom Car',style=$('customCarStyle').value,color=parseInt($('customCarColor').value.slice(1),16),max=+$('customCarPower').value,turn=+$('customCarHandling').value/10,price=customCarBuildPrice();
+ if(money<price){$('customCarStatus').textContent='Not enough game cash. You need £'+(price-money).toLocaleString('en-GB')+' more.';return}
+ customCarSequence++;const id='customcar_'+Date.now().toString(36)+'_'+customCarSequence;
+ const shape={compact:{w:1.9,l:3.6,acc:Math.min(19,max*.42),turn:turn+0.2},saloon:{w:2.1,l:4.7,acc:Math.min(20,max*.36),turn},sport:{w:2.0,l:4.3,acc:Math.min(25,max*.5),turn:turn+0.3},suv:{w:2.35,l:4.8,acc:Math.min(18,max*.32),turn:Math.max(.8,turn-.2)}}[style];
+ const spec={id,name,w:shape.w,l:shape.l,max,acc:shape.acc,turn:shape.turn,color,custom:true,style,buildPrice:price};
+ money-=price;syncFinance();specs.push(spec);carPrices[id]=price;ownedCars.add(id);
+ const c=createCar(spec,player.position.x+4,player.position.z+4,0);c.owned=true;
+ $('customCarStatus').textContent='Built '+name+' for £'+price.toLocaleString('en-GB')+'! It has been added to your garage.';
+ notify('Custom car built: '+name);buildDealer();saveUKLife(false);
+};
+
 $('dealershipBtn').addEventListener('click',()=>{buildDealer();$('dealershipPanel').style.display=$('dealershipPanel').style.display==='block'?'none':'block'});
 $('closeDealership').addEventListener('click',()=>$('dealershipPanel').style.display='none');
 $('controlsBtn').onclick=()=>{$('help').style.display=$('help').style.display==='none'?'block':'none'};
@@ -1795,7 +1814,7 @@ function saveUKLife(showMessage=false){
    player:{x:player.position.x,y:player.position.y,z:player.position.z},
    finance:{...finance},
    look:{hair:playerHair.color.getHex(),skin:playerSkin.color.getHex(),outfit:outfit.color.getHex(),hairStyle:$('hairStyle')?.value||'short',uniform:selectedUniform},
-   cars:cars.filter(c=>c.owned).map(c=>({id:c.spec.id,x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),ownedCars:[...ownedCars],region:selectedRegion,
+   cars:cars.filter(c=>c.owned).map(c=>({id:c.spec.id,x:c.g.position.x,y:c.g.position.y,z:c.g.position.z,heading:c.heading,speed:c.speed})),ownedCars:[...ownedCars],customCarSpecs:specs.filter(s=>s.custom).map(s=>({...s})),region:selectedRegion,
    xp:typeof xp==='number'?xp:0,jobCount:typeof jobCount==='number'?jobCount:0,petType:petType,homeUpgradeOwned:homeUpgradeOwned,
    homeNeeds:{energy:homeNeeds.energy,hunger:homeNeeds.hunger,hygiene:homeNeeds.hygiene},homeCustomItems:homeCustomItems.map(o=>({type:o.type,x:o.object.position.x,y:o.object.position.y,z:o.object.position.z,color:o.color})),
    activeJob:typeof activeJob==='number'?activeJob:null,jobStarted:typeof jobStarted==='boolean'?jobStarted:false,relationships:npcs.map(n=>({id:n.persistentId,name:n.name,friendship:n.friendship,meetings:n.meetings,known:n.known,lastLine:n.lastLine}))
@@ -1848,6 +1867,7 @@ function loadUKLife(){
    if($('skinColor'))$('skinColor').value='#'+playerSkin.color.getHexString();
    if($('topColor'))$('topColor').value='#'+outfit.color.getHexString();
   }
+  if(Array.isArray(d.customCarSpecs)){for(const cs of d.customCarSpecs){if(!cs||typeof cs.id!=='string'||!cs.id.startsWith('customcar_')||typeof cs.name!=='string'||![cs.w,cs.l,cs.max,cs.acc,cs.turn,cs.color,cs.buildPrice].every(Number.isFinite)||specs.some(v=>v.id===cs.id))continue;specs.push({...cs,custom:true});carPrices[cs.id]=cs.buildPrice}}
   if(Array.isArray(d.ownedCars))d.ownedCars.forEach(id=>{const spec=specs.find(x=>x.id===id);if(spec&&!ownedCars.has(id)){const v=Array.isArray(d.cars)?d.cars.find(c=>c.id===id):null;const c=createCar(spec,v&&Number.isFinite(v.x)?v.x:5+cars.length*3,v&&Number.isFinite(v.z)?v.z:10+cars.length*2,v&&Number.isFinite(v.heading)?v.heading:0);c.owned=true;ownedCars.add(id);if(v&&Number.isFinite(v.speed))c.speed=v.speed;if(v&&Number.isFinite(v.x)&&Number.isFinite(v.z))c.g.position.set(v.x,0,v.z)}});if(typeof d.region==='string'&&regionNames[d.region])selectedRegion=d.region;
   if(typeof xp!=='undefined'&&Number.isFinite(d.xp))xp=Math.max(0,d.xp);
   if(typeof jobCount!=='undefined'&&Number.isFinite(d.jobCount))jobCount=Math.max(0,d.jobCount);
@@ -2084,4 +2104,15 @@ body.ui-hidden #cityLifeBtn,body.ui-hidden #cityLifePanel{display:none!important
 })();
 </script>
 
-</body></html>
+
+<div id="customCarPanel" style="display:none;position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,calc(100vw - 24px));max-height:85vh;overflow:auto;padding:16px;background:#101a21f7;border:1px solid #83e0b0;border-radius:16px;box-shadow:0 18px 60px #000b;pointer-events:auto;color:white">
+<h2 style="margin:0 0 6px;font-size:20px">🛠️ Custom Car Workshop</h2><p style="font-size:12px;color:#c8d7dd;line-height:1.45">Build a car with your own body size, paint, speed and handling. The workshop charges game cash; no real money.</p>
+<label style="display:block;font-size:12px;margin:8px 0 4px">Car name</label><input id="customCarName" maxlength="24" value="My Custom Car" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ffffff30;background:#263a45;color:white">
+<label style="display:block;font-size:12px;margin:8px 0 4px">Paint colour</label><input id="customCarColor" type="color" value="#28a8a0" style="width:100%;height:38px">
+<label style="display:block;font-size:12px;margin:8px 0 4px">Body style</label><select id="customCarStyle" style="width:100%;padding:8px;border-radius:8px;background:#263a45;color:white"><option value="compact">Compact</option><option value="saloon">Saloon</option><option value="sport">Sports coupe</option><option value="suv">SUV</option></select>
+<label style="display:block;font-size:12px;margin:8px 0 4px">Engine performance</label><input id="customCarPower" type="range" min="20" max="55" value="32" style="width:100%"><div id="customCarPowerLabel" style="font-size:11px;color:#a9e6cb">Top speed: 32 m/s</div>
+<label style="display:block;font-size:12px;margin:8px 0 4px">Handling</label><input id="customCarHandling" type="range" min="8" max="22" value="15" style="width:100%">
+<label style="display:block;font-size:12px;margin:8px 0 4px">Budget / build cost</label><div id="customCarPrice" style="font-size:18px;font-weight:900;color:#83e0b0">£3,200</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button id="customCarBuild" style="padding:10px;border:0;border-radius:9px;background:#83e0b0;color:#102019;font-weight:900">Build & buy</button><button id="customCarCancel" style="padding:10px;border-radius:9px">Cancel</button></div>
+<p id="customCarStatus" style="font-size:11px;color:#c8d7dd"></p>
+</div></body></html>
