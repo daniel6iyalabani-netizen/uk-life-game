@@ -1002,7 +1002,7 @@ function buildPet(type){
  if(adoptedPet){scene.remove(adoptedPet);adoptedPet=null}
  petType=type;
  const g=new THREE.Group(),coat=M(type==='dog'?0xb9824b:0x777b85),dark=M(0x292a2c),innerEar=M(0xd99a9a),white=M(0xf5eee1);
- mesh(new THREE.SphereGeometry(type==='dog'?.48:.39,14,10),coat,0,.48,0,g);
+ mesh(new THREE.SphereGeometry(type==='dog' ? 0.48 : 0.39,14,10),coat,0,.48,0,g);
  mesh(new THREE.SphereGeometry(.3,14,10),coat,0,.75,-.28,g);
  mesh(new THREE.SphereGeometry(.045,10,8),dark,-.11,.79,-.535,g);mesh(new THREE.SphereGeometry(.045,10,8),dark,.11,.79,-.535,g);
  mesh(new THREE.SphereGeometry(.06,10,8),dark,0,.68,-.56,g);
