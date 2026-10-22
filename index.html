@@ -1149,13 +1149,27 @@ addEventListener('keydown',e=>{
   if((e.code==='KeyU'||e.key.toLowerCase()==='u')&&playing)toggleGameUI();
 });
 addEventListener('keyup',e=>setGameKey(e,false));
+// Click/tap movement controls also work on Chromebook trackpads and when keyboard focus is unreliable.
+(function bindOnScreenControls(){
+ const panel=document.getElementById('touchControls');if(!panel)return;
+ function press(button,down){
+  const move=button.getAttribute('data-move'),action=button.getAttribute('data-action');
+  if(move){const k=move==='Shift'?'ShiftLeft':move.toLowerCase()==='w'?'KeyW':move.toLowerCase()==='a'?'KeyA':move.toLowerCase()==='s'?'KeyS':move.toLowerCase()==='d'?'KeyD':move;keys[k]=down;if(move==='Shift')keys.Shift=down;}
+  if(action&&down&&playing){if(action==='E')useDoorOrCar();if(action==='F')interact();}
+ }
+ panel.querySelectorAll('button').forEach(button=>{
+  button.addEventListener('pointerdown',e=>{e.preventDefault();press(button,true);button.setPointerCapture?.(e.pointerId)});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>button.addEventListener(type,e=>{e.preventDefault();press(button,false)}));
+  button.addEventListener('contextmenu',e=>e.preventDefault());
+ });
+})();
 addEventListener('blur',()=>{for(const key of Object.keys(keys))keys[key]=false;});
 renderer.domElement.addEventListener('click',()=>{if(playing)renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&playing&&!inside&&!driving)yaw-=e.movementX*.0022});
 let selectedRegion='london';
 const regionNames={london:'England · London',edinburgh:'Scotland · Edinburgh',cardiff:'Wales · Cardiff',belfast:'Northern Ireland · Belfast'};
 const startPoints={centre:{x:0,z:5,label:'City centre'},homes:{x:-34,z:-34,label:'Terraced homes'},shops:{x:33,z:-35,label:'Shopping street'},park:{x:4,z:92,label:'Park and gardens'},oldtown:{x:150,z:0,label:'Old town / harbour'}};
-function startGame(){try{inside=false;driving=false;trainJourney=false;if(typeof playerOnBus!=='undefined')playerOnBus=false;player.visible=true;player.scale.set(1,1,1);try{const startPing=document.createElement('img');startPing.alt='';startPing.width=1;startPing.height=1;startPing.style.cssText='position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';startPing.src='https://hits.sh/uk-life-game-starts.svg?label=game%20starts&view=total&cb='+Date.now();document.body.appendChild(startPing);}catch(trackErr){}selectedRegion=$('regionChoice').value||'london';applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);player.visible=true;camera.position.set(spawn.x,5.2,spawn.z+10);camera.lookAt(spawn.x,1.1,spawn.z);yaw=0;cameraMode=0;playing=true;$('start').style.display='none';$('uiToggle').style.display='block';if($('touchControls'))$('touchControls').style.display=(window.matchMedia&&window.matchMedia('(hover:none) and (pointer:coarse)').matches)?'flex':'none';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';try{renderer.domElement.requestPointerLock?.()}catch(e){}notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')}catch(err){console.error('Start failed',err);const help=$('help');if(help){help.style.display='block';help.textContent='The game could not start: '+err.message+' Please refresh and try again.'}}}
+function startGame(){try{inside=false;driving=false;trainJourney=false;if(typeof playerOnBus!=='undefined')playerOnBus=false;player.visible=true;player.scale.set(1,1,1);try{const startPing=document.createElement('img');startPing.alt='';startPing.width=1;startPing.height=1;startPing.style.cssText='position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';startPing.src='https://hits.sh/uk-life-game-starts.svg?label=game%20starts&view=total&cb='+Date.now();document.body.appendChild(startPing);}catch(trackErr){}selectedRegion=$('regionChoice').value||'london';applyRegionLandmarks(selectedRegion);const spawn=startPoints[$('startChoice').value]||startPoints.centre;player.position.set(spawn.x,0,spawn.z);player.visible=true;camera.position.set(spawn.x,5.2,spawn.z+10);camera.lookAt(spawn.x,1.1,spawn.z);yaw=0;cameraMode=0;playing=true;$('start').style.display='none';$('uiToggle').style.display='block';if($('touchControls'))$('touchControls').style.display='flex';$('mapPanel').style.display='block';$('mapText').textContent=regionNames[selectedRegion]+' · '+spawn.label+' · Regional landmarks';try{renderer.domElement.requestPointerLock?.()}catch(e){}notify('Welcome to '+regionNames[selectedRegion]+' — starting at '+spawn.label+'.')}catch(err){console.error('Start failed',err);const help=$('help');if(help){help.style.display='block';help.textContent='The game could not start: '+err.message+' Please refresh and try again.'}}}
 window.__startUKLifeGame=startGame;
 if(window.__ukLifeStartClickPending){window.__ukLifeStartClickPending=false;startGame();}
 const careerCarUnlocks={van:{missionIndex:5,label:'Complete 5 missions'},electric:{xp:150,label:'Earn 150 XP'},sports:{xp:300,label:'Earn 300 XP'},minibus:{jobCount:5,label:'Complete 5 jobs'},bus:{missionIndex:10,label:'Complete 10 missions'}};
