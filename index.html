@@ -56,6 +56,27 @@ body.ui-hidden #updatesBtn{display:none!important}
 #touchControls button{min-width:0;padding:8px 5px;background:#101a21ed;border:1px solid #ffffff66;color:#fff;font-size:12px;font-weight:900;border-radius:12px;box-shadow:0 3px 12px #0005;touch-action:none;user-select:none;-webkit-user-select:none}
 #touchControls button:active{background:#83e0b0;color:#102019}
 @media(hover:none) and (pointer:coarse){#touchControls{display:flex!important}#miniMapPanel{bottom:150px!important;left:8px!important;width:132px!important;padding:5px!important}#miniMapCanvas{width:118px!important;height:118px!important}#bottom{bottom:150px!important}#mission{max-width:calc(100vw - 28px);font-size:11px}#staminaPanel{top:112px!important;right:8px!important;width:135px!important}#phoneBtn{top:260px!important}#busMapBtn{top:170px!important}#trainBtn{top:210px!important}#lifeBtn{top:72px!important;right:8px!important}#financeBtn{top:116px!important;right:8px!important}}
+
+/* Phone-friendly play layout: keep the world full-screen and expose touch controls on small screens. */
+@media (max-width: 760px), (pointer: coarse) {
+  #touchControls { display:flex !important; }
+  #touchControls button { min-height:44px; min-width:48px; padding:8px; font-size:13px; font-weight:800; background:#142630ee; border:1px solid #ffffff75; box-shadow:0 3px 10px #0006; touch-action:none; }
+  #stats { left:8px; right:8px; top:8px; gap:4px; font-size:10px; }
+  #stats .pill { padding:6px 7px; }
+  #brand { left:8px; top:8px; font-size:11px; padding:7px; }
+  #mission { left:8px; top:62px; max-width:min(235px,62vw); font-size:11px; padding:8px; }
+  #staminaPanel { right:8px; top:62px; width:112px; font-size:10px; padding:7px; }
+  #miniMapPanel { left:8px; bottom:118px; width:112px; padding:5px; }
+  #miniMapCanvas { width:100px; height:100px; }
+  #weatherStatus { left:8px!important; top:auto!important; bottom:110px; max-width:125px; font-size:10px!important; }
+  #bottom { left:8px; right:8px; bottom:8px; font-size:10px; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  #touchControls { bottom:8px!important; }
+  #miniMapPanel { bottom:174px; }
+  #weatherStatus { bottom:165px; }
+  #mission { max-width:58vw; }
+}
 </style></head>
 <body>
 <div id="start"><div class="card">
