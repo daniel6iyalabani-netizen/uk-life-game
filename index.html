@@ -2082,7 +2082,7 @@ function loop(now){
   if(typeof player!=='undefined'&&!driving&&!trainJourney&&!(typeof playerOnBus!=='undefined'&&playerOnBus)){
    player.visible=true;player.scale.set(1,1,1);player.position.y=0;
    player.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false}});
-   camera.position.set(player.position.x,4.1,player.position.z+8.5);camera.lookAt(player.position.x,1.2,player.position.z-7);
+   camera.position.set(player.position.x,4.1,player.position.z+8.5);camera.lookAt(player.position.x,1.2,player.position.z);
   }
   // Keep rendering lightweight on Chromebook hardware; avoid walking every
   // object and rewriting every material on every animation frame.
