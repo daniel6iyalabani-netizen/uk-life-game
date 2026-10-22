@@ -2080,7 +2080,7 @@ function loop(now){
   if(typeof player!=='undefined'&&!driving&&!trainJourney&&!(typeof playerOnBus!=='undefined'&&playerOnBus)){
    player.visible=true;player.scale.set(1,1,1);player.position.y=0;
    player.traverse(o=>{if(o.isMesh){o.visible=true;o.frustumCulled=false}});
-   camera.position.set(player.position.x,5.2,player.position.z+10);camera.lookAt(player.position.x,1.1,player.position.z);
+   camera.position.set(player.position.x,4.1,player.position.z+8.5);camera.lookAt(player.position.x,1.2,player.position.z-7);
   }
   // Keep rendering lightweight on Chromebook hardware; avoid walking every
   // object and rewriting every material on every animation frame.
@@ -2089,7 +2089,7 @@ function loop(now){
  if(playing){try{update(dt)}catch(err){console.error('UK Life update crashed',err);showUKLifeRenderError((err&&err.message)||String(err));}}
  requestAnimationFrame(loop)
 }
-camera.position.set(player.position.x,5,player.position.z+10);camera.lookAt(player.position.x,1,player.position.z);requestAnimationFrame(loop);
+camera.position.set(player.position.x,4.1,player.position.z+8.5);camera.lookAt(player.position.x,1.2,player.position.z-7);requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
 })().catch(function(error){
