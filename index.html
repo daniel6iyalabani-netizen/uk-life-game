@@ -2116,7 +2116,8 @@ const ukFriendsMP=(()=>{
    channel=client.channel('uk-life-friends-'+room,{config:{broadcast:{self:false},presence:{key:nick+'-'+Math.random().toString(36).slice(2,7)}}});
    channel.on('broadcast',{event:'state'},({payload})=>{
     if(!payload||payload.id===clientId)return;
-    let g=remotes.get(payload.id);if(!g){g=makeRemote(payload.id,payload.name,payload.color);remotes.set(payload.id,g)}
+    let g=remotes.get(payload.id);if(!g){g=makeRemote(payload.id,payload.name,payload.color);g.userData.playerName=String(payload.name||'Friend');remotes.set(payload.id,g)}
+    g.userData.lastSeen=Date.now();
     if(Number.isFinite(payload.x)&&Number.isFinite(payload.z)){g.position.set(payload.x,0,payload.z);g.rotation.y=Number(payload.yaw)||0;g.visible=true}
     refreshList();
    }).on('broadcast',{event:'bye'},({payload})=>{if(payload?.id&&remotes.has(payload.id)){scene.remove(remotes.get(payload.id));remotes.delete(payload.id);refreshList()}});
@@ -2125,7 +2126,7 @@ const ukFriendsMP=(()=>{
   }catch(e){status('Multiplayer connection failed: '+(e.message||e))}
  }
  const clientId='p'+Math.random().toString(36).slice(2,11);
- function refreshList(){const list=$('friendsMPList');if(list)list.textContent=(connected?nick+' (you)'+(remotes.size?'\n'+[...remotes.values()].map(g=>g.name||'Friend').join('\n'):'\nWaiting for friends to join…'):'Not connected');}
+ function refreshList(){const list=$('friendsMPList');if(list)list.textContent=(connected?nick+' (you)'+(remotes.size?'\n'+[...remotes.values()].map(g=>g.userData.playerName||'Friend').join('\n'):'\nWaiting for friends to join…'):'Not connected');}
  $('friendsMPCreate').onclick=()=>join(true);$('friendsMPJoin').onclick=()=>join(false);$('friendsMPLeave').onclick=()=>{if(channel&&connected)channel.send({type:'broadcast',event:'bye',payload:{id:clientId}});cleanup()};
  function tick(now){if(connected&&channel&&now-lastSent>180&&typeof player!=='undefined'){lastSent=now;channel.send({type:'broadcast',event:'state',payload:{id:clientId,name:nick,x:Number(player.position.x)||0,z:Number(player.position.z)||0,yaw:Number(yaw)||0,color:0xe28bff,at:Date.now()}}).catch(()=>{});for(const [id,g] of remotes){if(g.userData.lastSeen&&Date.now()-g.userData.lastSeen>12000){scene.remove(g);remotes.delete(id)}}}}
  return {tick};
