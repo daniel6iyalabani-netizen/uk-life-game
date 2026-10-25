@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#8fd3ff"><title>City Bots — First-Person Training</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8fd3ff;color:#fff;font-family:system-ui,Arial,sans-serif}canvas{display:block;width:100%;height:100%;touch-action:none}#game{position:fixed;inset:0}#hud{position:fixed;inset:0;pointer-events:none;text-shadow:0 2px 5px #000;z-index:2}.panel{background:#071521c9;border:1px solid #ffffff40;border-radius:12px;padding:9px 12px;backdrop-filter:blur(5px)}#top{position:absolute;left:12px;top:12px;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}#score{font-weight:900;font-size:17px}#helpmini{font-size:12px;max-width:230px}#health{position:absolute;bottom:12px;left:12px;width:min(250px,45vw)}#ammo{position:absolute;bottom:12px;right:12px;font-weight:900;font-size:20px}#map{position:absolute;right:12px;top:12px;width:120px;height:120px;border-radius:50%;border:2px solid #ffffffa8;background:#071521c9}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px}#cross:before,#cross:after{content:"";position:absolute;background:#fff;box-shadow:0 0 3px #000}#cross:before{width:2px;height:22px;left:10px}#cross:after{height:2px;width:22px;top:10px}#message{position:absolute;left:50%;top:63%;transform:translateX(-50%);font-weight:900;font-size:clamp(16px,3vw,25px);text-align:center}#start{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:16px;background:linear-gradient(#082338b8,#071521e8)}.card{width:min(540px,100%);padding:24px;border:1px solid #ffffff55;border-radius:22px;background:#101f2c;box-shadow:0 20px 70px #0008}h1{margin:0 0 8px;font-size:clamp(30px,7vw,48px);line-height:1.02}.muted{color:#c9dce8;line-height:1.5}button{border:0;border-radius:12px;padding:12px 16px;background:#9bf1c6;color:#0b2420;font-weight:900;font-size:16px;cursor:pointer}#touch{position:fixed;inset:0;z-index:3;display:none;pointer-events:none}.pad{position:absolute;bottom:25px;left:18px;width:126px;height:126px;border-radius:50%;background:#07152177;border:1px solid #ffffff80;pointer-events:auto;touch-action:none}.pad button{position:absolute;width:42px;height:42px;padding:0;border-radius:50%;background:#ffffff36;color:white;border:1px solid #ffffff70}.pad #up{left:41px;top:3px}.pad #down{left:41px;bottom:3px}.pad #left{left:3px;top:41px}.pad #right{right:3px;top:41px}#touchActions{position:absolute;right:16px;bottom:26px;display:flex;gap:10px;align-items:end;pointer-events:auto}#touchActions button{border-radius:50%;width:68px;height:68px;padding:5px;background:#071521aa;color:#fff;border:1px solid #ffffff80;font-size:13px}#shoot{background:#a72c35dd!important}#restart{position:fixed;right:12px;top:145px;z-index:4;display:none;pointer-events:auto;font-size:12px;padding:8px 10px}@media(pointer:coarse){#touch{display:block}#helpmini{display:none}#map{width:88px;height:88px}#restart{top:110px}} 
+</style></head><body>
+<canvas id="game" aria-label="First-person city game"></canvas>
+<div id="hud"><div id="top"><div class="panel"><div id="score">BOT TARGETS: 0 / 8</div><div id="timer">TIME: 90</div></div><div id="helpmini" class="panel">WASD move · Mouse look · Click to tag bots · Shift sprint · R restart</div></div><canvas id="map" width="160" height="160"></canvas><div id="cross"></div><div id="message"></div><div id="health" class="panel">TRAINING ENERGY <div style="height:9px;background:#ffffff33;border-radius:8px;margin-top:5px;overflow:hidden"><div id="energyFill" style="height:100%;width:100%;background:#80f0a6"></div></div></div><div id="ammo" class="panel">TAGS: ∞</div></div>
+<div id="touch"><div class="pad"><button id="up">▲</button><button id="down">▼</button><button id="left">◀</button><button id="right">▶</button></div><div id="touchActions"><button id="turnL">LOOK ◀</button><button id="shoot">TAG BOT</button><button id="turnR">LOOK ▶</button></div></div><button id="restart">RESTART</button>
+<div id="start"><div class="card"><h1>🏙️ CITY BOTS</h1><p class="muted">A first-person 3D-style city training game built for Chromebooks. Find the friendly training bots around the streets and tag their glowing targets. No downloads or 3D graphics acceleration needed.</p><p class="muted"><b>Computer:</b> WASD to move, mouse to look, click to tag, Shift to sprint, R to restart.<br><b>Touchscreen:</b> use the direction pad and TAG BOT button.</p><button id="play">START CITY TRAINING</button><p id="status" class="muted" style="font-size:12px;margin-bottom:0">Lightweight canvas renderer — works without WebGL.</p></div></div>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:false}),mapCanvas=document.getElementById('map'),mctx=mapCanvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let W=innerWidth,H=innerHeight,dpr=1,playing=false,won=false,seconds=90,score=0,energy=100,flash=0,last=performance.now(),yaw=0,px=8.5,pz=8.5,keys={},mouseDown=false,touchLook=0;
+const map=[
+'########################',
+'#..........#...........#',
+'#..##......#..###......#',
+'#..##.................#',
+'#......####.....##.....#',
+'#.............. ##.....#',
+'###.####...............#',
+'#......#....####.......#',
+'#......#...............#',
+'#..#######..#####..##..#',
+'#......................#',
+'#....##...........##...#',
+'#....##..####..........#',
+'#...........#..........#',
+'#..###......#...####...#',
+'#..............#.......#',
+'#..####..##....#....##..#',
+'#......................#',
+'########################'];
+const MW=map[0].length,MH=map.length;
+function wall(x,z){let a=Math.floor(x),b=Math.floor(z);return b<0||b>=MH||a<0||a>=MW||map[b][a]==='#'}
+function resize(){dpr=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+const bots=[];function reset(){px=8.5;pz=8.5;yaw=0;seconds=90;score=0;energy=100;won=false;bots.length=0;[[4.5,2.5],[17.5,2.5],[20.5,5.5],[3.5,8.5],[13.5,8.5],[18.5,11.5],[8.5,14.5],[20.5,16.5]].forEach((p,i)=>bots.push({x:p[0],z:p[1],alive:true,phase:i*.9,move:Math.random()*6}));$('message').textContent='';updateHud()}
+function updateHud(){$('score').textContent='BOT TARGETS: '+score+' / '+bots.length;$('timer').textContent='TIME: '+Math.max(0,Math.ceil(seconds));$('energyFill').style.width=energy+'%';$('ammo').textContent='TAGS: ∞'}
+function move(dx,dz){const c=Math.cos(yaw),s=Math.sin(yaw),nx=px+dx*c-dz*s,nz=pz+dx*s+dz*c;if(!wall(nx+.2*Math.sign(dx),pz)&&!wall(nx-.2*Math.sign(dx),pz))px=nx;if(!wall(px,nz+.2*Math.sign(dz))&&!wall(px,nz-.2*Math.sign(dz)))pz=nz}
+function cast(angle){let sin=Math.sin(angle),cos=Math.cos(angle);for(let d=.04;d<24;d+=.035){let x=px+cos*d,z=pz+sin*d;if(wall(x,z))return {d,x,z,side:(Math.abs(x-Math.round(x))<Math.abs(z-Math.round(z)))?0:1}}return {d:24,x:px+cos*24,z:pz+sin*24,side:0}}
+function render(){ctx.fillStyle='#86c9f6';ctx.fillRect(0,0,W,H);let horizon=H*.46;
+let sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,'#63b4f3');sky.addColorStop(1,'#d6efff');ctx.fillStyle=sky;ctx.fillRect(0,0,W,horizon);
+let ground=ctx.createLinearGradient(0,horizon,0,H);ground.addColorStop(0,'#8799a0');ground.addColorStop(1,'#303b46');ctx.fillStyle=ground;ctx.fillRect(0,horizon,W,H-horizon);
+// Sun and stylized cloud puffs
+ctx.fillStyle='#fff5c2';ctx.beginPath();ctx.arc(W*.78,H*.14,Math.min(W,H)*.035,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffffffaa';for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(W*(.18+i*.035),H*(.13+i%2*.025),24,9,0,0,Math.PI*2);ctx.fill()}
+// Raycast walls, depth-corrected vertical strips
+const fov=Math.PI/2.8,cols=Math.ceil(W/3),strip=W/cols,depths=new Float32Array(cols);
+for(let i=0;i<cols;i++){let a=yaw+(i/cols-.5)*fov,r=cast(a),correct=r.d*Math.cos(a-yaw);depths[i]=correct;let hh=Math.min(H*1.8,H*.82/(correct+.12)),x=i*strip,top=horizon-hh*.5;let shade=Math.max(.22,1-correct/19)*(r.side?.78:1);let block=Math.floor(r.x)+Math.floor(r.z)*3;let palette=['#a8b7c4','#c1cbd0','#8999a8','#b3a48d','#879aa8'];ctx.fillStyle=palette[Math.abs(block)%palette.length];ctx.globalAlpha=shade;ctx.fillRect(x,top,strip+1,hh);ctx.globalAlpha=1;
+if(correct<9){ctx.strokeStyle='#27374755';ctx.lineWidth=1;for(let yy=top+hh*.25;yy<top+hh;yy+=Math.max(12,hh*.22)){ctx.beginPath();ctx.moveTo(x,yy);ctx.lineTo(x+strip,yy);ctx.stroke()}}
+}
+// Road markings
+ctx.strokeStyle='#f4e5a6aa';ctx.lineWidth=2;ctx.setLineDash([18,16]);ctx.beginPath();ctx.moveTo(W*.49,horizon+8);ctx.lineTo(W*.49,H);ctx.stroke();ctx.setLineDash([]);
+// Billboard targets are sorted far-to-near
+const visible=bots.filter(b=>b.alive).map(b=>{let dx=b.x-px,dz=b.z-pz,dist=Math.hypot(dx,dz),rel=Math.atan2(dz,dx)-yaw;while(rel>Math.PI)rel-=2*Math.PI;while(rel< -Math.PI)rel+=2*Math.PI;return {...b,dist,rel}}).filter(b=>Math.abs(b.rel)<fov*.68&&b.dist<19).sort((a,b)=>b.dist-a.dist);
+for(const b of visible){let sx=W*(.5+b.rel/fov),size=Math.min(H*.8,H*.66/(b.dist+.2)),sy=horizon+size*.08;let rayIndex=Math.max(0,Math.min(cols-1,Math.floor(sx/W*cols)));if(b.dist>depths[rayIndex]+.15)continue;
+ctx.save();ctx.translate(sx,sy);ctx.globalAlpha=Math.max(.55,1-b.dist/26);let body=size*.29,head=size*.12;
+ctx.fillStyle='#182b3a';ctx.beginPath();ctx.roundRect(-body*.55,-size*.05,body*1.1,size*.48,body*.2);ctx.fill();ctx.fillStyle='#e0b999';ctx.beginPath();ctx.arc(0,-size*.15,head*.52,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ff5c68';ctx.fillRect(-body*.75,-size*.02,body*1.5,Math.max(3,size*.055));ctx.fillStyle='#9ff5d0';ctx.beginPath();ctx.arc(0,-size*.02,Math.max(3,size*.04),0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ff6674';ctx.lineWidth=Math.max(1,size*.012);ctx.strokeRect(-body*.75,-size*.02,body*1.5,Math.max(3,size*.055));ctx.fillStyle='#fff';ctx.font='bold '+Math.max(10,Math.min(17,size*.09))+'px system-ui';ctx.textAlign='center';ctx.fillText('BOT',0,-size*.29);ctx.restore()}
+if(flash>0){ctx.fillStyle='rgba(255,244,170,'+(flash*.35)+')';ctx.fillRect(0,0,W,H);flash=Math.max(0,flash-.12)}
+// tiny first-person training blaster, drawn as vector art
+ctx.fillStyle='#172635';ctx.beginPath();ctx.moveTo(W*.57,H);ctx.lineTo(W*.59,H*.83);ctx.lineTo(W*.64,H*.77);ctx.lineTo(W*.72,H*.79);ctx.lineTo(W*.75,H);ctx.fill();ctx.fillStyle='#344b5c';ctx.fillRect(W*.61,H*.82,W*.12,H*.13);ctx.fillStyle='#9bb4c5';ctx.fillRect(W*.635,H*.79,W*.08,H*.025);
+drawMiniMap();if(energy<=0||seconds<=0||score===bots.length){if(!won){won=score===bots.length;$('message').textContent=won?'CITY CLEAR! ALL TRAINING BOTS TAGGED':'TRAINING ROUND OVER — PRESS R TO RETRY';$('restart').style.display='block'}}
+}
+function drawMiniMap(){const w=mapCanvas.width,h=mapCanvas.height,cell=w/MW;mctx.clearRect(0,0,w,h);mctx.fillStyle='#172b3b';mctx.fillRect(0,0,w,h);for(let z=0;z<MH;z++)for(let x=0;x<MW;x++){mctx.fillStyle=map[z][x]==='#'?'#718695':'#263c49';mctx.fillRect(x*cell,z*cell,cell+.5,cell+.5)}for(const b of bots)if(b.alive){mctx.fillStyle='#ff6771';mctx.beginPath();mctx.arc((b.x+.5)*cell,(b.z+.5)*cell,3,0,7);mctx.fill()}mctx.fillStyle='#9bf1c6';mctx.beginPath();mctx.arc(px*cell,pz*cell,4,0,7);mctx.fill();mctx.strokeStyle='#9bf1c6';mctx.beginPath();mctx.moveTo(px*cell,pz*cell);mctx.lineTo((px+Math.cos(yaw)*1.5)*cell,(pz+Math.sin(yaw)*1.5)*cell);mctx.stroke()}
+function shoot(){if(!playing||won)return;let best=null;for(const b of bots){if(!b.alive)continue;let dx=b.x-px,dz=b.z-pz,dist=Math.hypot(dx,dz),rel=Math.atan2(dz,dx)-yaw;while(rel>Math.PI)rel-=2*Math.PI;while(rel< -Math.PI)rel+=2*Math.PI;if(Math.abs(rel)<.105&&dist<14){const r=cast(yaw+rel);if(r.d>=dist-.35&&(!best||dist<best.dist))best={b,dist}}}if(best){best.b.alive=false;score++;flash=1;$('message').textContent='NICE TAG!';setTimeout(()=>{if($('message').textContent==='NICE TAG!')$('message').textContent=''},650)}else{$('message').textContent='AIM AT A BOT';setTimeout(()=>{if($('message').textContent==='AIM AT A BOT')$('message').textContent=''},500)}updateHud()}
+function start(){reset();playing=true;$('start').style.display='none';$('restart').style.display='none';$('status').textContent='';canvas.requestPointerLock?.();last=performance.now()}
+$('play').addEventListener('click',start);$('restart').addEventListener('click',()=>{reset();playing=true;$('restart').style.display='none';canvas.requestPointerLock?.()});
+canvas.addEventListener('click',()=>{if(playing){if(document.pointerLockElement!==canvas&&matchMedia('(pointer:fine)').matches)canvas.requestPointerLock?.();shoot()}});
+document.addEventListener('pointerlockchange',()=>{});
+document.addEventListener('mousemove',e=>{if(playing&&document.pointerLockElement===canvas)yaw+=e.movementX*.0025});
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='r'&&playing){reset();playing=true}});
+document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function hold(id,key){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;el.setPointerCapture?.(e.pointerId)});for(const ev of ['pointerup','pointercancel','pointerleave'])el.addEventListener(ev,()=>keys[key]=false)}
+hold('up','w');hold('down','s');hold('left','a');hold('right','d');$('shoot').addEventListener('pointerdown',e=>{e.preventDefault();shoot()});$('turnL').addEventListener('pointerdown',()=>touchLook=-1);$('turnR').addEventListener('pointerdown',()=>touchLook=1);for(const id of ['turnL','turnR'])for(const ev of ['pointerup','pointercancel','pointerleave'])$(id).addEventListener(ev,()=>touchLook=0);
+function tick(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(playing&&!won){if(keys.a)yaw-=1.9*dt;if(keys.d)yaw+=1.9*dt;yaw+=touchLook*1.7*dt;let speed=(keys.shift?.1:0.0);speed=keys.shift?3.5:2.5;let forward=(keys.w?1:0)-(keys.s?1:0),side=(keys.d?1:0)-(keys.a?1:0);if(forward||side){let len=Math.hypot(forward,side);move(forward/len*speed*dt,side/len*speed*dt)}seconds=Math.max(0,seconds-dt);if(seconds<=0)playing=false;updateHud()}render();requestAnimationFrame(tick)}
+reset();requestAnimationFrame(tick);
+})();
+</script></body></html>
